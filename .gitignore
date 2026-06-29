@@ -1,0 +1,20 @@
+# Build output
+dist/
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node (if tooling is added later)
+node_modules/
+npm-debug.log*
+
+# Internal research notes — kept local for maintenance, not published
+ai-analysis/
+
+# Eval suite / QA — kept local for maintenance, not published
+evaluation/

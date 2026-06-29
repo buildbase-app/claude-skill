@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "buildbase",
+  "displayName": "Buildbase SDK Integration",
+  "version": "0.1.0",
+  "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) into any application — auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, webhooks, and using Buildbase from any backend language via raw HTTP.",
+  "author": {
+    "name": "Buildbase",
+    "url": "https://github.com/buildbase-app"
+  },
+  "homepage": "https://github.com/buildbase-app/claude-skill",
+  "repository": "https://github.com/buildbase-app/claude-skill",
+  "license": "MIT",
+  "keywords": [
+    "buildbase",
+    "sdk",
+    "saas",
+    "authentication",
+    "billing",
+    "stripe",
+    "feature-flags",
+    "quota",
+    "credits",
+    "notifications",
+    "nextjs",
+    "multi-tenant"
+  ]
+}

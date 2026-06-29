@@ -1,0 +1,14 @@
+{
+  "name": "buildbase-skills",
+  "owner": {
+    "name": "Buildbase",
+    "url": "https://github.com/buildbase-app"
+  },
+  "plugins": [
+    {
+      "name": "buildbase",
+      "source": "./plugins/buildbase",
+      "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) — auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, and calling Buildbase from any backend via raw HTTP."
+    }
+  ]
+}
