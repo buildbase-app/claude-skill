@@ -1,28 +1,44 @@
 #!/usr/bin/env bash
-# Build an upload-ready zip of the Buildbase skill for claude.ai
+# Build upload-ready zips of the Buildbase skills for claude.ai
 # (Settings → Capabilities → Skills → Upload).
 #
-# Output: dist/buildbase.zip  — contains a top-level `buildbase/` folder
-# with SKILL.md + knowledge/ (no dev artifacts, no plugin manifest).
+# Output (one zip per skill, each with a top-level folder
+# containing SKILL.md + knowledge/ — no dev artifacts, no plugin manifest):
+#   dist/buildbase.zip            — SDK integration skill
+#   dist/buildbase-selfhost.zip   — self-hosting skill
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILL_SRC="$ROOT/plugins/buildbase"
 DIST="$ROOT/dist"
-STAGE="$DIST/buildbase"
 
 rm -rf "$DIST"
-mkdir -p "$STAGE"
+mkdir -p "$DIST"
 
-# Copy only what ships with the skill: SKILL.md + knowledge/
-cp "$SKILL_SRC/SKILL.md" "$STAGE/SKILL.md"
-cp -R "$SKILL_SRC/knowledge" "$STAGE/knowledge"
+package() {
+  local name="$1"                    # plugin dir name = skill name = zip name
+  local src="$ROOT/plugins/$name"
+  local stage="$DIST/$name"
 
-# Zip from inside dist/ so the archive root is `buildbase/`
-( cd "$DIST" && zip -r -q buildbase.zip buildbase )
-rm -rf "$STAGE"
+  mkdir -p "$stage"
+  # Copy only what ships with the skill: SKILL.md + knowledge/
+  cp "$src/SKILL.md" "$stage/SKILL.md"
+  cp -R "$src/knowledge" "$stage/knowledge"
 
-echo "Built: $DIST/buildbase.zip"
-unzip -l "$DIST/buildbase.zip" | tail -n +2 | head -5
-echo "..."
-echo "Upload this at claude.ai → Settings → Capabilities → Skills."
+  # Zip from inside dist/ so the archive root is `<name>/`
+  ( cd "$DIST" && zip -r -q "$name.zip" "$name" )
+  rm -rf "$stage"
+
+  echo "Built: $DIST/$name.zip"
+}
+
+package "buildbase"
+package "buildbase-selfhost"
+
+echo
+echo "Contents:"
+for z in "$DIST"/*.zip; do
+  echo "  $z"
+  unzip -l "$z" | tail -n +4 | head -6 | sed 's/^/    /'
+done
+echo
+echo "Upload each at claude.ai → Settings → Capabilities → Skills."

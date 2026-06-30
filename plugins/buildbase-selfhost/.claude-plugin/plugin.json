@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "buildbase-selfhost",
+  "displayName": "Buildbase Self-Hosting",
+  "version": "0.1.0",
+  "description": "Deploy and operate the self-hosted Buildbase platform on your own infrastructure — the four-component architecture, Docker Compose quick start, full environment-variable reference, production hardening with Nginx and replicas, zero-downtime upgrades, and backups.",
+  "author": {
+    "name": "Buildbase",
+    "url": "https://github.com/buildbase-app"
+  },
+  "homepage": "https://github.com/buildbase-app/claude-skill",
+  "repository": "https://github.com/buildbase-app/claude-skill",
+  "license": "MIT",
+  "keywords": [
+    "buildbase",
+    "self-hosted",
+    "self-hosting",
+    "on-premises",
+    "docker",
+    "docker-compose",
+    "deployment",
+    "devops",
+    "tenant-server",
+    "mongodb",
+    "redis",
+    "nginx",
+    "saas"
+  ]
+}

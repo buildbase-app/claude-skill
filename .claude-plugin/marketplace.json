@@ -9,6 +9,11 @@
       "name": "buildbase",
       "source": "./plugins/buildbase",
       "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) — auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, and calling Buildbase from any backend via raw HTTP."
+    },
+    {
+      "name": "buildbase-selfhost",
+      "source": "./plugins/buildbase-selfhost",
+      "description": "Deploy and operate the self-hosted Buildbase platform on your own infrastructure — the four-component architecture, Docker Compose quick start, environment-variable reference, production hardening (Nginx, replicas, TLS), zero-downtime upgrades, and backups."
     }
   ]
 }

@@ -15,6 +15,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILL_DIR = os.path.join(ROOT, "plugins", "buildbase")
+SELFHOST_DIR = os.path.join(ROOT, "plugins", "buildbase-selfhost")
 errors = []
 
 
@@ -29,26 +30,29 @@ def check_json(path):
 
 
 def check_skill_size():
-    skill = os.path.join(SKILL_DIR, "SKILL.md")
-    if not os.path.exists(skill):
-        errors.append("plugins/buildbase/SKILL.md is missing")
-        return
-    n = sum(1 for _ in open(skill))
-    if n >= 500:
-        errors.append(f"SKILL.md is {n} lines (must be < 500)")
+    for d in (SKILL_DIR, SELFHOST_DIR):
+        skill = os.path.join(d, "SKILL.md")
+        rel = os.path.relpath(skill, ROOT)
+        if not os.path.exists(skill):
+            errors.append(f"{rel} is missing")
+            continue
+        n = sum(1 for _ in open(skill))
+        if n >= 500:
+            errors.append(f"{rel} is {n} lines (must be < 500)")
 
 
 def check_links():
-    for dp, _, files in os.walk(SKILL_DIR):
-        for f in files:
-            if not f.endswith(".md"):
-                continue
-            p = os.path.join(dp, f)
-            for m in re.finditer(r"\]\((\.\.?/[^)\s#]+\.md)", open(p).read()):
-                target = os.path.normpath(os.path.join(dp, m.group(1)))
-                if not os.path.exists(target):
-                    rel = os.path.relpath(p, ROOT)
-                    errors.append(f"broken link in {rel}: {m.group(1)}")
+    for base in (SKILL_DIR, SELFHOST_DIR):
+        for dp, _, files in os.walk(base):
+            for f in files:
+                if not f.endswith(".md"):
+                    continue
+                p = os.path.join(dp, f)
+                for m in re.finditer(r"\]\((\.\.?/[^)\s#]+\.md)", open(p).read()):
+                    target = os.path.normpath(os.path.join(dp, m.group(1)))
+                    if not os.path.exists(target):
+                        rel = os.path.relpath(p, ROOT)
+                        errors.append(f"broken link in {rel}: {m.group(1)}")
 
 
 def check_regressions():
@@ -60,21 +64,23 @@ def check_regressions():
         (r"result\.remaining", "credit consume returns `balanceAfter`, not `remaining`"),
         (r"AuthStatus.*@buildbase/sdk/react", "AuthStatus is imported from @buildbase/sdk (react entry is types-only)"),
     ]
-    for dp, _, files in os.walk(SKILL_DIR):
-        for f in files:
-            if not f.endswith(".md"):
-                continue
-            p = os.path.join(dp, f)
-            text = open(p).read()
-            for pat, msg in bad:
-                if re.search(pat, text):
-                    rel = os.path.relpath(p, ROOT)
-                    errors.append(f"regression in {rel}: {msg}")
+    for base in (SKILL_DIR, SELFHOST_DIR):
+        for dp, _, files in os.walk(base):
+            for f in files:
+                if not f.endswith(".md"):
+                    continue
+                p = os.path.join(dp, f)
+                text = open(p).read()
+                for pat, msg in bad:
+                    if re.search(pat, text):
+                        rel = os.path.relpath(p, ROOT)
+                        errors.append(f"regression in {rel}: {msg}")
 
 
 def main():
     check_json(".claude-plugin/marketplace.json")
     check_json("plugins/buildbase/.claude-plugin/plugin.json")
+    check_json("plugins/buildbase-selfhost/.claude-plugin/plugin.json")
     check_skill_size()
     check_links()
     check_regressions()

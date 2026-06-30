@@ -14,7 +14,7 @@ This section was reverse-engineered directly from the SDK source (`sdk/src/lib/a
 {serverUrl}/api/{version}/{basePath}/{path}
 ```
 
-- `serverUrl` — the hosted value is **`https://api.console.buildbase.app`** (or your own origin if self-hosting).
+- `serverUrl` — the hosted value is **`https://api.console.buildbase.app`** (or your own origin if self-hosting — point it at your tenant server, e.g. `https://api.yourcompany.com`; everything below is identical. To stand up that stack, use the **`buildbase-selfhost`** skill or see [docs.buildbase.app/self-hosted](https://docs.buildbase.app/self-hosted/overview)).
 - `version` — `v1`.
 - `basePath` — almost always **`public`**. (`beta` exists for a few beta endpoints; auth's `/auth/request` is the one exception that sits *outside* basePath.)
 
