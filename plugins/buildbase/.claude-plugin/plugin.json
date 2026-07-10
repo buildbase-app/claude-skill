@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "buildbase",
   "displayName": "Buildbase SDK Integration",
-  "version": "0.1.0",
-  "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) into any application — auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, webhooks, and using Buildbase from any backend language via raw HTTP.",
+  "version": "0.2.0",
+  "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) into any application \u2014 auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, webhooks, using Buildbase from any backend language via raw HTTP, and making the app MCP/agent-ready (live MCP server + AI-agent OAuth).",
   "author": {
     "name": "Buildbase",
     "url": "https://github.com/buildbase-app"
@@ -23,6 +23,10 @@
     "credits",
     "notifications",
     "nextjs",
-    "multi-tenant"
+    "multi-tenant",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "agent-ready"
   ]
 }

@@ -6,8 +6,8 @@ How to keep this skill accurate as the Buildbase SDK / API grows. The golden rul
 
 | What | Where |
 |------|-------|
-| SDK package | `@buildbase/sdk` — the local checkout used during authoring was `codebase/sdk` (v0.0.47) |
-| Reference app | `codebase/nextjs-starter` (auth wiring, token-exchange shape, React version) |
+| SDK package | [`@buildbase/sdk`](https://www.npmjs.com/package/@buildbase/sdk) (source: [buildbase-app/sdk](https://github.com/buildbase-app/sdk)) — authored against v0.0.47; `knowledge/mcp/` was authored and live-verified against the published v0.0.54 (`@buildbase/sdk/mcp` entry point) |
+| Reference apps | [buildbase-app/nextjs-starter](https://github.com/buildbase-app/nextjs-starter) (auth wiring, token-exchange shape, React version); [buildbase-app/nextjs-agent-mcp-starter](https://github.com/buildbase-app/nextjs-agent-mcp-starter) for the MCP/agent-readiness wiring |
 | Official docs | https://docs.buildbase.app (dashboard labels, hosted `serverUrl`) — for facts not in code |
 | Dashboard | https://console.buildbase.app |
 

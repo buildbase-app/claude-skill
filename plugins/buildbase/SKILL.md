@@ -7,6 +7,10 @@ description: |-
   BuildBase(), useSaaSAuth, WhenSubscription, WhenQuotaAvailable, WhenCreditsAvailable,
   bb-session-id, orgId with 24 hex characters, or any Buildbase-specific term.
 
+  Also trigger for making a Buildbase app MCP/agent-ready: createAgentStack,
+  @buildbase/sdk/mcp, exposing an MCP server, agent OAuth/discovery, llms.txt,
+  connecting Claude/Cursor to the app, applicationTokenUrl, agent readiness.
+
   Also trigger when the user is building a SaaS app and asks about auth, workspaces,
   billing, feature flags, quota tracking, or notifications — they may be using Buildbase
   even without naming it.
@@ -78,6 +82,7 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | Exact HTTP endpoints / methods / paths / payloads | `knowledge/http-api/endpoints.md` (+ `overview.md`) |
 | Verifying inbound webhooks in any language | `knowledge/http-api/webhooks.md` |
 | Writing the full Next.js wiring end-to-end | `knowledge/patterns/nextjs-integration.md` |
+| Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `llms.txt` / `.well-known` discovery, agent tokens (SDK ≥ 0.0.54) | `knowledge/mcp/mcp-and-agent-readiness.md` |
 | Quick factual answer to a common question | `knowledge/faq/frequently-asked.md` |
 
 ---
@@ -224,6 +229,9 @@ What each file contains, so you know whether it's worth opening:
 - `http-api/webhooks.md` — HMAC-SHA256 webhook verification recipe with Python/Go code
 - `http-api/using-from-any-language.md` — login/code-exchange flow + Python/Go examples
 
+**MCP & agent readiness** (`knowledge/mcp/`, SDK ≥ 0.0.54)
+- `mcp/mcp-and-agent-readiness.md` — expose a live MCP server + agent OAuth: `createAgentStack`, console setup (OAuth2 agent client, Agent Readiness toggle, DCR base client), the two-client-secret split, tool exposure (`builtinTools`, `defineMcpTool`), verification checklist, and a failure library of real integration failures
+
 **Patterns & quick lookup**
 - `patterns/nextjs-integration.md` — complete production Next.js wiring (all 7 files)
 - `faq/frequently-asked.md` — common questions with direct answers
@@ -232,4 +240,4 @@ What each file contains, so you know whether it's worth opening:
 
 ---
 
-**Keywords**: Buildbase, @buildbase/sdk, @buildbase/sdk/react, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration.
+**Keywords**: Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.
