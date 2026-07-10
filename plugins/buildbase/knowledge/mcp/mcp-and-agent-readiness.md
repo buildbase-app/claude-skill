@@ -227,7 +227,85 @@ Built-ins run under the user's session; the read/write boundary is this config, 
 - Custom tools with the same name **override** built-ins.
 - **Clients cache `tools/list` per connection.** After adding/changing tools (and rebuilding): in Claude Code run `/mcp` → the server → **Reconnect** (no re-auth needed). New sessions always fetch fresh.
 
+A complete custom tool — zod input, agent-behavior annotations, per-user
+ownership scoping, and a Buildbase call via `ctx.bb`:
+
+```ts
+defineMcpTool({
+  name: 'create_project',
+  description: 'Create a project owned by the calling user.',
+  inputSchema: z.object({
+    name: z.string().min(1).max(120),
+    description: z.string().max(2000).optional(),
+  }),
+  annotations: { title: 'Create project' },        // readOnlyHint / destructiveHint / idempotentHint
+  execute: async (input, ctx) => {
+    const ownerId = ctx.auth.userId;               // scope everything to the acting user
+    if (!ownerId) throw new Error('Unauthenticated: no acting user on the token.');
+    if (ctx.workspaceId) {                         // session-scoped Buildbase call
+      const quota = await ctx.bb.usage.getQuota(ctx.workspaceId, 'projects');
+      // …reject if quota.available is exhausted…
+    }
+    // …insert into YOUR database, return the created record…
+    return { id: '…', name: input.name, ownerId };
+  },
+})
+```
+
+Errors thrown in `execute` become the tool's error text for the agent — write
+them for the agent to read ("Project not found: X"), and use
+`formatToolError` to redact anything unexpected in production.
+
 Production hardening on `mcp.handler`: `rateLimit`, `allowedOrigins`, `maxRequestBytes` (default 1 MiB), `formatToolError`, `onError`.
+
+### Testing tools without the full OAuth loop (dev only)
+
+`mcp: { auth: false }` disables auth so `tools/list`/`tools/call` work with
+plain curl — **never ship it**; built-ins then have no session and fail unless
+one is supplied. The realistic middle ground: sign a platform-style JWT with
+the base client's secret (`signClientJwt`), POST it to your own
+`/api/agent/token` to mint a real app token, and call `/mcp` with that Bearer —
+this exercises verification, audience binding, and `sid` decryption exactly as
+production does.
+
+---
+
+## Not on Next.js? (Vite/CRA React SPA + any Node server)
+
+The React side of a Buildbase app needs nothing for MCP — agents talk to the
+server. `createAgentStack` is framework-agnostic; only the mounting differs.
+Express example:
+
+```ts
+// MCP endpoint (mount at the SAME path as mcp.path, i.e. /mcp)
+app.all('/mcp', async (req, res) => {
+  const r = await agent.mcp.handle({ method: req.method, headers: req.headers, body: req.body });
+  res.status(r.status).set(r.headers).send(r.body);
+});
+// Every discovery document (llms.txt, .well-known/*, auth.md, …)
+app.use(async (req, res, next) => {
+  const doc = await agent.resolvePath(req.path);
+  if (!doc) return next();
+  res.status(doc.status).set('Content-Type', doc.contentType).send(doc.body);
+});
+```
+
+Hono/Bun/Cloudflare Workers: use `agent.mcp.fetch(request)` and
+`agent.serveAgentPath(request)` — both are Web-standard `Request → Response`.
+The bridge endpoints (`handleAppTokenRequest` / `handleAppRevokeRequest`) are
+plain functions returning `{ status, body }` — mount them on any route.
+
+For **in-page** agents in a React app (WebMCP), `provideWebMcpTools(tools)`
+from `@buildbase/sdk` registers tools with `navigator.modelContext`; it's a
+safe no-op where unsupported. This is separate from the server-side MCP above.
+
+---
+
+## Reference implementation & further reading
+
+- **Working starter (public):** https://github.com/buildbase-app/nextjs-agent-mcp-starter — the complete wiring from this guide, verified end-to-end with a live MCP client; also usable as a GitHub template.
+- **SDK machine reference:** `node_modules/@buildbase/sdk/AGENTS.md` — dense export map for the whole SDK including `@buildbase/sdk/mcp`.
+- The starter deliberately has **no human sign-in UI** — users authenticate on Buildbase's hosted login during the agent's OAuth consent flow. An app that also wants human sign-in combines this guide with `../patterns/nextjs-integration.md`.
 
 ---
 
