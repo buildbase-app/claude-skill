@@ -53,7 +53,12 @@ When adding a regression rule, plant the defect and confirm the rule fires befor
 | Both composes parse with all five secrets | **Observed.** exit 0 |
 | Webhook HMAC recipe | **10/10 against the real 0.0.70 package.** Valid verifies; 6-minute-old timestamp rejected and 4-minute accepted; tampered body, wrong secret and missing `sha256=` prefix all rejected; `parseWebhookEvent` returns the event, its type field is `event`, it has no `id`, and an invalid one returns null rather than throwing |
 | Quick-start files typecheck | **Observed.** All eight files extracted verbatim from `sdk/quick-start.md` pass `tsc --noEmit` under `strict` against `@buildbase/sdk@0.0.70`, `next@16.3.5`, `react@19.3.0` |
-| Live org API, API roles, token exchange, idempotency | **Not run.** Needs a local session |
+| Live org API, API roles, token exchange, idempotency | **Not run.** Reachable from a local machine; needs a throwaway org's API token |
+| Real `docker compose up` from the skill's own files (2026-09-22, local) | **Observed.** Mongo, Redis and auth healthy. Redis started with `--requirepass` and its authenticated healthcheck passed, with zero Redis auth errors in the tenant-server log. `tenant-server` exits only on `Missing API key. Set INSTALLATION_API_KEY`, so `/api/ready` needs a real Installation from the console |
+| `read_only` negative control, auth portal | **Observed.** With `read_only` on, as the old compose had it, 5 files still hold the literal `__NEXT_PUBLIC_SERVER_URL__` and the container reports *running*. With it off, 0 remain and 5 are rewritten to the real URL. The broken case looks healthy, which is why it shipped |
+| Published images match the docs | **Observed.** `:latest` for all three is a multi-arch manifest (amd64, arm64) on Node 22.21.1 |
+
+**Gate 3 results, 2026-09-22.** The eight prompts from `GATE-2-AND-3-LOCAL.md` were run through a separate headless `claude -p --plugin-dir plugins/`, from an empty directory so the model could not read BuildBase source and had to answer from the skill. All eight passed on a line-by-line read, not only the regex first pass: it confirmed an API key now reaches org webhooks but declined to guess an undocumented payload; it refused an irreversible workspace delete and showed the request instead; it said deliveries carry no event id; it handed out a compose with no `read_only` on client or auth and named all five secrets; and it never divided yen by 100. Run on the default model only - repeat on a smaller one before trusting it for weaker models.
 
 `docker compose config` needs no daemon, which is worth knowing: the compose blocks can be parse-checked anywhere the CLI exists.
 
