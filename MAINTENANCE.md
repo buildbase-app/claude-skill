@@ -32,6 +32,25 @@ Re-run the verification that caught real bugs during authoring — for each know
 - `IWorkspace` / `IUser` are **not** exported from the public type surface
 - only `INSUFFICIENT_CREDITS` is a guaranteed error-code string
 
+## Verifying a change (the three gates)
+
+A skill is prose plus sample commands, so "it works" has to be shown three ways. Gate 1 is mechanical and must pass before any push.
+
+**Gate 1 - the facts match the code.** All of it automatic:
+
+1. `python3 scripts/validate.py` - manifests, SKILL size, description budget (1536 chars), link resolution, the regression list, and every `/api/...` path in `org-api.md` against `scripts/api-routes.txt`.
+2. `./scripts/package.sh` - both zips build.
+3. **Symbol check.** Every `use*` and `When*` name in `plugins/buildbase/**` must exist in the published `.d.ts` export lists for the version in the table above. The one expected miss is the prose in `decision-trees/which-feature-to-use.md` stating that `WhenTrialEnded` does not exist.
+4. **Self-host block check.** Every fenced compose, env and nginx block in the self-host plugin must byte-match the corresponding fence in `docs/content/self-hosted/*.mdx`, which is generated from `packages/shared/src/constants/self-hosted.ts`. Those blocks are copied, never paraphrased.
+
+When adding a regression rule, plant the defect and confirm the rule fires before trusting it. Every rule in the current list was confirmed that way, and doing so found a stale `(Node.js only)` claim in `SKILL.md` that had been missed by hand.
+
+**Gate 2 - the samples actually run.** Execute the curl and code samples against a throwaway org: the org-API path with a real key, a key on a narrow API role being refused where the role lacks the permission, `token/exchange` then a session-authed read, an `idempotencyKey` sent twice counting once, and the webhook HMAC recipe verifying and then failing on a six-minute-old timestamp. Scaffold a Next.js app and typecheck the quick-start files as shown.
+
+**Gate 3 - the model behaves.** Install the plugin locally and run the prompts in `evaluation/`, one per audience, against the expected answer recorded beside each.
+
+Not verifiable outside a browser or Docker, and left as a human checklist: the self-host "Test Connection" wizard, a full `docker compose up`, Stripe checkout, browser sign-in, push notifications.
+
 ## Evals (regression tests)
 
 The eval suite is kept **local-only** (gitignored, not published) under `evaluation/` — `evaluation/evals/evals.json` holds 21 prompts with objective assertions, and `evaluation/eval-results.md` records the last run (100% with-skill, +54pt over baseline, 0 hallucinations). After any substantive change, re-run the prompts with vs without the skill and re-grade. Recommended: test on more than one model (Haiku + Sonnet + Opus) — what Opus infers, Haiku may need spelled out.
