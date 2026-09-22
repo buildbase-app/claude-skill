@@ -45,6 +45,18 @@ A skill is prose plus sample commands, so "it works" has to be shown three ways.
 
 When adding a regression rule, plant the defect and confirm the rule fires before trusting it. Every rule in the current list was confirmed that way, and doing so found a stale `(Node.js only)` claim in `SKILL.md` that had been missed by hand.
 
+**Gate 2 results, 2026-09-22.** Three of the five parts ran here; the live-API parts cannot, because the agent proxy denies `api.console.buildbase.app` (403 on CONNECT) regardless of credentials.
+
+| Check | Result |
+|---|---|
+| Both composes abort without `REDIS_PASSWORD` | **Observed.** `docker compose config` exits 1 with `required variable REDIS_PASSWORD is missing a value` |
+| Both composes parse with all five secrets | **Observed.** exit 0 |
+| Webhook HMAC recipe | **10/10 against the real 0.0.70 package.** Valid verifies; 6-minute-old timestamp rejected and 4-minute accepted; tampered body, wrong secret and missing `sha256=` prefix all rejected; `parseWebhookEvent` returns the event, its type field is `event`, it has no `id`, and an invalid one returns null rather than throwing |
+| Quick-start files typecheck | **Observed.** All eight files extracted verbatim from `sdk/quick-start.md` pass `tsc --noEmit` under `strict` against `@buildbase/sdk@0.0.70`, `next@16.3.5`, `react@19.3.0` |
+| Live org API, API roles, token exchange, idempotency | **Not run.** Needs a local session |
+
+`docker compose config` needs no daemon, which is worth knowing: the compose blocks can be parse-checked anywhere the CLI exists.
+
 **Gate 2 - the samples actually run.** Execute the curl and code samples against a throwaway org: the org-API path with a real key, a key on a narrow API role being refused where the role lacks the permission, `token/exchange` then a session-authed read, an `idempotencyKey` sent twice counting once, and the webhook HMAC recipe verifying and then failing on a six-minute-old timestamp. Scaffold a Next.js app and typecheck the quick-start files as shown.
 
 **Gate 3 - the model behaves.** Install the plugin locally and run the prompts in `evaluation/`, one per audience, against the expected answer recorded beside each.
