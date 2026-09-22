@@ -49,13 +49,13 @@ This is a faithful rendering of the docs' mermaid diagram — these exact arrows
 
 ## Docker Images
 
-Three official images on Docker Hub — all `linux/amd64`, Node.js 20 Alpine:
+Three official images on Docker Hub. All are multi-arch (`linux/amd64, linux/arm64`) built on **Node.js 22 Alpine**; `docker pull` picks the right variant. 32-bit ARM (`linux/arm/v7`) is not supported.
 
 | Image | Description | Port | Health check |
 |---|---|---|---|
 | `buildbaseapp/tenant-server` | Backend API server | 3000 | `GET /api/ready` |
 | `buildbaseapp/client` | Web dashboard (Next.js SSR) | 3000 | `GET /` |
-| `buildbaseapp/auth` | Auth portal (Next.js) | 3000 | `GET /` |
+| `buildbaseapp/auth` | Auth portal (Next.js) | 3000 | `GET /health` |
 
 (From `configuration.mdx`. Inside the container each listens on **3000**; the compose files map host ports `4100`/`4101`/`4103`.)
 
@@ -66,6 +66,7 @@ Three official images on Docker Hub — all `linux/amd64`, Node.js 20 Alpine:
 | Requirement | Details |
 |---|---|
 | **Server** | Linux (Ubuntu 20.04+ recommended), 2 GB RAM, 2 vCPU minimum |
+| **CPU architecture** | x86-64 (`amd64`) or 64-bit ARM (`arm64`). Apple Silicon, Graviton, Ampere and 64-bit Raspberry Pi 4/5 all work |
 | **Docker** | Docker Engine 20+ and Docker Compose v2 |
 | **Database** | MongoDB 7+ (included in quick start, or bring your own) |
 | **Redis** | Redis 7+ (included in quick start) |
