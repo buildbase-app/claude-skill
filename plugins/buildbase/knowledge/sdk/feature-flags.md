@@ -89,7 +89,9 @@ function App() {
 import { useUserFeatures } from '@buildbase/sdk/react';
 
 function FeatureCheck() {
-  const { features, isFeatureEnabled, refreshFeatures } = useUserFeatures();
+  // 0.0.55: `refreshFeatures` and `isLoading` are deprecated aliases for
+  // `refetch` and `loading`. Both still work.
+  const { features, loading, error, refetch, isFeatureEnabled } = useUserFeatures();
 
   // Programmatic check
   const hasPremium = isFeatureEnabled('premium-features');

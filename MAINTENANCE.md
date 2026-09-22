@@ -6,9 +6,9 @@ How to keep this skill accurate as the Buildbase SDK / API grows. The golden rul
 
 | What | Where |
 |------|-------|
-| SDK package | [`@buildbase/sdk`](https://www.npmjs.com/package/@buildbase/sdk) (source: [buildbase-app/sdk](https://github.com/buildbase-app/sdk)) — authored against v0.0.47; `knowledge/mcp/` was authored and live-verified against the published v0.0.54 (`@buildbase/sdk/mcp` entry point) |
+| SDK package | [`@buildbase/sdk`](https://www.npmjs.com/package/@buildbase/sdk) (source: [buildbase-app/sdk](https://github.com/buildbase-app/sdk)) — verified against **v0.0.70**. The `/mcp` surface is accurate for 0.0.54 plus the 0.0.55 additions (resources, prompts, rich tool results, the connect guide); the newer 0.0.56-0.0.70 changes it must track are `signOut` ending the server session (0.0.70), the `tracking` prop (0.0.62), and devices and sessions (0.0.57) |
 | Reference apps | [buildbase-app/nextjs-starter](https://github.com/buildbase-app/nextjs-starter) (auth wiring, token-exchange shape, React version); [buildbase-app/nextjs-agent-mcp-starter](https://github.com/buildbase-app/nextjs-agent-mcp-starter) for the MCP/agent-readiness wiring |
-| Official docs | https://docs.buildbase.app (dashboard labels, hosted `serverUrl`) — for facts not in code |
+| Official docs | https://docs.buildbase.app — for facts not in the package. `reference/admin-api` is the source for `knowledge/http-api/org-api.md`, and `self-hosted/*` is the source for the self-host plugin's compose blocks, which are generated output and must be copied rather than paraphrased |
 | Dashboard | https://console.buildbase.app |
 
 ## When the SDK version bumps

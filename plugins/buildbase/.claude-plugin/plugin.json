@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "buildbase",
   "displayName": "Buildbase SDK Integration",
-  "version": "0.2.0",
-  "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk) into any application \u2014 auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, webhooks, using Buildbase from any backend language via raw HTTP, and making the app MCP/agent-ready (live MCP server + AI-agent OAuth).",
+  "version": "0.3.0",
+  "description": "Expert guide for BuildBase (@buildbase/sdk), for two audiences: developers integrating the SDK into an app - auth, workspaces, billing, feature flags, quota, credits, notifications, devices and sessions, server-side usage, webhooks, using BuildBase from any backend language over raw HTTP, and making the app MCP/agent-ready; and org owners driving the console by API key - API roles, the admin REST API, and acting for an app user via token exchange.",
   "author": {
     "name": "Buildbase",
     "url": "https://github.com/buildbase-app"
@@ -27,6 +27,10 @@
     "mcp",
     "model-context-protocol",
     "ai-agents",
-    "agent-ready"
+    "agent-ready",
+    "api-key",
+    "admin-api",
+    "automation",
+    "agents"
   ]
 }

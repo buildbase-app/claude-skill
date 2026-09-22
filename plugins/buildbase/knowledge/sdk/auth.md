@@ -56,7 +56,7 @@ function AuthExample() {
     isRedirecting,     // true during OAuth redirect
     status,            // AuthStatus enum: 'loading' | 'redirecting' | 'authenticating' | 'authenticated' | 'unauthenticated'
     signIn,            // () => void — starts OAuth flow. Optionally pass returnUrl
-    signOut,           // () => void — calls onSignOut callback
+    signOut,           // (options?) => Promise<void> — ends the session, then onSignOut
     openWorkspaceSettings,  // (section) => void — opens settings dialog
   } = useSaaSAuth();
 
@@ -67,6 +67,21 @@ function AuthExample() {
   return <Dashboard user={user} />;
 }
 ```
+
+---
+
+### Signing out actually ends the session (SDK 0.0.70)
+
+Before 0.0.70, `signOut()` cleared the session id locally and reset client state, and stopped there - the session stayed valid on the server until it expired. It now revokes the session server-side as well.
+
+```tsx
+const { signOut } = useSaaSAuth();
+
+await signOut();                      // ends this session
+await signOut({ everywhere: true });  // ends every session, on every device
+```
+
+`signOut()` alone still ends only the current session. Signing out one *other* session is `SessionsApi.revoke`, covered in the devices and sessions section below. If the developer is on an older SDK, say so rather than promising server-side revocation.
 
 ---
 
@@ -125,7 +140,7 @@ While the SDK is initializing auth (and exchanging the login `?code=`), `SaaSOSP
 >
 ```
 
-> This provider-level `loadingComponent` is the full-screen auth overlay. It's separate from the subscription gates' `loadingComponent`, which only covers that one gate's loading state and takes a `ReactNode`. (Note: the `WhenAuthenticated` / `WhenUnauthenticated` auth gates do **not** accept a `loadingComponent` — they take only `children` and render nothing while loading.)
+> This provider-level `loadingComponent` is the full-screen auth overlay. It's separate from the subscription gates' `loadingComponent`, which only covers that one gate's loading state and takes a `ReactNode`. (Since SDK 0.0.51 the `WhenAuthenticated` / `WhenUnauthenticated` auth gates **do** accept `loadingComponent` and `fallbackComponent`, matching the subscription, quota and credit gates. Both default to `null`, so without a `loadingComponent` nothing renders during the loading, redirecting and authenticating states.)
 
 ---
 
@@ -231,6 +246,24 @@ interface AuthUser {
   image?: string;
 }
 ```
+
+---
+
+## Devices, sessions and connected agents
+
+Three self-service surfaces the SDK ships, all session-authed and scoped to the signed-in user.
+
+```tsx
+import { useDevices, useSessions, useConnectedAgents } from '@buildbase/sdk/react';
+
+const { devices, loading, error, busyId, rename, signOut, forget } = useDevices();
+const { sessions, revoke } = useSessions();
+const { agents, revoke: revokeAgent } = useConnectedAgents();
+```
+
+Ready-made `<Devices />`, `<Sessions />` and `<ConnectedAgents />` components exist too, and the workspace settings dialog already includes all three screens. Server-side the same actions are `bb.devices.list/rename/signOut/forget` and `bb.sessions.list/revoke`.
+
+Device identity is server-issued as of 0.0.57 and entirely transparent: after login the SDK fetches a server-signed device token and echoes it as `x-device-id`, so "this device", per-device sign-out and new-device alerts are anchored to an id the client cannot forge. It is best-effort and never blocks login, and your `handleAuthentication` still returns only `{ sessionId }`.
 
 ---
 

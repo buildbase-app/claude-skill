@@ -133,7 +133,7 @@ There is **no "check" endpoint** — fetch the map and look up the slug. A featu
 
 | Purpose | Method | Path | Body / Query | Response |
 |---|---|---|---|---|
-| Record usage | POST | `public/workspaces/{workspaceId}/subscription/usage` | `{ quotaSlug, quantity, metadata?, source?, idempotencyKey? }` | `{ used, consumed, included, available, overage, billedAsync }` |
+| Record usage | POST | `public/workspaces/{workspaceId}/subscription/usage` | `{ quotaSlug, quantity, metadata?, source?, idempotencyKey? }` | `{ used, consumed, included, available, overage, billedAsync }` - note: **no `hasOverage`**, that is on the status shape below |
 | Record usage batch (≤100) | POST | `public/workspaces/{workspaceId}/subscription/usage/batch` | `{ items: [{ quotaSlug, quantity, metadata?, source?, idempotencyKey? }] }` | `{ success, total, succeeded, failed, results[] }` |
 | One quota status | GET | `public/workspaces/{workspaceId}/subscription/usage/status?quotaSlug={slug}` | — | `{ quotaSlug, consumed, included, available, overage, hasOverage, allowOverage? }` |
 | All quota status | GET | `public/workspaces/{workspaceId}/subscription/usage/all` | — | `{ quotas: Record<slug, status> }` |

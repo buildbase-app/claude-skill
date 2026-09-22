@@ -184,11 +184,18 @@ function FeatureWithQuota() {
 ## Server-Side: Recording Usage
 
 ```ts
-import { usage } from '@/lib/buildbase';
+import { auth, usage } from '@/lib/buildbase';
 
 // Record usage in an API route
 export async function POST(request: Request) {
-  const { workspaceId } = await getAuthContext(request);
+  // `auth()` comes from your own src/lib/buildbase.ts factory (see
+  // server-side.md). There is no getAuthContext helper in the SDK.
+  const session = await auth();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // The workspace is your app's to choose - the SDK does not infer one
+  // server-side. Take it from the request, or look it up for the user.
+  const { workspaceId } = await request.json();
 
   const result = await usage.record(workspaceId, {
     quotaSlug: 'api_calls',
@@ -198,7 +205,9 @@ export async function POST(request: Request) {
     idempotencyKey: request.headers.get('x-request-id') ?? undefined,
   });
 
-  if (result.available <= 0 && !result.hasOverage) {
+  // `IRecordUsageResponse` has no `hasOverage` field - that lives on the
+  // quota *status* shape. Here, read `overage` directly.
+  if (result.available <= 0 && result.overage === 0) {
     return Response.json({ error: 'Quota exceeded' }, { status: 429 });
   }
 

@@ -201,7 +201,7 @@ Import the types that the package actually exports:
 import type { ISubscriptionResponse, ISubscription, IPlan } from '@buildbase/sdk';
 ```
 
-Note: not every internal interface is part of the public type surface. `ISubscriptionResponse`, `ISubscription`, `IPlan`, and the credit/quota/invoice `I*` types are exported, but `IWorkspace` and `IUser` are **not** re-exported from `@buildbase/sdk` — if you need their shape, derive it from a hook's return value (e.g. `ReturnType`/inference from `useSaaSWorkspaces().currentWorkspace`) rather than importing the interface.
+Since SDK 0.0.53 the public model types **are** exported by name from both `@buildbase/sdk` and `@buildbase/sdk/react`: `IUser`, `IWorkspace`, `ISettings` and `TranslationKey`, alongside `ISubscriptionResponse`, `ISubscription`, `IPlan` and the credit, quota and invoice `I*` types. Import them directly. Earlier guidance to infer `IWorkspace` or `IUser` from a hook's return type is obsolete.
 
 ---
 

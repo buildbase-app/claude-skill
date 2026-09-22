@@ -178,7 +178,12 @@ BuildBase({
   
   // Optional
   timeout: 30_000,               // Request timeout ms (default: 30s)
-  maxRetries: 2,                 // Retry on 5xx/network (default: 0)
+  maxRetries: 2,                 // Retry on 5xx/network (default: 0).
+                                 // Since 0.0.54 only GET/HEAD/OPTIONS/PUT/DELETE
+                                 // are retried. POST and PATCH are never replayed,
+                                 // so a lost response on credits.consume or
+                                 // subscription.checkout cannot double-charge.
+                                 // Retry those yourself with an idempotencyKey.
   debug: true,                   // Log all requests to console
   headers: { 'X-Source': 'api' }, // Custom headers on every request
   onError: (err, ctx) => {       // Centralized error logging
@@ -235,7 +240,9 @@ export async function POST(request: Request) {
 - Headers are `x-buildbase-signature` and `x-buildbase-timestamp`.
 - Signatures are valid for **5 minutes** (the `timestamp` check rejects older requests to prevent replay attacks). Override with `maxAgeSeconds` if needed.
 - Return **401** when verification fails.
-- Webhooks can be delivered more than once, so dedupe before acting (e.g. on a unique id in the event payload) — the official docs reference `event.id` for this; confirm the field is present in your payloads.
+- Webhooks can be delivered more than once, so dedupe before acting. **There is no event id to dedupe on** - deliveries carry only `event`, `timestamp` and `data`, and a retry repeats all three. Hash the raw request body instead.
+- A third header, `x-buildbase-event`, carries the event name (e.g. `subscription.upgraded`), so you can route before parsing.
+- Verification is runtime-agnostic as of SDK 0.0.50: the HMAC is a dependency-free pure-JS implementation, so it behaves identically on Node (CJS and ESM), bundlers, edge runtimes, Deno, Bun and browsers. Earlier notes calling this "Node.js only" are out of date.
 
 ---
 

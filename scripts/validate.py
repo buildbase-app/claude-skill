@@ -56,13 +56,31 @@ def check_links():
 
 
 def check_regressions():
-    # Patterns that were real bugs; they must not reappear.
+    # Patterns that were real bugs; they must not reappear. Each entry is a
+    # defect that actually shipped in this repo, so the list is a record rather
+    # than a style guide - do not add speculative ones.
+    #
+    # Removed deliberately: the old rule forbidding `AuthStatus` imported from
+    # `@buildbase/sdk/react`. That was correct until SDK 0.0.51, which made the
+    # react entry re-export the core runtime surface by value, so the import it
+    # banned is now the documented one.
     bad = [
         (r"switchToWorkspace\((id|workspaceId)\)", "switchToWorkspace takes the workspace object, not an id"),
         (r"<WhenTrialEnded", "WhenTrialEnded is not a real SDK component"),
         (r"consume\w*\(\s*\{\s*quantity", "credit consume uses `amount`, not `quantity`"),
         (r"result\.remaining", "credit consume returns `balanceAfter`, not `remaining`"),
-        (r"AuthStatus.*@buildbase/sdk/react", "AuthStatus is imported from @buildbase/sdk (react entry is types-only)"),
+        # Hallucinated helpers and fields.
+        (r"getAuthContext\(", "getAuthContext is not an SDK helper; use the app's own auth() factory"),
+        (r"result\.hasOverage", "IRecordUsageResponse has no hasOverage; that field is on the quota status shape"),
+        # Claims that later became false.
+        (r"event\.id", "webhook deliveries carry no event id; dedupe on a hash of the raw body"),
+        (r"`IWorkspace` and `IUser` are \*\*not\*\*", "IUser/IWorkspace/ISettings are exported since SDK 0.0.53"),
+        (r"\(Node\.js only\)", "webhook verification is runtime-agnostic since SDK 0.0.50"),
+        (r"localdev_", "the self-host composes have no development fallbacks; secrets are required"),
+        (r"All 42 minus the named", "`exclude` filters the readonly set, not all 42 builtin tools"),
+        (r"^\s+update_config:", "update_config is gone from the compose and is a Swarm-only key"),
+        (r"Node\.js 20 Alpine", "the self-host images are built on Node.js 22 Alpine"),
+        (r"all `linux/amd64`", "the self-host images are multi-arch: linux/amd64 and linux/arm64"),
     ]
     for base in (SKILL_DIR, SELFHOST_DIR):
         for dp, _, files in os.walk(base):
@@ -72,9 +90,69 @@ def check_regressions():
                 p = os.path.join(dp, f)
                 text = open(p).read()
                 for pat, msg in bad:
-                    if re.search(pat, text):
+                    if re.search(pat, text, re.M):
                         rel = os.path.relpath(p, ROOT)
                         errors.append(f"regression in {rel}: {msg}")
+
+
+def check_descriptions():
+    """A skill's `description` is what decides whether it triggers at all, and
+    the host truncates it. Keep it inside the documented budget."""
+    LIMIT = 1536
+    for d in (SKILL_DIR, SELFHOST_DIR):
+        skill = os.path.join(d, "SKILL.md")
+        rel = os.path.relpath(skill, ROOT)
+        if not os.path.exists(skill):
+            continue
+        lines = open(skill).read().splitlines()
+        if not lines or lines[0] != "---":
+            errors.append(f"{rel}: no YAML frontmatter")
+            continue
+        try:
+            end = lines.index("---", 1)
+        except ValueError:
+            errors.append(f"{rel}: unterminated frontmatter")
+            continue
+        body, grabbing = [], False
+        for line in lines[1:end]:
+            if re.match(r"^description:\s*\|", line):
+                grabbing = True
+                continue
+            if grabbing:
+                if line.startswith("  ") or not line.strip():
+                    body.append(line[2:] if line.startswith("  ") else "")
+                else:
+                    break
+        text = "\n".join(body).strip()
+        if not text:
+            errors.append(f"{rel}: no block description found")
+        elif len(text) > LIMIT:
+            errors.append(f"{rel}: description is {len(text)} chars (limit {LIMIT})")
+
+
+def check_org_api_paths():
+    """Every `/api/...` path the org-API page names must exist in the platform's
+    own route constants. The skill repo cannot import the monorepo, so the
+    authoritative list is vendored as a fixture and refreshed per MAINTENANCE.md.
+    """
+    page = os.path.join(SKILL_DIR, "knowledge", "http-api", "org-api.md")
+    fixture = os.path.join(ROOT, "scripts", "api-routes.txt")
+    if not os.path.exists(page):
+        errors.append("org-api.md is missing")
+        return
+    if not os.path.exists(fixture):
+        errors.append("scripts/api-routes.txt fixture is missing")
+        return
+
+    known = {l.strip() for l in open(fixture) if l.strip() and not l.startswith("#")}
+    # Only the backticked base paths in the module map are checked; prose paths
+    # like /api/tokens/:id carry parameters the constants do not.
+    named = set(re.findall(r"`(/api/[a-z0-9\-./]+)`", open(page).read()))
+    unknown = sorted(p for p in named if p not in known)
+    if unknown:
+        errors.append(
+            "org-api.md names paths absent from API_ROUTES: " + ", ".join(unknown)
+        )
 
 
 def main():
@@ -82,8 +160,10 @@ def main():
     check_json("plugins/buildbase/.claude-plugin/plugin.json")
     check_json("plugins/buildbase-selfhost/.claude-plugin/plugin.json")
     check_skill_size()
+    check_descriptions()
     check_links()
     check_regressions()
+    check_org_api_paths()
 
     if errors:
         print("VALIDATION FAILED:")
