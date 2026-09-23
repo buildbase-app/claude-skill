@@ -110,7 +110,7 @@ Every collection endpoint runs the same handler, so this works identically acros
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `$page` | number | `1` | Page number, 1-indexed |
-| `$limit` | number | controller default | Items per page |
+| `$limit` | number | controller default (10) | Items per page. Capped at 1000 |
 | `filter` | object | `{}` | Mongo-style query, flattened before use |
 | `sort` | object | - | Field to direction, e.g. `{"createdAt":-1}` |
 | `populate` | string | `''` | Space-separated reference fields to expand |
@@ -118,6 +118,8 @@ Every collection endpoint runs the same handler, so this works identically acros
 | `pagination` | boolean | `true` | `false` returns every match, unpaged |
 
 Note the `$` on `$page` and `$limit` and its absence on the others. Neither has a route-level default, so set `$limit` explicitly.
+
+**`$limit` is clamped, not refused.** Ask for more than 1000 and you get 1000, with nothing in the response saying so - the `limit` field reports what you were given, not what you asked for. A `0`, a negative or an unparseable value falls back to the controller default rather than erroring. Page through on `hasNextPage` rather than on arithmetic over a limit you assumed you had.
 
 ```bash
 curl -G https://api.console.buildbase.app/api/links \
@@ -130,7 +132,9 @@ curl -G https://api.console.buildbase.app/api/links \
 
 **`filter` is not passed to Mongo verbatim.** It is flattened to dot-notation then re-nested one level, so operators survive (`{"status":{"$in":["a","b"]}}` works) but a path two or more levels deep does not round-trip. For a deep field send the dotted path yourself as a flat key: `{"owner.profile.city":"X"}`.
 
-A paged response uses `mongoose-paginate-v2` labels: `{ docs, totalDocs, limit, page, totalPages, pagingCounter, hasPrevPage, hasNextPage, prevPage, nextPage }`, with `prevPage`/`nextPage` null at the ends. With `pagination=false` it is a plain array, so branch on `Array.isArray` if you allow both.
+A paged response uses `mongoose-paginate-v2` labels: `{ docs, totalDocs, limit, page, totalPages, pagingCounter, hasPrevPage, hasNextPage, prevPage, nextPage }`, with `prevPage`/`nextPage` null at the ends.
+
+**`pagination=false` does not change that shape.** It returns every match, still wrapped in the same object, reporting `limit: 0`. The rows are always at `.docs`, there is no array form, and code that branches on `Array.isArray` takes the wrong branch every time.
 
 ---
 
