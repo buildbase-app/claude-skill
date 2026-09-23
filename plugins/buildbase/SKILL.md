@@ -82,6 +82,9 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 
 | When to load | File |
 |---|---|
+| **First** when asked to build a whole app, or "build me a SaaS with BuildBase" | `knowledge/patterns/build-an-app-with-an-agent.md` |
+| **Before writing ANY settings, billing, members or profile screen** | `knowledge/sdk/pre-built-ui.md` - 13 screens already exist |
+| "Can BuildBase do X?" / which surface reaches a module / is there a hook for X | `knowledge/product/module-map.md` |
 | **First** when a developer reports a bug or something "doesn't work" | `knowledge/failure-library/top-mistakes.md` |
 | **First** when a developer is starting a fresh integration | `knowledge/learning/beginner-path.md` |
 | Before correcting a developer who seems confused about how the SDK behaves | `knowledge/misconceptions/common-wrong-beliefs.md` |
@@ -113,6 +116,10 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 Establish these before showing any code.
 
 **Org → Workspace → User.** Everything — subscriptions, quotas, feature flags, credits — belongs to a workspace. Users join workspaces with roles. The org is the developer's product registered in the Buildbase dashboard.
+
+**Most of the UI is already written.** BuildBase ships 13 settings screens, a workspace switcher, a headless pricing page and a credit store, translated into 8 languages and permission-gated. Hand-building any of them is the most expensive mistake available here. Before writing an account, billing or members screen, read `knowledge/sdk/pre-built-ui.md`.
+
+**Eight of the twenty modules have no React surface.** Email, workflows, collections, content, forms, short links, assets and reporting are console and org-API only. There is no `useCollections`. Check `knowledge/product/module-map.md` before reaching for a hook.
 
 **Dashboard first, code second.** Feature slugs, plan slugs, quota slugs, and notification event slugs must exist in the Buildbase dashboard before any SDK code referencing them will work. Code alone does nothing if the dashboard isn't configured.
 
@@ -231,6 +238,10 @@ Gate (When*) renders nothing
 
 What each file contains, so you know whether it's worth opening:
 
+**Building a whole app**
+- `patterns/build-an-app-with-an-agent.md` - the order that works, and the three points where an agent must stop and hand back to a human
+- `product/module-map.md` - all 20 modules against the surface that reaches each one
+
 **SDK reference** (`knowledge/sdk/`)
 - `quick-start.md` — the minimal end-to-end first integration
 - `auth.md` — `useSaaSAuth`, the three auth callbacks, events, redirect preservation
@@ -241,6 +252,7 @@ What each file contains, so you know whether it's worth opening:
 - `credits.md` — `useConsumeCredits`, `CreditActionsProvider`, public packages, `INSUFFICIENT_CREDITS`
 - `notifications.md` — push service-worker setup, `notification.send`, channels, merge tags
 - `server-side.md` — `BuildBase()` factory, all action modules, webhook verification (options-object API)
+- `pre-built-ui.md` — the 13 settings screens, pricing and credit-store components, the `ui` prop, theming variables, the 8 locales
 
 **Plain-language onboarding**
 - `explain-buildbase-simply.md` — jargon-free explanation + analogies for true beginners ("what is this?")
@@ -280,4 +292,4 @@ What each file contains, so you know whether it's worth opening:
 
 ---
 
-**Keywords**: Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, BuildBaseProvider, org API key, orgId:secret, admin API, console API, API roles, /api/tokens, token exchange, useSessions, useDevices, useConnectedAgents, BuildBaseBadge, tracking, signOut everywhere, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.
+**Keywords**: settings screens, openWorkspaceSettings, pre-built UI, SettingsScreen, CreditStorePage, PricingPage, WorkspaceSwitcher, theming, CSS variables, locale, i18n, RTL, ui prop, SDKUIConfig, build a SaaS app, build an app with AI, module map, Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, BuildBaseProvider, org API key, orgId:secret, admin API, console API, API roles, /api/tokens, token exchange, useSessions, useDevices, useConnectedAgents, BuildBaseBadge, tracking, signOut everywhere, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.

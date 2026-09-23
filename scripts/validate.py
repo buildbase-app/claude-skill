@@ -78,6 +78,11 @@ def check_regressions():
         (r"\(Node\.js only\)", "webhook verification is runtime-agnostic since SDK 0.0.50"),
         (r"localdev_", "the self-host composes have no development fallbacks; secrets are required"),
         (r"All 42 minus the named", "`exclude` filters the readonly set, not all 42 builtin tools"),
+        # Hooks for modules that have no React surface at all. Inventing one of
+        # these sends a developer looking for an export that was never built.
+        # Requires a call paren, so naming one as non-existent stays allowed.
+        (r"use(Collections?|Workflows?|EmailCampaigns?|Forms?|ShortLinks?|Assets?|Blogs?)\s*\(",
+         "that module has no React SDK surface; it is console and org-API only (see product/module-map.md)"),
         (r"^\s+update_config:", "update_config is gone from the compose and is a Swarm-only key"),
         (r"Node\.js 20 Alpine", "the self-host images are built on Node.js 22 Alpine"),
         (r"all `linux/amd64`", "the self-host images are multi-arch: linux/amd64 and linux/arm64"),
