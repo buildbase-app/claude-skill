@@ -93,6 +93,11 @@ def check_regressions():
          "pagination=false still returns the {docs,...} object with limit 0; there is no array form"),
         (r"defaults to and caps at",
          "expiresIn is refused above 2592000, not clamped to it; the caller gets a 400 and no session"),
+        # Verified live on 2026-09-23 by double-sending a key against a real
+        # metered quota: the replay returns 200 with `used: 0`, so treating a
+        # dedupe as "nothing happened" or asserting used == quantity is wrong.
+        (r"used` (is |will be |comes back )?(the )?quantity (you )?(sent|requested)",
+         "on an idempotent replay `used` is 0, not the requested quantity"),
         (r"Node\.js 20 Alpine", "the self-host images are built on Node.js 22 Alpine"),
         (r"all `linux/amd64`", "the self-host images are multi-arch: linux/amd64 and linux/arm64"),
     ]
