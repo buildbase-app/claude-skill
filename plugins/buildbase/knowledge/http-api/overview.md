@@ -65,6 +65,15 @@ No `Accept`, no User-Agent required. You may add your own custom headers freely.
 
 There is **no idempotency header**. Idempotency is an **optional body field** `idempotencyKey` on the write endpoints that support it: `usage` (single + per-item in batch) and `credits/consume`. Send a stable unique key to make a write safe to retry without double-applying.
 
+It does work - a repeated key does not double-count. What catches people is the shape of the *replay*, because a deduplicated call is reported as a success, not as a conflict:
+
+- **`used` comes back `0` on a replay**, while `consumed` and `available` show the already-applied state. So `used` means "what this call recorded", not "the quantity in the request". Never assert `used === quantity`, or every retry path fails on a correct dedupe.
+- **The key is scoped to the workspace and the quota**, not global. The same key against a different `quotaSlug` records again, which is deliberate: one request id can meter several quotas.
+- **A replay with a different `quantity` is silently ignored.** First write wins, and the second returns 200 with no indication the numbers differed. Do not "correct" a value by re-sending under the same key.
+- **In a batch, a deduplicated item still reports `success: true` and counts toward `succeeded`.** The envelope is identical to a fresh write; only `results[].used === 0` tells them apart. Counting `succeeded` to mean "rows metered" over-reports on any retry.
+
+Credits behave the same way: a repeated `idempotencyKey` on `credits/consume` returns 200 with `balanceAfter` unchanged rather than deducting twice.
+
 ## 7. What is NOT pure HTTP (replication caveats)
 
 Almost everything ports cleanly. The few things to know:
