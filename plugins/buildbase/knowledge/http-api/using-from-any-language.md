@@ -130,11 +130,11 @@ Content-Type: application/json
 { "token": "<orgId>:<secret>", "expiresIn": 2592000, "userId": "<optional>" }
 ```
 
-Response: `{ "sessionId": "..." }`. Then send `x-session-id: <sessionId>` exactly as a browser session would.
+Response: `{ "sessionId": "...", "expiresIn": 2592000, "userId": "...", "orgId": "..." }`. Then send `x-session-id: <sessionId>` exactly as a browser session would. The echoed `userId` is worth asserting on in a job: it tells you which identity the session actually acts as, which is the thing that silently differs when `userId` is omitted.
 
 Four things to get right:
 
-- **`expiresIn` is seconds, optional, and both defaults to and caps at 30 days.** Get one session and reuse it rather than exchanging per request; the endpoint is rate limited to 10/min.
+- **`expiresIn` is seconds, optional, and defaults to 30 days (2592000).** Thirty days is also the ceiling, and it is a refusal rather than a clamp: a larger value is rejected with `400 {"error":true,"path":"expiresIn","message":"Expires in must be 2592000 or less"}` and you get no session at all. Ask for less, never more. Get one session and reuse it rather than exchanging per request; the endpoint is rate limited to 10/min.
 - **Omit `userId` and the session belongs to the key's creator**, not to a service identity. Pass the `userId` you mean to act as. Mint the key from a least-privilege API role either way, because a session inherits real permissions.
 - **This is the org key crossing into the user plane**, so treat it as privileged. Keep the key server-side and never send it from a browser.
 - The Node SDK's `withSession(sessionId)` wraps exactly this. There is nothing Node-specific about it.

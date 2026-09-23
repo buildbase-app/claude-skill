@@ -84,6 +84,15 @@ def check_regressions():
         (r"use(Collections?|Workflows?|EmailCampaigns?|Forms?|ShortLinks?|Assets?|Blogs?)\s*\(",
          "that module has no React SDK surface; it is console and org-API only (see product/module-map.md)"),
         (r"^\s+update_config:", "update_config is gone from the compose and is a Swarm-only key"),
+        # Verified live against a tenant on 2026-09-23: `pagination=false`
+        # returns the same {docs,...} object with limit 0, never a bare array,
+        # and the exchange REFUSES an over-long expiresIn rather than clamping
+        # it. Both rules are worded to miss the corrective prose that replaced
+        # them, which names the wrong answer in order to rule it out.
+        (r"pagination=false[^\n]{0,80}plain array",
+         "pagination=false still returns the {docs,...} object with limit 0; there is no array form"),
+        (r"defaults to and caps at",
+         "expiresIn is refused above 2592000, not clamped to it; the caller gets a 400 and no session"),
         (r"Node\.js 20 Alpine", "the self-host images are built on Node.js 22 Alpine"),
         (r"all `linux/amd64`", "the self-host images are multi-arch: linux/amd64 and linux/arm64"),
     ]
