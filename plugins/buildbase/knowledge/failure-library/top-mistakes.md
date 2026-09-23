@@ -122,7 +122,18 @@ See `knowledge/patterns/nextjs-integration.md` for full implementations.
 
 **What the developer did**: Set env vars in `.env.local` which is not committed or deployed. Production build has missing env vars.
 
-**Symptom**: App crashes in production with `Invalid orgId`, `Invalid serverUrl`, or `Cannot read properties of undefined` errors. Works fine in local dev.
+**Symptom, and it usually bites at build time first**: the deploy never gets far enough to crash at runtime, because `next build` dies. The message names a Next.js internal phase rather than the missing variable, and it comes *after* a success line, which is what makes it confusing:
+
+```text
+ ✓ Compiled successfully in 12.3s
+   Error: Failed to collect configuration for /api/auth/session
+     [cause]: Error: BuildBase: serverUrl is required
+   Error: Failed to collect page data for /api/auth/session
+```
+
+That happens because `src/lib/buildbase.ts` calls `BuildBase()` at module scope, and Next imports every route module while collecting page data. No env, no `serverUrl`, and the factory throws during the build. Verified in a clean container: the same project builds and serves correctly the moment `.env.local` exists.
+
+If the build does succeed with the vars missing at runtime instead, the older symptom applies: `Invalid orgId`, `Invalid serverUrl`, or `Cannot read properties of undefined`, working fine in local dev.
 
 **Why it happens**: `.env.local` is gitignored by default. Developers forget to set the same vars in their hosting provider (Vercel, Railway, Fly.io).
 
