@@ -9,7 +9,7 @@ Read [overview.md](./overview.md) and [endpoints.md](./endpoints.md) for the ful
 - [The whole model in four facts](#the-whole-model-in-four-facts) — core concepts in brief
 - [Step 1 — Log the user in and get a `sessionId`](#step-1--log-the-user-in-and-get-a-sessionid) — OAuth-style login flow
 - [Step 2 — Call any endpoint](#step-2--call-any-endpoint) — Python and Go examples
-- [Step 3 — Server-to-server / background jobs (no user)](#step-3--server-to-server--background-jobs-no-user) — service-account sessions
+- [Step 3 — Server-to-server, jobs, acting for a user](#step-3--server-to-server-background-jobs-and-acting-for-one-of-your-app-users) — token exchange
 - [Step 4 — Webhooks](#step-4--webhooks) — verifying inbound webhooks
 - [What you must implement yourself (no single endpoint)](#what-you-must-implement-yourself-no-single-endpoint) — permission and feature checks
 - [Honest limits](#honest-limits) — caveats about this reference
@@ -117,9 +117,33 @@ Any language with an HTTP client works the same way — set `x-session-id`, send
 
 ---
 
-## Step 3 — Server-to-server / background jobs (no user)
+## Step 3 — Server-to-server, background jobs, and acting for one of your app users
 
-For cron jobs or service-to-service calls, use a **service-account session ID** (obtained the same way, for a service user) and send it as `x-session-id`. This mirrors what the Node SDK's `withSession(serviceSessionId)` does — there's nothing Node-specific about it.
+<a id="acting-for-one-of-your-app-users"></a>
+
+You do **not** need a browser login for this. An org API key can be exchanged for a session, which is the supported way for a backend or an agent to act as a user:
+
+```
+POST https://api.console.buildbase.app/api/v1/public/token/exchange
+Content-Type: application/json
+
+{ "token": "<orgId>:<secret>", "expiresIn": 2592000, "userId": "<optional>" }
+```
+
+Response: `{ "sessionId": "..." }`. Then send `x-session-id: <sessionId>` exactly as a browser session would.
+
+Four things to get right:
+
+- **`expiresIn` is seconds, optional, and both defaults to and caps at 30 days.** Get one session and reuse it rather than exchanging per request; the endpoint is rate limited to 10/min.
+- **Omit `userId` and the session belongs to the key's creator**, not to a service identity. Pass the `userId` you mean to act as. Mint the key from a least-privilege API role either way, because a session inherits real permissions.
+- **This is the org key crossing into the user plane**, so treat it as privileged. Keep the key server-side and never send it from a browser.
+- The Node SDK's `withSession(sessionId)` wraps exactly this. There is nothing Node-specific about it.
+
+For an agent acting on behalf of a signed-in user of *your* app, prefer the OAuth path instead, where the user consents and your app mints the token: [../mcp/mcp-and-agent-readiness.md](../mcp/mcp-and-agent-readiness.md). Use token exchange for your own backend and jobs.
+
+### Driving the console API instead
+
+If the job is administrative - campaigns, workflows, collections, content, links, assets - that is a different surface with a different auth header, documented in [org-api.md](./org-api.md). Do not try to reach it with `x-session-id`.
 
 ---
 
@@ -138,6 +162,6 @@ Verify inbound webhooks with HMAC-SHA256 — full recipe + Python/Go code in [we
 
 ## Honest limits
 
-- The endpoint catalog here is reverse-engineered from the SDK source (accurate for what the SDK sends), but Buildbase's server may expose more endpoints or fields than the SDK uses. The fully authoritative HTTP reference is the npm package README, which was not publicly fetchable at the time of writing — if something here is incomplete, that's the place to confirm.
+- The endpoint catalog here is reverse-engineered from the SDK source, so it is accurate for what the SDK sends, but the server exposes far more than the SDK uses. Two places to confirm against: the package README on npm (`npmjs.com/package/@buildbase/sdk`, and `unpkg.com/@buildbase/sdk/README.md` for the raw file), and [docs.buildbase.app](https://docs.buildbase.app). The console's own REST API is a separate surface entirely, documented in [org-api.md](./org-api.md).
 - Request/response field lists reflect what the SDK's TypeScript types declare; servers can return extra fields. Treat responses leniently (ignore unknown fields).
 - The token-exchange endpoint shape (`/api/v1/auth/token`) comes from the official starter app, not the SDK package — verify against your dashboard's auth settings if it differs.

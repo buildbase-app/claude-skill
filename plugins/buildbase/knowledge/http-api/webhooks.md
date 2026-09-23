@@ -20,7 +20,7 @@ Buildbase POSTs webhook events to an endpoint you host. Before trusting one, ver
 3. Parse the timestamp as an integer; reject if `|now - ts| > 300`.
 4. Compute `expected = hmac_sha256_hex(secret, f"{ts}.{rawBody}")`.
 5. Constant-time compare `sig_hex` vs `expected`. Accept only if equal.
-6. Only then `JSON.parse` the body. The event shape is `{ event: string, timestamp: number, data: {...} }` — switch on `event` (e.g. `subscription.created`, `workspace.member_added`). Dedupe on the event's id if you process at-least-once.
+6. Only then `JSON.parse` the body. The event shape is `{ event: string, timestamp: number, data: {...} }` — switch on `event` (e.g. `subscription.created`, `workspace.member_added`). **There is no event id in the delivery.** A retry repeats the same `event` and `timestamp`, so deduplicate on a hash of the raw request body if you process at-least-once.
 
 ## Python
 

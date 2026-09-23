@@ -1,12 +1,15 @@
 # Self-Hosting Docs — Gaps
 
+> Last re-verified against the published docs on 2026-09-22. Rows 5, 7 and 8 narrowed; the rest still stand.
+
 Things an operator needs that the self-hosted docs do **not** currently cover. The `buildbase-selfhost` skill is grounded strictly in the four source files below, so each gap is a place where the skill can only say *"not documented"* rather than give an answer.
 
-**Source of truth (the only files the skill draws from):**
+**Source of truth (the files the skill draws from):**
 - `os/docs/content/self-hosted/overview.mdx` — [docs.buildbase.app/self-hosted/overview](https://docs.buildbase.app/self-hosted/overview)
 - `os/docs/content/self-hosted/quick-start.mdx` — [docs.buildbase.app/self-hosted/quick-start](https://docs.buildbase.app/self-hosted/quick-start)
 - `os/docs/content/self-hosted/configuration.mdx` — [docs.buildbase.app/self-hosted/configuration](https://docs.buildbase.app/self-hosted/configuration)
 - `os/docs/content/self-hosted/production.mdx` — [docs.buildbase.app/self-hosted/production](https://docs.buildbase.app/self-hosted/production)
+- [www.buildbase.app/self-hosted](https://www.buildbase.app/self-hosted) — the public marketing page, a second published source for the comparison table, the security list, supported architectures and the Node version
 
 When a gap is filled in these files, update the matching skill knowledge file (named per row) and remove the "not documented" flag there.
 
@@ -36,24 +39,30 @@ When a gap is filled in these files, update the matching skill knowledge file (n
 - **What's missing:** what a wrong or expired `INSTALLATION_API_KEY` produces; how the stack behaves when the central server is **unreachable** (timeout, retry, offline grace period); which exact outbound host/port must be allowed. The host `central.console.buildbase.app` appears only as a diagram label in `configuration.mdx`, never as a stated firewall/egress requirement.
 - **Skill file affected:** `knowledge/failure-library/selfhost-mistakes.md`, `knowledge/mental-models/installations.md`.
 
-### 5. External MongoDB connection details
-- **What's missing:** production says MongoDB is "external (managed like Atlas, or self-hosted)" but gives no example `MONGO_CONNECTION_URL` with auth, TLS, or replica-set parameters.
+### 5. External MongoDB connection details (narrowed)
+- **Partly closed.** The template now ships an Atlas-style example, `MONGO_CONNECTION_URL=mongodb+srv://user:password@your-cluster.mongodb.net/`, with the warning that omitting it leaves the server on localhost and never ready.
+- **Still missing:** TLS, `replicaSet` and `authSource` parameters, and any guidance for a self-managed replica set.
 - **Skill file affected:** `knowledge/config/env-reference.md`, `knowledge/deploy/production.md`.
 
 ### 6. Image tags, upgrades & rollback
 - **What's missing:** only `:latest` is shown. No version pinning guidance, no rollback procedure, no migration/breaking-change notes between versions.
 - **Skill file affected:** `knowledge/operations/upgrades-backups.md`.
 
-### 7. Logs & monitoring
-- **What's missing:** log locations/formats, how to read tenant-server logs, and the exact JSON shape of `GET /api/health` (docs say it returns "DB status, Redis latency, worker status" but don't show the payload).
+### 7. Logs & monitoring (narrowed)
+- **Partly closed.** Observability is now documented as six `NEW_RELIC_*` variables pointing at the operator's own account, unset by default. Every service in the quick-start compose has `logging: json-file` with size caps, so `docker compose logs <service>` is the log path.
+- **Still missing:** the exact JSON shape of `GET /api/health`. The docs describe it as "DB status, Redis latency, worker status" without showing the payload, and the wording is imprecise - there is no worker-status field.
 - **Skill file affected:** `knowledge/failure-library/selfhost-mistakes.md`, `knowledge/deploy/production.md`.
 
 ---
 
+### 11. TLS termination topology
+- **What's missing:** production tells the operator to run `certbot --nginx`, which configures an Nginx on the host, while the compose's own Nginx listens on plain `:80` with a read-only config mount. How the two are meant to fit together is never described.
+- **Skill file affected:** `knowledge/deploy/production.md` (currently flags this inline).
+
 ## Priority 3 — completeness
 
 ### 8. Optional-service setup walkthroughs
-- **What's missing:** `GOOGLE_AUTH_CLIENT_ID/SECRET`, `GOOGLE_STORAGE_ASSETS_BUCKET_NAME`, `MAILGUN_API_KEY` are listed as variables, but there's no walkthrough to configure Google OAuth, GCS-backed uploads, or Mailgun email.
+- **What's missing:** `GOOGLE_AUTH_CLIENT_ID/SECRET`, `GOOGLE_STORAGE_ASSETS_BUCKET_NAME`, `MAILGUN_API_KEY`, the six `NEW_RELIC_*` variables, `TRUST_PROXY` and the URL-safety set (`GOOGLE_WEB_RISK_API_KEY`, `URL_SAFETY_*`, `WEB_RISK_TIMEOUT_MS`) are all listed as variables with no walkthrough for configuring the service behind them.
 - **Skill file affected:** `knowledge/config/env-reference.md`.
 
 ### 9. Scaling beyond the fixed 2 replicas

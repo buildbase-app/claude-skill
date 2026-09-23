@@ -50,10 +50,13 @@ export const agent = createAgentStack({
   site: { name: 'My App', description: 'What the app does.' },
   secret: process.env.SYSTEM_SECRET!,                  // app-owned; openssl rand -hex 32
   mcp: {
-    // CRITICAL: serve at /mcp. The default is /api/mcp, but the canonical
-    // RFC 9728 resource identifier is <host>/mcp — MCP clients (Claude Code
-    // among them) REJECT the connection when endpoint ≠ declared resource:
+    // Recommended: serve at /mcp. The default is /api/mcp.
+    // Observed with Claude Code in July 2026: it refused /api/mcp with
     //   "Protected resource …/mcp does not match expected …/api/mcp"
+    // The SDK's own guide uses /api/mcp throughout and createAgentStack binds
+    // both <host>/mcp and the literal endpoint as audiences, registering
+    // protected-resource metadata for both, so other clients may be fine.
+    // Serving at /mcp avoids the question entirely.
     path: '/mcp',
     builtinTools: 'readonly',   // least privilege: 24 read tools. 'all' = 42.
     tools: [
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
 
 ### 4. Console — OAuth2 client for agents
 
-Dashboard → Auth clients → **Create Auth client**:
+Dashboard → Admin → **Authentication** → **Settings** tab → **Create Auth client**:
 
 - **Type:** `oauth2`. **Client kind:** `Agent (third-party)` — this is what makes users see the consent screen. (`Application (first-party)` skips consent — wrong for agents.)
 - **Application Token URL:** `https://<public-origin>/api/agent/token`
@@ -136,7 +139,7 @@ Copy **this client's secret** — the app verifies platform calls with it.
 
 ### 5. Console — enable Agent Readiness
 
-Dashboard → Admin → Auth → **Agent access**:
+Dashboard → Admin → **Authentication** → **Agent readiness** tab → the **Agent access** card:
 
 - **Agent readiness** → ON. Publishes the org's authorization server; the app's `/auth.md` + OAuth pointers activate automatically (SDK caches the readiness bundle ~5 min; restart the app server to pick it up instantly).
 - **Let agents register themselves** (DCR) → ON, and pick the OAuth2 client from step 4 as the **base client**. Self-registered agents inherit its endpoints and signing.
@@ -180,7 +183,7 @@ Then connect a real client: `claude mcp add --transport http my-app https://<ori
 | `'all'` | All 42, incl. writes + destructive | Demos; full-capability starters. Surface is invisible in code — prefer an explicit list for production |
 | `false` | No built-ins | Standalone server: only the app's custom tools |
 | `{ include: [...] }` | Exactly the named tools | **Production.** Explicit, PR-reviewable; names are typed (`BuiltinMcpToolName`), so a typo fails `tsc` |
-| `{ exclude: [...] }` | All 42 minus the named | "Everything but destructive" — but tools added by future SDK versions appear automatically; prefer `include` for a security boundary |
+| `{ exclude: [...] }` | **The 24 readonly tools minus the named** | Trimming a couple of reads. It does **not** mean "all 42 minus these": `exclude` without `include` filters the readonly base, so writes stay off. For "everything but destructive", pass `{ include: [...] }` with the tools you want, or `{ include: [...all 42...], exclude: [...] }`. Prefer an explicit `include` as a security boundary either way |
 
 Recipes:
 
@@ -313,9 +316,9 @@ safe no-op where unsupported. This is separate from the server-side MCP above.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Client error: *"Protected resource `…/mcp` does not match expected `…/api/mcp`"* | Default `mcp.path` is `/api/mcp` but the canonical resource is `<host>/mcp` | Set `mcp.path: '/mcp'` and serve the route there |
+| Client error: *"Protected resource `…/mcp` does not match expected `…/api/mcp`"* | The client insists the endpoint equals the declared resource identifier. Observed with Claude Code; not an SDK guarantee | Set `mcp.path: '/mcp'` and serve the route there |
 | Platform's call to `applicationTokenUrl` returns **401 `invalid_signature`**; agent auth dies after consent | App verified with the **login client's** secret; the platform signs with the **base (agent) client's** secret — self-registered agents inherit its signing | Use the base client's secret (`BUILDBASE_AGENT_CLIENT_SECRET`) in `handleAppTokenRequest`/`handleAppRevokeRequest` |
-| `/auth.md` and OAuth pointers 404 while everything else works | Org's **Agent readiness** toggle is off — or it was just enabled and the SDK's ~5-min bundle cache hasn't expired | Enable in Admin → Auth → Agent access; restart the app server to skip the cache |
+| `/auth.md` and OAuth pointers 404 while everything else works | Org's **Agent readiness** toggle is off, or it was just enabled and the SDK's 5-minute bundle cache has not expired | Enable it under Admin → Authentication → Agent readiness. To pick it up without a restart call `clearAgentReadinessCache()`, or lower `discovery.cacheTtlSeconds` |
 | Agent completes login/consent, then token exchange fails; app never receives the mint call | Token/Revoke URLs point at `localhost` — platform can't reach it and its SSRF guard blocks loopback in production | Public HTTPS origin (deploy or tunnel) in the console client's URLs |
 | Changed env/code but behavior didn't change | `NEXT_PUBLIC_*` inlined at build; `next start` serves the last build | Rebuild after env or code changes; restart after server-only env changes |
 | Added tools but the agent doesn't see them | MCP clients fetch `tools/list` once per connection | Reconnect the server in the client (`/mcp` → Reconnect) |

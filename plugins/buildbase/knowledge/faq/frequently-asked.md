@@ -102,7 +102,8 @@ No — quotas reset at the start of each billing period (as defined by Stripe).
 
 **Q: What happens when a workspace runs out of quota?**
 - If overage is configured on the plan: usage continues, billed per-unit
-- If no overage: `available` returns 0, `hasOverage` is false. Your code should gate actions using `WhenQuotaAvailable` or check `available > 0` before proceeding.
+- If no overage: `available` returns 0 and `allowOverage` is false. Gate actions with `WhenQuotaAvailable`, or check `available > 0` before proceeding.
+- Note which shape you are holding. `hasOverage` and `allowOverage` are fields on the quota **status** (`useQuotaUsageStatus`, `useAllQuotaUsage`, `usage.getQuota`). The response from recording usage has no `hasOverage` - it returns `used`, `consumed`, `included`, `available`, `overage` and `billedAsync`.
 
 **Q: Can credits expire?**
 Yes — credit buckets can have expiration dates. Use `credits.getExpiring(workspaceId, 7)` to check credits expiring in the next 7 days.

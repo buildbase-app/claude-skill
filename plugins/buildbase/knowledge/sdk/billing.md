@@ -24,9 +24,13 @@ Buildbase manages Stripe billing entirely. You:
 
 You do NOT need to write Stripe checkout code — the SDK handles it.
 
-> **Two dashboard-first rules — silent failures otherwise:**
-> 1. **Plans must be created in the dashboard BEFORE your code references them.** A plan **slug** (the short, URL-safe text id like `pro` you pass to the SDK) that doesn't exist in the dashboard won't error loudly — the gate just renders nothing and the plan picker comes up empty.
-> 2. **Stripe must be connected to your Buildbase org** (dashboard → billing settings) before any charge can happen. Without it, checkout and the billing portal can't take payment.
+> **Four dashboard-first steps — silent failures otherwise.** Miss any one and `PricingPage` renders empty plans and `selectPlan()` fails:
+> 1. **Connect Stripe** under **Billing → Credentials**. Use test keys for development. Without it nothing can take payment.
+> 2. **Create a plan.**
+> 3. **Publish a plan version.** Plans are versioned, and only published versions render.
+> 4. **Set up a pricing group.** The `slug` you pass to `PricingPage` is the plan-group slug, and it must exist.
+>
+> A plan **slug** (the short URL-safe id like `pro`) that does not exist will not error loudly — the gate renders nothing and the picker comes up empty.
 
 ---
 
@@ -149,7 +153,7 @@ function Dashboard() {
 |-----------|-------------|
 | `WhenTrialing` | Status is `trialing` |
 | `WhenNotTrialing` | Status is NOT `trialing` |
-| `WhenTrialEnding` | Trialing AND within N days of end (default 3) |
+| `WhenTrialEnding` | Trialing AND within N days of end. The `daysThreshold` prop wins; otherwise `ui.behavior.trialEndingDays` on the provider; otherwise 3 |
 
 ---
 
@@ -159,6 +163,7 @@ Display plans without requiring login. The `slug` below is the **plan-group slug
 
 ```tsx
 import { PricingPage } from '@buildbase/sdk/react';
+import { formatCents, getBasePriceCents } from '@buildbase/sdk';
 
 function PublicPricingPage() {
   return (
@@ -176,7 +181,13 @@ function PublicPricingPage() {
               <div key={plan._id} className="border rounded p-6">
                 <h2>{plan.name}</h2>
                 <p className="text-3xl font-bold">
-                  ${(getBasePriceCents(plan, 'usd', 'monthly') / 100).toFixed(0)}/mo
+                  {/* Never divide by 100 yourself: JPY and KRW have no minor
+                      unit, KWD and BHD have three. formatCents handles all of
+                      them. getBasePriceCents returns number | null. */}
+                  {(() => {
+                    const cents = getBasePriceCents(plan, 'usd', 'monthly');
+                    return cents == null ? 'Contact us' : `${formatCents(cents, 'usd')}/mo`;
+                  })()}
                 </p>
                 <button onClick={() => selectPlan(plan._id, 'monthly', 'usd')}>
                   {plan.trial?.enabled ? `Start ${plan.trial.durationDays}-Day Free Trial` : 'Get Started'}
@@ -193,7 +204,7 @@ function PublicPricingPage() {
 
 `selectPlan(planVersionId, interval, currency)`:
 - If authenticated → opens built-in plan picker dialog
-- If unauthenticated → saves plan selection, redirects to sign-in, resumes after login
+- If unauthenticated → **only resumes after login when `redirectBaseUrl` is set on `PricingPage`.** Without it the user is simply sent to sign-in and the plan choice is lost.
 
 ---
 
@@ -231,12 +242,23 @@ import {
   formatCents,
   getCurrencySymbol,
   getStripePriceIdForInterval,
+  isZeroDecimalCurrency,
+  getCurrencyDecimals,
+  minorAmountToDisplay,
+  formatMinorAmountIntl,
 } from '@buildbase/sdk';
 
 // Get price for a plan in a specific currency
 const variant = getPricingVariant(planVersion, 'eur');
-const cents = getBasePriceCents(planVersion, 'eur', 'monthly');
-const display = formatCents(cents, 'eur'); // "€19.99"
+const cents = getBasePriceCents(planVersion, 'eur', 'monthly'); // number | null
+const display = cents == null ? null : formatCents(cents, 'eur'); // "€19.99"
+
+// Zero-decimal and three-decimal currencies (SDK 0.0.54 / 0.0.55).
+// NEVER divide a minor-unit amount by 100 yourself.
+isZeroDecimalCurrency('jpy');            // true - no minor unit
+getCurrencyDecimals('kwd');              // 3 - divide by 1000, per Stripe
+minorAmountToDisplay(1000, 'jpy');       // 1000, not 10
+formatMinorAmountIntl(1000, 'jpy', 'ja'); // locale-aware Intl formatting
 
 // Get Stripe price ID for checkout
 const priceId = getStripePriceIdForInterval(planVersion, 'usd', 'yearly');

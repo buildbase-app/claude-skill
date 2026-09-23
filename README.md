@@ -4,13 +4,13 @@
 
 | Skill | For | What it does |
 |-------|-----|--------------|
-| **`buildbase`** | App developers integrating Buildbase | Takes a developer from `npm install` to a working sign-in, then guides auth, workspaces, billing, feature flags, quota, credits, notifications, server-side usage, webhooks — and using Buildbase from a non-Node backend over raw HTTP. |
+| **`buildbase`** | App developers integrating Buildbase, **and org owners automating their own org** | Takes a developer from `npm install` to a working sign-in, then guides auth, workspaces, billing, feature flags, quota, credits, notifications, devices and sessions, server-side usage, webhooks, and using Buildbase from a non-Node backend over raw HTTP. For operators it covers the console's own REST API: an API key with a role, the shared list contract, and what a key can and cannot reach. |
 | **`buildbase-selfhost`** | Operators running Buildbase themselves | Deploys and operates the self-hosted platform — the four-component architecture, the real Docker Compose + Nginx configs, env-var reference, production hardening, upgrades. |
 
 The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it — point `serverUrl` at your own tenant server instead of the Buildbase cloud.
 
 **Grounding** — we don't guess:
-- `buildbase` — we verified every API name, signature, endpoint, and code sample against the SDK source (`@buildbase/sdk@0.0.47`) and the official `nextjs-starter` reference app.
+- `buildbase` — every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.70` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants.
 - `buildbase-selfhost` — we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
 
 ---

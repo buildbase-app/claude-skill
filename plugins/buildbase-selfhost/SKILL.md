@@ -79,7 +79,7 @@ Establish these before showing commands.
 
 ## Security & operations notes (grounded in docs)
 
-- **Secrets are required for production.** `JWT_PASS`, `DB_ENCRYPTION_KEY`, `SECRET_KEY`, `OAUTH2_SECRET` should each be a unique `openssl rand -hex 32` value. The quick-start compose has `localdev_..._do_not_use_in_production` fallbacks so it boots with blanks — these must be overridden for any real deployment.
+- **Five secrets are required, and the stack will not start without them.** `JWT_PASS`, `DB_ENCRYPTION_KEY`, `SECRET_KEY`, `OAUTH2_SECRET` and `REDIS_PASSWORD`, each a unique `openssl rand -hex 32` value. Both composes interpolate them as `${VAR:?message}`, so Compose aborts before starting a container when one is missing. There are no development fallbacks any more, so give the operator the five-variable generate command rather than the older four-variable one.
 - **Backups are your responsibility** (per the docs' responsibility matrix) — but the docs provide **no backup procedure**. Don't invent one as if it's Buildbase guidance; flag it as a gap. See [upgrades-backups.md](knowledge/operations/upgrades-backups.md).
 - **Encryption-key / secret-rotation behavior is NOT documented.** Don't tell operators whether rotating `DB_ENCRYPTION_KEY` is safe or destructive — the docs don't say. See [env-reference.md](knowledge/config/env-reference.md).
 - **Use real public URLs in production.** The docs require a domain + SSL cert; the setup wizard's "Test Connection" needs the URL to actually reach your tenant server.
@@ -93,7 +93,7 @@ Detail: [env-reference.md](knowledge/config/env-reference.md), [upgrades-backups
 Don't let an operator skip ahead. The sequence (full version with ✅ checks: [quick-start.md](knowledge/deploy/quick-start.md)):
 
 1. **Create the self-hosted org + Installation** in the dashboard → copy `INSTALLATION_API_KEY` + `INSTALLATION_ID`.
-2. **`.env.selfhost`** — Installation values, public URLs, and four `openssl rand -hex 32` secrets.
+2. **`.env.selfhost`** — Installation values, public URLs, and five `openssl rand -hex 32` secrets (the fifth is `REDIS_PASSWORD`).
 3. **Save `docker-compose.selfhost.yml`** (and `nginx-lb.conf` for production) — both are reproduced verbatim from the docs in [quick-start.md](knowledge/deploy/quick-start.md) / [production.md](knowledge/deploy/production.md).
 4. **`docker compose ... up -d`**.
 5. **Verify** — `docker compose ps`, then `curl .../api/ready` → `{"ready": true}`.
@@ -112,6 +112,7 @@ Documented requirements (overview + production docs):
 | OS | Linux (Ubuntu 20.04+ recommended) |
 | RAM | 2 GB minimum (production docs say 2 GB+) |
 | vCPU | 2 minimum (production docs say 2 vCPU+) |
+| CPU architecture | x86-64 (`amd64`) or 64-bit ARM (`arm64`); images are multi-arch, Node.js 22 Alpine. 32-bit ARM unsupported |
 | Docker | Engine 20+, Compose v2 |
 | MongoDB | 7+ (bundled in quick-start; **external** like Atlas for production) |
 | Redis | 7+ (bundled in quick-start) |
@@ -152,4 +153,4 @@ Documented requirements (overview + production docs):
 
 ---
 
-**Keywords**: Buildbase self-hosted, self-hosting, on-premises, on-prem, Docker Compose, docker-compose.selfhost.yml, .env.selfhost, nginx-lb.conf, INSTALLATION_API_KEY, INSTALLATION_ID, tenant-server, buildbaseapp/tenant-server, buildbaseapp/client, buildbaseapp/auth, central server, Installation, DB_ENCRYPTION_KEY, JWT_PASS, OAUTH2_SECRET, SECRET_KEY, MONGO_CONNECTION_URL, REDIS_PASSWORD, CORS_WHITELISTED_DOMAINS, MongoDB, Redis, Nginx, autoheal, /api/ready, /api/health, certbot, Caddy, data sovereignty, serverUrl, TENANT_SERVER_URL.
+**Keywords**: Buildbase self-hosted, self-hosting, on-premises, on-prem, Docker Compose, docker-compose.selfhost.yml, .env.selfhost, nginx-lb.conf, INSTALLATION_API_KEY, INSTALLATION_ID, tenant-server, buildbaseapp/tenant-server, buildbaseapp/client, buildbaseapp/auth, central server, Installation, DB_ENCRYPTION_KEY, JWT_PASS, OAUTH2_SECRET, SECRET_KEY, MONGO_CONNECTION_URL, REDIS_PASSWORD, CORS_WHITELISTED_DOMAINS, MongoDB, Redis, Nginx, autoheal, /api/ready, /api/health, certbot, Caddy, data sovereignty, serverUrl, TENANT_SERVER_URL, arm64, Apple Silicon, Graviton, NODE_OPTIONS, __NEXT_PUBLIC_SERVER_URL__, NEW_RELIC_LICENSE_KEY, TRUST_PROXY, URL_SAFETY_ENABLED, GOOGLE_WEB_RISK_API_KEY.

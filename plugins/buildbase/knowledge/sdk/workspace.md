@@ -166,7 +166,10 @@ Store arbitrary key-value data on a user:
 import { useUserAttributes } from '@buildbase/sdk/react';
 
 function UserPreferences() {
-  const { attributes, isLoading, updateAttribute, updateAttributes } = useUserAttributes();
+  // 0.0.55 moved these to the { data, loading, error, refetch } convention.
+  // `isLoading` still works but is deprecated, and it combines both pipelines.
+  const { attributes, loading, error, refetch, updateAttribute, updateAttributes } =
+    useUserAttributes();
 
   return (
     <div>

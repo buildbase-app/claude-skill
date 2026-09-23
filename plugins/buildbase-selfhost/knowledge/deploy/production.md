@@ -1,47 +1,50 @@
 # Production Deployment
 
-The documented production deployment: **Nginx load balancer, 2 tenant-server replicas, external MongoDB, SSL, and health monitoring.** Do the [quick-start.md](./quick-start.md) first and confirm `/api/ready` is true before layering this on.
+The documented production deployment: **Nginx load balancer, two tenant-server replicas, external MongoDB, TLS and health monitoring.** Do the [quick-start.md](./quick-start.md) first and confirm `/api/ready` is true before layering this on.
 
-> **Source (verbatim):** `docs/content/self-hosted/production.mdx` → [docs.buildbase.app/self-hosted/production](https://docs.buildbase.app/self-hosted/production). The compose file and `nginx-lb.conf` below are reproduced exactly from the docs.
+> **Source:** `docs/content/self-hosted/production.mdx` -> [docs.buildbase.app/self-hosted/production](https://docs.buildbase.app/self-hosted/production). The compose file and `nginx-lb.conf` below are generated output of `packages/shared`, reproduced byte-for-byte.
 
 ---
 
 ## Prerequisites
 
-- Linux (Ubuntu 20.04+ recommended), **2 GB+ RAM, 2 vCPU+**.
+- Linux (Ubuntu 20.04+ recommended), 2 GB+ RAM, 2 vCPU+.
+- `amd64` or `arm64`. ARM servers such as AWS Graviton and Ampere are supported.
 - Docker Engine 20+ and Docker Compose v2.
-- **MongoDB 7+** (managed like Atlas, or self-hosted) — note production uses an **external** Mongo, not a bundled container.
-- Domain name pointed to your server's public IP.
-- SSL certificate (Let's Encrypt or custom).
+- **MongoDB 7+ external** - managed like Atlas, or self-managed. Production bundles no Mongo container.
+- A domain pointed at the host, and a TLS certificate.
+
+> The per-service memory limits below sum to about 3 GB (2x1024M for the replicas, plus 256M each for Redis, client and auth, 128M for Nginx, 64M for autoheal). That is arithmetic on the compose file, not a separate documented figure, but it means the 2 GB minimum is a floor for the quick start rather than a sizing for this file.
 
 ---
 
-## Directory structure
+## Directory layout
 
-```
+```text
 your-server/
-  .env.selfhost              # Environment configuration
-  docker-compose.selfhost.yml # Service definitions
-  nginx-lb.conf              # Nginx load balancer config
+  .env.selfhost               # environment configuration
+  docker-compose.selfhost.yml # service definitions
+  nginx-lb.conf               # Nginx load balancer config
 ```
 
 ---
 
-## Step 1 — Environment file
+## Step 1 - Environment file
 
-Same `.env.selfhost` as the quick-start (Installation values, public URLs, ports, the four `openssl rand -hex 32` secrets, optional services) — see [quick-start.md](./quick-start.md) Step 2 and [../config/env-reference.md](../config/env-reference.md). Generate secrets:
+The same `.env.selfhost` as the quick start; see [quick-start.md](./quick-start.md) Step 2 and [../config/env-reference.md](../config/env-reference.md). Generate the secrets:
 
 ```bash
-for i in JWT_PASS DB_ENCRYPTION_KEY SECRET_KEY OAUTH2_SECRET; do echo "$i=$(openssl rand -hex 32)"; done
+for i in JWT_PASS DB_ENCRYPTION_KEY SECRET_KEY OAUTH2_SECRET REDIS_PASSWORD; do echo "$i=$(openssl rand -hex 32)"; done
 ```
 
-> The production tenant-server uses `env_file: .env.selfhost`, so your `MONGO_CONNECTION_URL` for the external database is read from that file. (It is **not** hard-coded to the bundled Mongo as it is in the quick-start.)
+Two things matter more in production than in the quick start:
+
+- **`MONGO_CONNECTION_URL` is required.** This compose has no Mongo container, and the server otherwise falls back to `localhost` inside the container and never becomes ready. The template ships an Atlas-style SRV example. TLS and replica-set parameters are not documented; see GAPS.md.
+- **`REDIS_PASSWORD` is required here too.** This compose starts Redis with `--requirepass` and the tenant server reads the same file, so the value has to be present and identical on both sides.
 
 ---
 
-## Step 2 — Docker Compose
-
-Reproduced verbatim from the docs:
+## Step 2 - Docker Compose
 
 ```yaml
 # Production: external MongoDB, Nginx LB, replicas, all 3 services
@@ -57,13 +60,24 @@ services:
     cap_add:
       - SETUID
       - SETGID
-    command: redis-server --appendonly yes --maxmemory-policy noeviction --maxmemory 256mb
+    # Same credential as the quick start. The tenant server reads
+    # REDIS_PASSWORD from .env.selfhost through env_file, and sends AUTH
+    # whenever it is non-empty - so a Redis started without --requirepass
+    # here would refuse that AUTH and the server would never become ready.
+    command: redis-server --appendonly yes --maxmemory-policy noeviction --maxmemory 256mb --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required — run the generate-secrets command from the quick start}
     tmpfs:
       - /tmp
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test:
+        [
+          'CMD',
+          'redis-cli',
+          '-a',
+          '${REDIS_PASSWORD:?REDIS_PASSWORD is required — run the generate-secrets command from the quick start}',
+          'ping',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -94,6 +108,13 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_OPTIONS=--max-old-space-size=768
+      # Map the public URLs from .env.selfhost onto the names the server
+      # reads. Without these the server falls back to localhost URLs and
+      # CORS blocks the client and auth origins.
+      - SERVER_URL=${TENANT_SERVER_URL}
+      - APPLICATION_URL=${CLIENT_URL}
+      - AUTH_SERVER_URL=${AUTH_URL}
+      - CORS_WHITELISTED_DOMAINS=${CLIENT_URL},${AUTH_URL}
     depends_on:
       redis:
         condition: service_healthy
@@ -111,10 +132,6 @@ services:
           memory: 1024M
           cpus: '1.0'
           pids: 256
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
     labels:
       - 'autoheal=true'
     networks:
@@ -124,7 +141,10 @@ services:
   # ── Frontend ──────────────────────────────────────────────────
   client:
     image: buildbaseapp/client:latest
-    read_only: true
+    # NOTE: read_only must NOT be set on client or auth. Their entrypoints
+    # rewrite __NEXT_PUBLIC_*__ URL placeholders in the JS bundles at
+    # startup; a read-only filesystem makes that rewrite fail silently and
+    # the app calls the literal placeholder string instead of your URL.
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -151,7 +171,6 @@ services:
 
   auth:
     image: buildbaseapp/auth:latest
-    read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -236,11 +255,20 @@ networks:
     driver: bridge
 ```
 
+What is deliberate in there:
+
+- **The URL mapping block on `tenant-server`.** `env_file` supplies `TENANT_SERVER_URL`, `CLIENT_URL` and `AUTH_URL`, but the server reads `SERVER_URL`, `APPLICATION_URL` and `AUTH_SERVER_URL`. Without the mapping the server falls back to localhost URLs and CORS blocks both frontends.
+- **`client` and `auth` are not `read_only`**, for the placeholder-rewrite reason in the quick start.
+- **`replicas: 2`** plus the `autoheal=true` label and the `willfarrell/autoheal:1.2.0` service, which restarts unhealthy containers every 30s.
+- **Network segmentation.** `db` is `internal: true`; only `tenant-server` sits on both networks.
+
+There is no `update_config` block, and the docs make no zero-downtime claim. `deploy.update_config` is a Swarm key that `docker compose up` does not implement, so a rolling restart was never something this file delivered.
+
 ---
 
-## Step 3 — Nginx configuration
+## Step 3 - Nginx configuration
 
-Save as `nginx-lb.conf` in the same directory (verbatim from the docs):
+Save as `nginx-lb.conf` beside the compose file:
 
 ```nginx
 events {
@@ -310,62 +338,54 @@ http {
 }
 ```
 
+Note the auth rate-limit zone matches `^/api/(auth|oauth|login|register|password)`. The tenant server's own auth routes live under `/api/v1/auth/*`, which that pattern does not match, so do not describe the 5 r/s zone as protecting login.
+
 ---
 
-## Step 4 — Deploy
+## Step 4 - Deploy
 
 ```bash
 docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d
 ```
 
-## Step 5 — SSL with Let's Encrypt
+## Step 5 - TLS
 
 ```bash
 sudo certbot --nginx -d api.yourcompany.com -d app.yourcompany.com -d auth.yourcompany.com
 ```
 
-Or use [Caddy](https://caddyserver.com/) for automatic HTTPS with zero configuration.
+Or [Caddy](https://caddyserver.com/) for automatic HTTPS.
 
-## Step 6 — Connect
+> `certbot --nginx` configures an Nginx on the **host**. The Nginx in this compose listens on plain `:80` mapped to `TENANT_SERVER_PORT`, with a read-only config mount. How the two fit together - host proxy in front of the published ports - is not described in the docs. Say so rather than guessing at a topology.
 
-Enter your public URL (e.g. `https://api.yourcompany.com`) in the setup wizard and complete the setup.
+## Step 6 - Connect
+
+Enter the public URL (for example `https://api.yourcompany.com`) in the setup wizard and complete setup.
 
 ---
 
-## Health Checks
+## Health checks
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/ready` | Readiness probe — returns `{"ready": true}` when DB and Redis are connected |
-| `GET /api/health` | Full health check — DB status, Redis latency, worker status |
+| `GET /api/ready` | Readiness probe. `{"ready": true}` when DB and Redis are connected |
+| `GET /api/health` | Full check. Documented as DB status, Redis latency, worker status |
 
 ---
 
 ## Updating
-
-Pull the latest images and restart:
 
 ```bash
 docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d
 ```
 
-The production tenant-server is configured with `update_config: parallelism: 1, delay: 10s, order: start-first` and runs **2 replicas** — so the rolling restart brings up a new replica before stopping the old one. See [../operations/upgrades-backups.md](../operations/upgrades-backups.md).
-
----
-
-## What the docs configure for you (don't strip these out)
-
-These are all present in the compose / nginx above — worth knowing they exist:
-- **2 tenant-server replicas**, `autoheal=true` label + the `willfarrell/autoheal:1.2.0` service (`AUTOHEAL_INTERVAL=30`).
-- **Container hardening:** `read_only`, `cap_drop: ALL`, `no-new-privileges:true`, per-service memory/CPU/PID limits.
-- **Nginx:** `server_tokens off`, rate limits (30 r/s general, 5 r/s on auth paths), `client_max_body_size 500M`, `large_client_header_buffers 4 8k`, the 60s/30s timeouts.
-- **Network segmentation:** `db` network is `internal: true`; only tenant-server is on both `db` and `app`.
+`replicas: 2` and `autoheal` reduce the blast radius, but the documented procedure is a pull and a restart. See [../operations/upgrades-backups.md](../operations/upgrades-backups.md).
 
 ---
 
 ## Read next
 
-- Updating + what the docs say (and don't say) about backups → [../operations/upgrades-backups.md](../operations/upgrades-backups.md)
-- Config reference → [../config/env-reference.md](../config/env-reference.md)
-- Diagnostics → [../failure-library/selfhost-mistakes.md](../failure-library/selfhost-mistakes.md)
+- Updating, and what the docs do and do not say about backups -> [../operations/upgrades-backups.md](../operations/upgrades-backups.md)
+- Config reference -> [../config/env-reference.md](../config/env-reference.md)
+- Diagnostics -> [../failure-library/selfhost-mistakes.md](../failure-library/selfhost-mistakes.md)

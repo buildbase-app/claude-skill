@@ -15,10 +15,11 @@ docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d
 ```
 
-What makes this low-disruption in the **production** compose (all from the compose file, not added):
+What reduces the blast radius in the **production** compose (from the compose file, not added):
 - `tenant-server` runs **`replicas: 2`**.
-- `update_config: parallelism: 1, delay: 10s, order: start-first` — a new replica starts before the old one stops.
-- An `autoheal=true` label + the `willfarrell/autoheal:1.2.0` service (`AUTOHEAL_INTERVAL=30`) restarts unhealthy containers.
+- An `autoheal=true` label plus the `willfarrell/autoheal:1.2.0` service (`AUTOHEAL_INTERVAL=30`) restarts unhealthy containers.
+
+**There is no rolling restart, and the docs never claim one.** An earlier version of this page described an `update_config: order: start-first` block. That block is no longer in the compose, and `deploy.update_config` is a Swarm-mode key that `docker compose up` - the command the docs give - does not implement, so the behaviour was never delivered even when the block was present. Describe updating as a pull and a restart, with a brief interruption.
 
 ✅ **Verify after updating:** `curl .../api/ready` → `{"ready": true}` (DB + Redis connected); `GET /api/health` for DB status, Redis latency, worker status.
 

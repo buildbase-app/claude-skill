@@ -1,34 +1,35 @@
-# Quick Start — From Zero to a Running Stack
+# Quick Start - From Zero to a Running Stack
 
-The documented path to a running self-hosted stack. Everything is bundled — **MongoDB, Redis, tenant server, client app, and auth portal** in one Docker Compose file. The ✅ checks map to the docs' own verify step.
+The documented path to a running self-hosted stack. Everything is bundled - **MongoDB, Redis, tenant server, client app and auth portal** in one Docker Compose file. The checks map to the docs' own verify step.
 
-> **Source (verbatim):** `docs/content/self-hosted/quick-start.mdx` → [docs.buildbase.app/self-hosted/quick-start](https://docs.buildbase.app/self-hosted/quick-start). The `.env.selfhost` and `docker-compose.selfhost.yml` below are reproduced exactly from the docs.
+> **Source:** `docs/content/self-hosted/quick-start.mdx` -> [docs.buildbase.app/self-hosted/quick-start](https://docs.buildbase.app/self-hosted/quick-start). The `.env.selfhost` and `docker-compose.selfhost.yml` below are the generated output of `packages/shared` and are reproduced byte-for-byte. Re-sync them whenever the docs change; see MAINTENANCE.md.
 
 ---
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-started/get-docker/) and Docker Compose installed.
+- [Docker](https://docs.docker.com/get-started/get-docker/) and Docker Compose v2.
 - A BuildBase account at **[console.buildbase.app](https://console.buildbase.app)**.
+- An `amd64` or `arm64` host. The images are multi-arch and run natively on both, Apple Silicon included.
 
-(The Requirements table — Ubuntu 20.04+, 2 GB RAM, 2 vCPU min, Docker Engine 20+/Compose v2, MongoDB 7+, Redis 7+ — is in [../config/env-reference.md](../config/env-reference.md) and the overview docs.)
+Full requirements table (Ubuntu 20.04+, 2 GB RAM, 2 vCPU, MongoDB 7+, Redis 7+) is in [../config/env-reference.md](../config/env-reference.md).
 
 ---
 
-## Step 1 — Create an Organization & Installation
+## Step 1 - Create an organization and Installation
 
 1. Log in to **[console.buildbase.app](https://console.buildbase.app)**.
-2. Create a new organization with **Self-Hosted** hosting mode.
-3. The setup wizard will guide you to create an **Installation**.
-4. Copy your **Installation API Key** and **Installation ID**.
+2. Create an organization with **Self-Hosted** hosting mode.
+3. The setup wizard guides you to create an **Installation**.
+4. Copy the **Installation API Key** and **Installation ID**.
 
-✅ **Check:** You have both values copied. (Concept: [../mental-models/installations.md](../mental-models/installations.md).)
+Check: you have both values. Concept: [../mental-models/installations.md](../mental-models/installations.md).
 
 ---
 
-## Step 2 — Create your environment file
+## Step 2 - Create the environment file
 
-Save this as `.env.selfhost`:
+Save as `.env.selfhost`:
 
 ```bash
 # ═══════════════════════════════════════════════════════════════════
@@ -38,6 +39,13 @@ Save this as `.env.selfhost`:
 # ── Installation (from BuildBase dashboard) ──────────────────────
 INSTALLATION_API_KEY=<INSTALLATION_API_KEY>
 INSTALLATION_ID=<INSTALLATION_ID>
+
+# ── Database (REQUIRED for production) ───────────────────────────
+# The production compose uses an external MongoDB (Atlas or
+# self-managed). Without this, the server falls back to localhost
+# inside the container and never becomes ready.
+# The quick-start compose bundles MongoDB and ignores this value.
+MONGO_CONNECTION_URL=mongodb+srv://user:password@your-cluster.mongodb.net/
 
 # ── Public URLs ──────────────────────────────────────────────────
 # For local testing use http://localhost:4100, :4101, :4103
@@ -55,29 +63,46 @@ JWT_PASS=
 DB_ENCRYPTION_KEY=
 SECRET_KEY=
 OAUTH2_SECRET=
+# Redis auth. Both compose files require this and both start Redis with
+# --requirepass, so it must match on the server and the container.
+REDIS_PASSWORD=
 
 # ── Optional services ────────────────────────────────────────────
 # GOOGLE_AUTH_CLIENT_ID=
 # GOOGLE_AUTH_CLIENT_SECRET=
 # GOOGLE_STORAGE_ASSETS_BUCKET_NAME=
 # MAILGUN_API_KEY=
+# GOOGLE_WEB_RISK_API_KEY=
+# URL_SAFETY_ENABLED=true            # default: true
+# URL_SAFETY_LOG_ONLY=false          # default: false - a malicious destination
+#                                    # is refused as soon as the key is set
+# URL_SAFETY_CLEAN_TTL_SECONDS=3600
+# WEB_RISK_TIMEOUT_MS=5000
 ```
 
-Generate all secrets at once:
+Generate every secret the compose file demands:
 
 ```bash
-for i in JWT_PASS DB_ENCRYPTION_KEY SECRET_KEY OAUTH2_SECRET; do echo "$i=$(openssl rand -hex 32)"; done
+for i in JWT_PASS DB_ENCRYPTION_KEY SECRET_KEY OAUTH2_SECRET REDIS_PASSWORD; do echo "$i=$(openssl rand -hex 32)"; done
 ```
 
-> Note from the compose file: if you leave a secret blank, the tenant-server falls back to a `localdev_..._do_not_use_in_production` value so it still boots locally. **Fill them in for any real deployment.** Each var's meaning is in [../config/env-reference.md](../config/env-reference.md).
+Paste those five lines into `.env.selfhost`.
 
-✅ **Check:** The four secret lines have values, and both Installation values are filled in.
+> **All five are required, `REDIS_PASSWORD` included.** The compose file interpolates them with `${VAR:?message}`, so a missing or empty one aborts `docker compose up` before any container starts - there are no development fallbacks any more. If you see
+>
+> ```text
+> REDIS_PASSWORD is required - run the generate-secrets command from the quick start
+> ```
+>
+> then the variable is unset or blank in `.env.selfhost`. Older copies of the published docs printed only four secrets and left `REDIS_PASSWORD` out of both the template and the generate command, so a stack built from them stops here; generate the fifth value and add it.
+
+Check: five filled secret lines, plus both Installation values.
 
 ---
 
-## Step 3 — Save the Docker Compose file
+## Step 3 - Save the Docker Compose file
 
-Save this as `docker-compose.selfhost.yml` (reproduced verbatim from the docs):
+Save as `docker-compose.selfhost.yml`:
 
 ```yaml
 # Self-Hosted: MongoDB + Redis + Server + Client + Auth
@@ -128,7 +153,7 @@ services:
     cap_add:
       - SETUID
       - SETGID
-    command: redis-server --appendonly yes --maxmemory-policy noeviction --maxmemory 256mb --requirepass ${REDIS_PASSWORD:-redispass}
+    command: redis-server --appendonly yes --maxmemory-policy noeviction --maxmemory 256mb --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required — run the generate-secrets command from the quick start}
     tmpfs:
       - /tmp
     volumes:
@@ -136,7 +161,14 @@ services:
     networks:
       - db
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-redispass}', 'ping']
+      test:
+        [
+          'CMD',
+          'redis-cli',
+          '-a',
+          '${REDIS_PASSWORD:?REDIS_PASSWORD is required — run the generate-secrets command from the quick start}',
+          'ping',
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -169,20 +201,38 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      # Keep the Node heap below the 1024M container limit — the image
+      # default is sized for larger hosts and would get OOM-killed here.
+      - NODE_OPTIONS=--max-old-space-size=768
       - SERVER_URL=${TENANT_SERVER_URL:-http://localhost:4101}
       - APPLICATION_URL=${CLIENT_URL:-http://localhost:4100}
       - AUTH_SERVER_URL=${AUTH_URL:-http://localhost:4103}
       - MONGO_CONNECTION_URL=mongodb://mongodb:27017/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispass}
-      - INSTALLATION_API_KEY=${INSTALLATION_API_KEY:-<INSTALLATION_API_KEY>}
-      - INSTALLATION_ID=${INSTALLATION_ID:-<INSTALLATION_ID>}
-      - JWT_PASS=${JWT_PASS:-localdev_jwt_secret_do_not_use_in_production}
-      - OAUTH2_SECRET=${OAUTH2_SECRET:-localdev_oauth2_secret_do_not_use_in_production}
-      - DB_ENCRYPTION_KEY=${DB_ENCRYPTION_KEY:-localdev_db_encryption_key_do_not_use_in_production}
-      - SECRET_KEY=${SECRET_KEY:-localdev_secret_key_do_not_use_in_production}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required — run the generate-secrets command from the quick start}
+      - INSTALLATION_API_KEY=${INSTALLATION_API_KEY:-}
+      - INSTALLATION_ID=${INSTALLATION_ID:-}
+      - JWT_PASS=${JWT_PASS:?JWT_PASS is required — run the generate-secrets command from the quick start}
+      - OAUTH2_SECRET=${OAUTH2_SECRET:?OAUTH2_SECRET is required — run the generate-secrets command from the quick start}
+      - DB_ENCRYPTION_KEY=${DB_ENCRYPTION_KEY:?DB_ENCRYPTION_KEY is required (64 hex chars) — run the generate-secrets command from the quick start}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — run the generate-secrets command from the quick start}
+      - GOOGLE_AUTH_CLIENT_ID=${GOOGLE_AUTH_CLIENT_ID:-}
+      - GOOGLE_AUTH_CLIENT_SECRET=${GOOGLE_AUTH_CLIENT_SECRET:-}
+      - GOOGLE_STORAGE_ASSETS_BUCKET_NAME=${GOOGLE_STORAGE_ASSETS_BUCKET_NAME:-}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY:-}
+      # URL safety. Unset means no reputation checking and links keep working;
+      # each tuning var below falls back to its code default when empty.
+      - GOOGLE_WEB_RISK_API_KEY=${GOOGLE_WEB_RISK_API_KEY:-}
+      - URL_SAFETY_ENABLED=${URL_SAFETY_ENABLED:-}
+      - URL_SAFETY_LOG_ONLY=${URL_SAFETY_LOG_ONLY:-}
+      - URL_SAFETY_CLEAN_TTL_SECONDS=${URL_SAFETY_CLEAN_TTL_SECONDS:-}
+      - WEB_RISK_TIMEOUT_MS=${WEB_RISK_TIMEOUT_MS:-}
       - CORS_WHITELISTED_DOMAINS=${CLIENT_URL:-http://localhost:4100},${AUTH_URL:-http://localhost:4103}
+      # Optional: point APM/log telemetry at YOUR OWN New Relic account.
+      # Leave unset (the default) and no telemetry is collected or sent.
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY:-}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -213,7 +263,10 @@ services:
   client:
     image: buildbaseapp/client:latest
     restart: unless-stopped
-    read_only: true
+    # NOTE: read_only must NOT be set on client or auth. Their entrypoints
+    # rewrite __NEXT_PUBLIC_*__ URL placeholders in the JS bundles at
+    # startup; a read-only filesystem makes that rewrite fail silently and
+    # the app calls the literal placeholder string instead of your URL.
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -228,8 +281,19 @@ services:
       - NEXT_PUBLIC_SERVER_URL=${TENANT_SERVER_URL:-http://localhost:4101}
       - NEXT_PUBLIC_DEFAULT_TENANT_SERVER_URL=${TENANT_SERVER_URL:-http://localhost:4101}
       - NEXT_PUBLIC_INSTALLATION_ID=${INSTALLATION_ID:-}
+      # Optional: browser monitoring against YOUR OWN New Relic account.
+      # Account ID and browser key are shared; the app ID is per app.
+      - NEXT_PUBLIC_NEW_RELIC_ACCOUNT_ID=${NEW_RELIC_BROWSER_ACCOUNT_ID:-}
+      - NEXT_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY=${NEW_RELIC_BROWSER_LICENSE_KEY:-}
+      - NEXT_PUBLIC_NEW_RELIC_APP_ID=${NEW_RELIC_BROWSER_APP_ID_CLIENT:-}
     networks:
       - app
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/']
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     deploy:
       resources:
         limits:
@@ -245,7 +309,6 @@ services:
   auth:
     image: buildbaseapp/auth:latest
     restart: unless-stopped
-    read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -258,8 +321,18 @@ services:
       - '${AUTH_PORT:-4103}:3000'
     environment:
       - NEXT_PUBLIC_SERVER_URL=${TENANT_SERVER_URL:-http://localhost:4101}
+      # Optional: browser monitoring against YOUR OWN New Relic account.
+      - NEXT_PUBLIC_NEW_RELIC_ACCOUNT_ID=${NEW_RELIC_BROWSER_ACCOUNT_ID:-}
+      - NEXT_PUBLIC_NEW_RELIC_BROWSER_LICENSE_KEY=${NEW_RELIC_BROWSER_LICENSE_KEY:-}
+      - NEXT_PUBLIC_NEW_RELIC_APP_ID=${NEW_RELIC_BROWSER_APP_ID_AUTH:-}
     networks:
       - app
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     deploy:
       resources:
         limits:
@@ -286,11 +359,16 @@ networks:
     driver: bridge
 ```
 
-✅ **Check:** `docker compose -f docker-compose.selfhost.yml config` parses with no error.
+Two things in there worth not "tidying up":
+
+- **`client` and `auth` must not be `read_only`.** Their entrypoints rewrite the `__NEXT_PUBLIC_*__` URL placeholders inside the built JS at startup. On a read-only filesystem that rewrite fails quietly and the app then calls the literal string `__NEXT_PUBLIC_SERVER_URL__` instead of your server. `tenant-server`, `redis` and `nginx` are read-only on purpose.
+- **`NODE_OPTIONS=--max-old-space-size=768` on `tenant-server`.** The image default is sized for larger hosts and exceeds the 1024M container limit, so without the cap the container is OOM-killed under load.
+
+Check: `docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost config` parses with no error. Pass `--env-file`, or Compose reports every required variable as missing.
 
 ---
 
-## Step 4 — Start the stack
+## Step 4 - Start the stack
 
 ```bash
 docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d
@@ -298,33 +376,32 @@ docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d
 
 ---
 
-## Step 5 — Verify
+## Step 5 - Verify
 
 ```bash
-# Check all services are running
 docker compose -f docker-compose.selfhost.yml ps
 
-# Server should return {"ready": true}
 curl http://localhost:4101/api/ready
 ```
 
-✅ **Check:** `/api/ready` returns `{"ready": true}` — per the docs this means **DB and Redis are connected**. If not, see [../failure-library/selfhost-mistakes.md](../failure-library/selfhost-mistakes.md).
+Check: `/api/ready` returns `{"ready": true}`, which per the docs means DB and Redis are connected. Anything else goes to [../failure-library/selfhost-mistakes.md](../failure-library/selfhost-mistakes.md).
 
 ---
 
-## Step 6 — Connect
+## Step 6 - Connect
 
-Go back to the setup wizard in the dashboard, enter your server URL (`http://localhost:4101` for local testing), click **Test Connection**, then **Complete Setup**.
+Back in the dashboard wizard, enter your server URL (`http://localhost:4101` for local testing), click **Test Connection**, then **Complete Setup**.
 
-Your services are now running at:
-- **Client**: http://localhost:4100
-- **Server API**: http://localhost:4101
-- **Auth Portal**: http://localhost:4103
+Services are now at:
+
+- Client: http://localhost:4100
+- Server API: http://localhost:4101
+- Auth portal: http://localhost:4103
 
 ---
 
-## What's Next
+## What's next
 
-- **Configuration reference** (all env vars) → [../config/env-reference.md](../config/env-reference.md)
-- **Production deployment** (SSL, custom domains, scaling) → [production.md](./production.md)
-- **Point your app at this stack** → [../handoff/integrating-against-self-host.md](../handoff/integrating-against-self-host.md)
+- Every environment variable -> [../config/env-reference.md](../config/env-reference.md)
+- Production (Nginx, replicas, TLS) -> [production.md](./production.md)
+- Point an app at this stack -> [../handoff/integrating-against-self-host.md](../handoff/integrating-against-self-host.md)

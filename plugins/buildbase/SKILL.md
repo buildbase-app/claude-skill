@@ -15,6 +15,11 @@ description: |-
   billing, feature flags, quota tracking, or notifications — they may be using Buildbase
   even without naming it.
 
+  Also trigger when an org owner or operator wants to RUN their BuildBase by API
+  rather than by clicking: org API key, orgId:secret, Authorization header,
+  /api/tokens, API roles, admin API, console API, email campaigns, workflows,
+  collections, short links, assets, token exchange.
+
   SKIP this skill for general React, Next.js, or Stripe questions with no Buildbase context.
 ---
 
@@ -40,7 +45,7 @@ For a beginner asking "what is this?" — explain it in plain language first (re
 
 The SDK has two surfaces:
 - **`@buildbase/sdk/react`** — React hooks, gate components, `SaaSOSProvider` (client-side)
-- **`@buildbase/sdk`** — `BuildBase()` factory, types, webhook verification (Node.js only)
+- **`@buildbase/sdk`** — `BuildBase()` factory, types, webhook verification, agent-readiness and app-bridge helpers. Server-side, but **not Node-only**: since 0.0.50 the crypto is dependency-free pure JS, so it runs on edge runtimes, Deno, Bun and browsers too
 
 Always be explicit about which surface you're discussing.
 
@@ -56,6 +61,20 @@ Always be explicit about which surface you're discussing.
 
 ---
 
+## First, which of three people is this?
+
+The same product has three audiences and they need different files. Decide before answering.
+
+| They are | Signals | Start here |
+|---|---|---|
+| **An operator** running their own BuildBase | "my org", "my campaigns", API key, `orgId:secret`, wants to automate the console, asks about workflows/email/collections/links/assets | `knowledge/http-api/org-api.md` |
+| **A developer** integrating the SDK into their product | `SaaSOSProvider`, hooks, gates, "add auth to my app", Next.js, billing UI | `knowledge/sdk/quick-start.md`, then the `knowledge/sdk/` file for the feature |
+| **Building for their own end users**, possibly via an agent | "on behalf of a user", MCP, agent, "let Claude do X for my customers" | `knowledge/mcp/mcp-and-agent-readiness.md`, plus token exchange in `knowledge/http-api/using-from-any-language.md` |
+
+If it is ambiguous, ask one question. "Are you automating your own BuildBase org, or adding BuildBase to an app you're building?" separates the first two, which are the two most often confused.
+
+---
+
 ## How to route questions
 
 Don't answer Buildbase API specifics from memory — open the relevant file first. The
@@ -63,6 +82,9 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 
 | When to load | File |
 |---|---|
+| **First** when asked to build a whole app, or "build me a SaaS with BuildBase" | `knowledge/patterns/build-an-app-with-an-agent.md` |
+| **Before writing ANY settings, billing, members or profile screen** | `knowledge/sdk/pre-built-ui.md` - 13 screens already exist |
+| "Can BuildBase do X?" / which surface reaches a module / is there a hook for X | `knowledge/product/module-map.md` |
 | **First** when a developer reports a bug or something "doesn't work" | `knowledge/failure-library/top-mistakes.md` |
 | **First** when a developer is starting a fresh integration | `knowledge/learning/beginner-path.md` |
 | Before correcting a developer who seems confused about how the SDK behaves | `knowledge/misconceptions/common-wrong-beliefs.md` |
@@ -78,11 +100,13 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | Implementing prepaid credits | `knowledge/sdk/credits.md` |
 | Implementing push / email notifications | `knowledge/sdk/notifications.md` |
 | Any server-side work — API routes, background jobs, webhooks, Express | `knowledge/sdk/server-side.md` |
+| **An org owner/operator driving the console by API key** — campaigns, workflows, collections, content, links, assets, org settings | `knowledge/http-api/org-api.md` |
+| Acting for one of *their* app's users from a backend or job (token exchange) | `knowledge/http-api/using-from-any-language.md` |
 | Using Buildbase from a non-Node backend (Python, Go, Ruby, PHP, …) or raw HTTP | `knowledge/http-api/using-from-any-language.md` |
 | Exact HTTP endpoints / methods / paths / payloads | `knowledge/http-api/endpoints.md` (+ `overview.md`) |
 | Verifying inbound webhooks in any language | `knowledge/http-api/webhooks.md` |
 | Writing the full Next.js wiring end-to-end | `knowledge/patterns/nextjs-integration.md` |
-| Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `llms.txt` / `.well-known` discovery, agent tokens (SDK ≥ 0.0.54) | `knowledge/mcp/mcp-and-agent-readiness.md` |
+| Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `llms.txt` / `.well-known` discovery, agent tokens (SDK ≥ 0.0.54; resources, prompts and the connect guide need ≥ 0.0.55) | `knowledge/mcp/mcp-and-agent-readiness.md` |
 | Quick factual answer to a common question | `knowledge/faq/frequently-asked.md` |
 
 ---
@@ -93,11 +117,30 @@ Establish these before showing any code.
 
 **Org → Workspace → User.** Everything — subscriptions, quotas, feature flags, credits — belongs to a workspace. Users join workspaces with roles. The org is the developer's product registered in the Buildbase dashboard.
 
+**Most of the UI is already written.** BuildBase ships 13 settings screens, a workspace switcher, a headless pricing page and a credit store, translated into 8 languages and permission-gated. Hand-building any of them is the most expensive mistake available here. Before writing an account, billing or members screen, read `knowledge/sdk/pre-built-ui.md`.
+
+**Eight of the twenty modules have no React surface.** Email, workflows, collections, content, forms, short links, assets and reporting are console and org-API only. There is no `useCollections`. Check `knowledge/product/module-map.md` before reaching for a hook.
+
 **Dashboard first, code second.** Feature slugs, plan slugs, quota slugs, and notification event slugs must exist in the Buildbase dashboard before any SDK code referencing them will work. Code alone does nothing if the dashboard isn't configured.
 
 **Gates have three states, not two.** Every `When*` component returns `null` (or `loadingComponent`) while loading, renders children when the condition is met, and returns `null` (or `fallbackComponent`) when not. "Gate shows nothing" almost always means loading state or missing dashboard config — not a bug.
 
 **Two tokens coexist.** The Buildbase `sessionId` (httpOnly cookie) authenticates against the Buildbase platform. Any JWT the developer issues for their own API is separate. These are independent.
+
+---
+
+## What you may do, versus explain
+
+When the user gives you a credential, you can make real changes. Decide by blast radius, not by how easy the call is.
+
+- **Answer** — explaining a flow, showing the request. Always fine.
+- **Guide** — reads. Run them, and show what you ran.
+- **Act** — reversible writes (create a draft, a link, a tag, record usage). Only with the user's explicit go-ahead **in this conversation**, and show the exact request first.
+- **Never alone** — irreversible or outward-facing: deleting anything, sending a campaign, checkout or payment, cancelling a subscription, revoking a key, editing a role's permissions. Explain it, show the request, let the person run it.
+
+"The user seems to want it" is not a go-ahead, and neither is a previous approval for a different action. Full table and the operator-specific traps: `knowledge/http-api/org-api.md#before-you-act-for-someone`.
+
+**Secrets the user pastes into chat** — an API key, a client secret — are live. Use them for the calls they asked for, never write them into a file, and say so if one looks like it has been shared more widely than it should be.
 
 ---
 
@@ -126,7 +169,7 @@ Either way, the order is not arbitrary:
 
 0. **Have a project.** A Next.js App Router + TypeScript app. If they don't have one: `npx create-next-app@latest my-app --typescript --app --src-dir --import-alias "@/*"`. This also sets up the `@/` import alias the code relies on. Confirm the framework before pasting any code.
 1. Credentials from the dashboard at **console.buildbase.app** (serverUrl, orgId, clientId, clientSecret, redirectUrl) — and in the dashboard's OAuth App, enable a login method and allow-list the `redirectUrl`, or sign-in fails
-2. Install `@buildbase/sdk` (needs React 18 or 19 — the official starter uses React 19; node ≥ 18)
+2. Install `@buildbase/sdk` (verified against **0.0.70**; needs React 18 or 19 — the official starter uses React 19; node ≥ 18)
 3. `src/lib/buildbase.ts` — `BuildBase()` factory reading from cookie
 4. Three auth API routes — `/api/auth/token`, `/api/auth/session`, `/api/auth/signout`
 5. `src/components/saas-provider.tsx` — `'use client'` wrapper with `SaaSOSProvider`
@@ -182,7 +225,8 @@ Gate (When*) renders nothing
 
 ## What not to do
 
-- Do not invent SDK behavior. If you are not certain something exists, say so and tell the developer to check the source or docs. (Only `INSUFFICIENT_CREDITS` is a guaranteed error-code string; the SDK does not expose a fixed error-code enum — don't claim codes like `SESSION_EXPIRED` exist.)
+- Do not invent SDK behavior. If you are not certain something exists, say so and tell the developer to check the source or docs.
+- On error codes, be precise about what is guaranteed. `INSUFFICIENT_CREDITS` is the one code the SDK documents as reliably set, on a 402 from consuming credits, alongside `err.available` and `err.requested`. The package also ships `docs/ERROR_CODES.md` listing a wider vocabulary (`AUTH_REQUIRED`, `SESSION_EXPIRED`, `NETWORK_ERROR`, `WORKSPACE_NOT_FOUND` and more) as the canonical reference for `SDKError.code` — but that doc says plainly that not every code is used in every release. So treat the list as the vocabulary, not as a promise, and never branch on a code other than `INSUFFICIENT_CREDITS` without checking it against the installed version.
 - Do not generate code before establishing the mental model.
 - Do not show advanced patterns to beginners — route to `knowledge/learning/beginner-path.md` instead.
 - Do not show the same answer to a solo founder and an enterprise developer — read `knowledge/user-model/personas.md` and tailor.
@@ -194,6 +238,10 @@ Gate (When*) renders nothing
 
 What each file contains, so you know whether it's worth opening:
 
+**Building a whole app**
+- `patterns/build-an-app-with-an-agent.md` - the order that works, and the three points where an agent must stop and hand back to a human
+- `product/module-map.md` - all 20 modules against the surface that reaches each one
+
 **SDK reference** (`knowledge/sdk/`)
 - `quick-start.md` — the minimal end-to-end first integration
 - `auth.md` — `useSaaSAuth`, the three auth callbacks, events, redirect preservation
@@ -204,6 +252,7 @@ What each file contains, so you know whether it's worth opening:
 - `credits.md` — `useConsumeCredits`, `CreditActionsProvider`, public packages, `INSUFFICIENT_CREDITS`
 - `notifications.md` — push service-worker setup, `notification.send`, channels, merge tags
 - `server-side.md` — `BuildBase()` factory, all action modules, webhook verification (options-object API)
+- `pre-built-ui.md` — the 13 settings screens, pricing and credit-store components, the `ui` prop, theming variables, the 8 locales
 
 **Plain-language onboarding**
 - `explain-buildbase-simply.md` — jargon-free explanation + analogies for true beginners ("what is this?")
@@ -223,6 +272,9 @@ What each file contains, so you know whether it's worth opening:
 - `decision-trees/which-feature-to-use.md` — "what do I use?" trees
 - `decision-rules/when-to-use-what.md` — "X vs Y" tradeoffs
 
+**Org API (operators automating the console)**
+- `http-api/org-api.md` — get an API key and give it a role, the one auth header, what a key can and cannot reach, the three error shapes, the shared list/pagination contract, a module-to-endpoint map, and the autonomy rule for acting on someone's org
+
 **HTTP API (any language / non-Node backends)**
 - `http-api/overview.md` — base URL, the `x-session-id` auth header, envelope/error rules, what's not pure-HTTP
 - `http-api/endpoints.md` — full endpoint catalog (method, path, body, response) for every SDK call
@@ -240,4 +292,4 @@ What each file contains, so you know whether it's worth opening:
 
 ---
 
-**Keywords**: Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.
+**Keywords**: settings screens, openWorkspaceSettings, pre-built UI, SettingsScreen, CreditStorePage, PricingPage, WorkspaceSwitcher, theming, CSS variables, locale, i18n, RTL, ui prop, SDKUIConfig, build a SaaS app, build an app with AI, module map, Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, BuildBaseProvider, org API key, orgId:secret, admin API, console API, API roles, /api/tokens, token exchange, useSessions, useDevices, useConnectedAgents, BuildBaseBadge, tracking, signOut everywhere, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.
