@@ -4,7 +4,7 @@ Twenty modules. The question that matters for an agent is not "does BuildBase ha
 
 Three surfaces:
 
-- **SDK** - React hooks and components, plus the server client. Runs in the customer's app, acts as the signed-in end user.
+- **SDK** - React hooks and components, plus the server client. Runs in the customer's app, acts as the signed-in end user. Since 0.0.73 the `@buildbase/sdk/server` entry also reads content and collections with an org API token (no end user involved).
 - **Org API** - `/api/*` with an `orgId:secret` key, authorizing as a role. This is the console's own REST API. See [../http-api/org-api.md](../http-api/org-api.md).
 - **Console** - configuration a human does once: plans, slugs, credentials, templates. Code cannot create these, and referencing a slug that does not exist fails silently.
 
@@ -26,8 +26,8 @@ Three surfaces:
 | Webhooks and events | Verification helpers only. `parseWebhookEvent` | `/api/organizations/webhooks` | `/webhooks/overview` |
 | **Email campaigns** | **None** | `/api/emails` | `/email/overview` |
 | **Workflow automation** | **None** | `/api/workflows` | `/workflows/overview` |
-| **Collections and custom data** | **None** | `/api/collections` | `/collections/overview` |
-| **Content management** | **None** | `/api/blogs`, `/api/docs`, `/api/faqs` | `/content/overview` |
+| **Collections and custom data** | **No React surface.** Read-only from a server through `@buildbase/sdk/server` (org token, 0.0.73) | `/api/collections` | `/collections/overview` |
+| **Content management** | **No React surface.** Read-only from a server through `@buildbase/sdk/server` (org token, 0.0.73): blogs, docs, FAQs, testimonials, rich content | `/api/blogs`, `/api/docs`, `/api/faqs` | `/content/overview` |
 | **Forms** | **None** | `/api/forms` | `/forms/overview` |
 | **Short links** | **None** | `/api/links` | `/links/overview` |
 | **Assets and media** | **None** | `/api/assets` | `/assets/overview` |
@@ -37,7 +37,7 @@ Docs paths are relative to `https://docs.buildbase.app`.
 
 ## The rule this table exists to enforce
 
-**Eight of the twenty modules have no React surface at all.** There is no `useCollections`, no `useWorkflows`, no `useEmailCampaigns`. If a developer asks for a hook for email, workflows, collections, content, forms, links, assets or reporting, say plainly that the SDK does not expose one and route them to the org API or the console. Inventing a hook name is the failure mode this page prevents.
+**Eight of the twenty modules have no React surface at all.** There is no `useCollections`, no `useWorkflows`, no `useEmailCampaigns`. If a developer asks for a hook for email, workflows, collections, content, forms, links, assets or reporting, say plainly that the SDK does not expose one and route them to the org API or the console. Two of the eight, content and collections, can be *read* from a server with an org token through `@buildbase/sdk/server` (see [../http-api/endpoints.md](../http-api/endpoints.md#org-token-content-client-buildbasesdkserver)); that is a server import, not a hook. Inventing a hook name is the failure mode this page prevents.
 
 The inverse also holds. Before hand-building account, billing or membership UI, check [pre-built-ui.md](../sdk/pre-built-ui.md): 13 settings screens already exist.
 
@@ -51,7 +51,7 @@ Every slug-based feature needs its object created in the console before code ref
 | A quota slug | The quota, defined on the plan |
 | A feature slug | The feature, and it enabled on the relevant plans |
 | A credit package | The package |
-| A notification event slug | The event, with its channels enabled |
+| A notification event slug | Optional since server release 22: a new slug registers itself on first send and counts toward the plan's custom-event limit. Creating it in the console first still lets you attach an email template before anything is sent |
 | An API role for a key | The role, created as `kind: "api"` |
 
 A correct slug that does not exist yet renders nothing and raises no error. When a gate "shows nothing", check this table before debugging code.

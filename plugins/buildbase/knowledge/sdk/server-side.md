@@ -1,30 +1,30 @@
 # Server-Side SDK
 
-This is the half of the SDK that runs on *your server* — never in the browser — so it can safely touch secrets, talk to the Buildbase API directly, and run without a logged-in user. Reach for it in API routes, background jobs, cron tasks, and webhook handlers. If you're just getting auth working, do [quick-start.md](./quick-start.md) first; this guide goes deeper on everything you build on top of it.
+This is the half of the SDK that runs on *your server* - never in the browser - so it can safely touch secrets, talk to the Buildbase API directly, and run without a logged-in user. Reach for it in API routes, background jobs, cron tasks, and webhook handlers. If you're just getting auth working, do [quick-start.md](./quick-start.md) first; this guide goes deeper on everything you build on top of it.
 
 ## Contents
 
-- [Overview](#overview) — what the server-side SDK is for
-- [Setup (Next.js — Recommended Pattern)](#setup-nextjs--recommended-pattern) — the `BuildBase()` factory with cookies
-- [Setup (Express)](#setup-express) — per-request `withSession`
-- [Usage in Next.js API Routes](#usage-in-nextjs-api-routes) — auth check + action modules
-- [Background Jobs and Webhooks](#background-jobs-and-webhooks) — service-session jobs and crons
-- [All Action Modules](#all-action-modules) — table of modules and methods
-- [Config Options](#config-options) — `BuildBase()` configuration reference
-- [Webhook Verification](#webhook-verification) — `parseWebhookEvent` and replay protection
-- [Permissions (Server-Side)](#permissions-server-side) — checking and resolving permissions
+- [Overview](#overview) - what the server-side SDK is for
+- [Setup (Next.js - Recommended Pattern)](#setup-nextjs--recommended-pattern) - the `BuildBase()` factory with cookies
+- [Setup (Express)](#setup-express) - per-request `withSession`
+- [Usage in Next.js API Routes](#usage-in-nextjs-api-routes) - auth check + action modules
+- [Background Jobs and Webhooks](#background-jobs-and-webhooks) - service-session jobs and crons
+- [All Action Modules](#all-action-modules) - table of modules and methods
+- [Config Options](#config-options) - `BuildBase()` configuration reference
+- [Webhook Verification](#webhook-verification) - `parseWebhookEvent` and replay protection
+- [Permissions (Server-Side)](#permissions-server-side) - checking and resolving permissions
 
 ## Overview
 
-The `BuildBase()` **factory** (a function you call once that hands back a ready-to-use set of tools) provides a server-side SDK for API routes, background jobs, webhooks, and **cron tasks** (jobs that run on a schedule, not in response to a user). Zero React dependency — works in any Node.js runtime.
+The `BuildBase()` **factory** (a function you call once that hands back a ready-to-use set of tools) provides a server-side SDK for API routes, background jobs, webhooks, and **cron tasks** (jobs that run on a schedule, not in response to a user). Zero React dependency - works in any Node.js runtime.
 
 Import from `@buildbase/sdk` (not `/react`, which is the browser-side half).
 
 ---
 
-## Setup (Next.js — Recommended Pattern)
+## Setup (Next.js - Recommended Pattern)
 
-Configure once, use everywhere. Same pattern as Auth.js. Each named export below is an **action module** — a grouped set of methods for one area (e.g. `workspace.list()`, `subscription.cancel()`):
+Configure once, use everywhere. Same pattern as Auth.js. Each named export below is an **action module** - a grouped set of methods for one area (e.g. `workspace.list()`, `subscription.cancel()`):
 
 ```ts
 // src/lib/buildbase.ts
@@ -45,7 +45,10 @@ export const {
   features,     // Feature flags
   settings,     // Org settings
   notification, // Send notifications
-  permissions,  // Check/resolve workspace permissions (computed client-side)
+  permissions,  // Check/resolve a member's permissions (computed locally from three GETs)
+  invitations,  // Workspace invitations: list, create, resend, revoke (0.0.71)
+  devices,      // The session user's devices: list, rename, signOut, forget (0.0.57)
+  sessions,     // The session user's live sessions: list, revoke (0.0.57)
   withSession,  // Create a scoped client for a specific session
   client,       // Low-level API classes
 } = BuildBase({
@@ -62,7 +65,7 @@ export const {
 
 ## Setup (Express)
 
-`withSession(sessionId)` returns a copy of the SDK tools locked to one specific user's session — handy when you can't rely on a cookie. For Express, call it per-request (passing the session ID off the request) instead of giving `BuildBase()` a `getSessionId` callback:
+`withSession(sessionId)` returns a copy of the SDK tools locked to one specific user's session - handy when you can't rely on a cookie. For Express, call it per-request (passing the session ID off the request) instead of giving `BuildBase()` a `getSessionId` callback:
 
 ```ts
 // src/lib/buildbase.ts
@@ -71,7 +74,7 @@ import BuildBase from '@buildbase/sdk';
 const bb = BuildBase({
   serverUrl: process.env.BUILDBASE_URL!,
   orgId: process.env.BUILDBASE_ORG_ID!,
-  // No getSessionId — use withSession() per request
+  // No getSessionId - use withSession() per request
 });
 
 export const { withSession, plans } = bb;
@@ -154,8 +157,9 @@ export async function dailyCronJob() {
 
 | Module | Methods |
 |--------|---------|
-| `workspace` | `list`, `get`, `create`, `update`, `delete` |
-| `users` | `list`, `invite`, `remove`, `updateRole`, `getProfile`, `updateProfile` |
+| `workspace` | `list`, `get`, `create`, `update`, `delete`, `permissions(workspaceId)` (the server's `{ role, isOwner, permissions }` for the session's user, 0.0.73), `can(workspaceId, permission \| permission[])` |
+| `users` | `list`, `invite` (adds an **existing** account at once and answers 404 when the address has none; use `invitations.create` to reach someone without an account), `remove`, `updateRole`, `getProfile`, `updateProfile` |
+| `invitations` | `list(workspaceId)`, `create(workspaceId, email, role, landingUrl?)`, `resend(workspaceId, invitationId)`, `revoke(workspaceId, invitationId)` (0.0.71). Accept and decline belong to the invitee's own session, so they live on the client |
 | `subscription` | `get`, `checkout`, `update`, `cancel`, `resume`, `getBillingPortalUrl` |
 | `plans` | `getGroup`, `getVersions`, `getPublic`, `getVersion` |
 | `invoices` | `list`, `get` |
@@ -164,7 +168,9 @@ export async function dailyCronJob() {
 | `features` | `list`, `update` |
 | `settings` | `get` |
 | `notification` | `send(workspaceId, event, userId?, data?)` |
-| `permissions` | `check(workspaceId, userId, permission)`, `resolve(workspaceId, userId)` |
+| `permissions` | `check(workspaceId, userId, permission)`, `resolve(workspaceId, userId)` - local computation for any member; for the session's own user prefer `workspace.can` |
+| `devices` | `list`, `rename(deviceId, name)`, `signOut(deviceId)`, `forget(deviceId)` |
+| `sessions` | `list`, `revoke(id)` |
 
 ---
 
@@ -174,6 +180,7 @@ export async function dailyCronJob() {
 BuildBase({
   serverUrl: '...',              // Required: Buildbase server URL
   orgId: '...',                  // Required: 24-char hex org ID
+  version: 'v1',                 // API version (default 'v1'; the ApiVersion type)
   getSessionId: async () => ..., // Session resolver (Next.js pattern)
   
   // Optional
@@ -197,11 +204,11 @@ BuildBase({
 
 ## Webhook Verification
 
-A **webhook** is an HTTP request Buildbase sends *to your server* when something happens (a subscription was created, an invoice paid, etc.) — the reverse of you calling its API. Because anyone could POST to that URL, you must verify each request really came from Buildbase before trusting it.
+A **webhook** is an HTTP request Buildbase sends *to your server* when something happens (a subscription was created, an invoice paid, etc.) - the reverse of you calling its API. Because anyone could POST to that URL, you must verify each request really came from Buildbase before trusting it.
 
 Both helpers take a **single options object** (not positional args) and require the
 `timestamp` header for replay protection (rejecting old, re-sent requests). `parseWebhookEvent` verifies *and* parses in
-one step — prefer it over calling `verifyWebhookSignature` separately. The parsed event's
+one step - prefer it over calling `verifyWebhookSignature` separately. The parsed event's
 type field is `event.event` (a string), not `event.type`.
 
 ```ts
@@ -222,7 +229,11 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid webhook' }, { status: 401 });
   }
 
+  // Only names from the catalog in knowledge/http-api/webhook-events.json.
   switch (event.event) {
+    case 'payment.failed':
+      await flagWorkspace(event.data.workspaceId, event.data.nextRetryAt);
+      break;
     case 'subscription.created':
       await handleSubscriptionCreated(event.data);
       break;
@@ -241,7 +252,9 @@ export async function POST(request: Request) {
 - Signatures are valid for **5 minutes** (the `timestamp` check rejects older requests to prevent replay attacks). Override with `maxAgeSeconds` if needed.
 - Return **401** when verification fails.
 - Webhooks can be delivered more than once, so dedupe before acting. **There is no event id to dedupe on** - deliveries carry only `event`, `timestamp` and `data`, and a retry repeats all three. Hash the raw request body instead.
-- A third header, `x-buildbase-event`, carries the event name (e.g. `subscription.upgraded`), so you can route before parsing.
+- A third header, `x-buildbase-event`, carries the event name (e.g. `subscription.upgraded`), so you can route before parsing. Verify before trusting it.
+- `x-buildbase-timestamp` is Unix **seconds**, and the signed string is `${timestamp}.${rawBody}`.
+- The event names are a fixed catalog of 112: [../http-api/webhooks.md](../http-api/webhooks.md#event-catalog), machine-readable in `webhook-events.json`. `payment.failed` carries `workspaceId, subscriptionId, invoiceId, dunningState, amount, currency, failedAt, nextRetryAt`; the platform already emails the customer about it, so the handler is for your own side effects.
 - Verification is runtime-agnostic as of SDK 0.0.50: the HMAC is a dependency-free pure-JS implementation, so it behaves identically on Node (CJS and ESM), bundlers, edge runtimes, Deno, Bun and browsers. Earlier notes calling this "Node.js only" are out of date.
 
 ---
@@ -262,7 +275,9 @@ const allPermissions = await permissions.resolve(workspaceId, userId);
 // Returns Set<string>
 ```
 
-App-level permissions are defined in the `defaultPermissions` prop on `SaaSOSProvider`:
+For the session's own user, prefer the server's answer: `await workspace.can(workspaceId, 'reports:export')` or `await workspace.permissions(workspaceId)` (`GET .../permissions/me`, 0.0.73). `permissions.check` / `permissions.resolve` compute locally and work for any member.
+
+App-level permissions are resolved in three tiers, the same as the server: a workspace override, then the organization's own permission catalog from the console (`settings.workspace.customPermissions`, where an org owner defines keys like `reports:export` and grants them per role), then the `defaultPermissions` prop on `SaaSOSProvider`, which only applies to keys the org has not catalogued:
 
 ```tsx
 <SaaSOSProvider

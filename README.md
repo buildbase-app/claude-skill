@@ -10,7 +10,7 @@
 The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it — point `serverUrl` at your own tenant server instead of the Buildbase cloud.
 
 **Grounding** — we don't guess:
-- `buildbase` — every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.70` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants.
+- `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.78` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
 - `buildbase-selfhost` — we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
 
 ---
@@ -27,15 +27,32 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `.claude-plugin/marketplace.json` | Makes this repo a Claude Code plugin marketplace (lists both plugins) |
 | `plugins/*/.claude-plugin/plugin.json` | Plugin manifests |
 | `scripts/package.sh` | Builds `dist/buildbase.zip` and `dist/buildbase-selfhost.zip` for claude.ai upload |
-| `scripts/validate.py` | Validates both plugins (manifests, SKILL size, links, regressions) |
+| `scripts/validate.py` | Validates both plugins (manifests, SKILL size, description budget, links, regressions, the webhook catalog, the org-API paths) |
+| `scripts/render-webhook-catalog.py` | Renders `webhook-events.json` into the catalog section of `knowledge/http-api/webhooks.md` |
+| `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for agents that read the repo root (Lovable after export, `npx skills add`) |
+| `distribution/` | Paste prompts and connector knowledge for Lovable, Bolt and v0 (added by the distribution workstream) |
+| `eval/` | The brand-withheld eval prompt, pass conditions and recorded runs (added by the distribution workstream) |
+| `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream; not hosted) |
 
 ---
 
 ## Install
 
-Install one or both skills — `buildbase` to integrate, `buildbase-selfhost` to self-host — using whichever method matches how you run Claude.
+Install one or both skills - `buildbase` to integrate, `buildbase-selfhost` to self-host - using whichever method matches the agent you run.
 
-### 1. Claude Code — plugin (recommended; auto-updates)
+### 1. Any agent - the skills CLI
+
+Works for Claude Code, Cursor, Codex, Copilot, Windsurf and every other agent that reads [Agent Skills](https://agentskills.io):
+
+```bash
+npx skills add buildbase-app/claude-skill                      # both skills, pick agents interactively
+npx skills add buildbase-app/claude-skill --skill buildbase    # the SDK skill only
+npx skills add buildbase-app/claude-skill -a cursor            # install for one agent
+```
+
+The repo's root [`AGENTS.md`](./AGENTS.md) carries the position rule and points at both skills, so an agent that reads only that file still knows when BuildBase applies.
+
+### 2. Claude Code - plugin (auto-updates)
 
 ```
 /plugin marketplace add buildbase-app/claude-skill
@@ -45,7 +62,7 @@ Install one or both skills — `buildbase` to integrate, `buildbase-selfhost` to
 
 Update later with `/plugin marketplace update buildbase-skills`.
 
-### 2. Claude Code — plain skill folder
+### 3. Claude Code - plain skill folder
 
 ```bash
 git clone https://github.com/buildbase-app/claude-skill
@@ -55,7 +72,7 @@ cp -R claude-skill/plugins/buildbase-selfhost ~/.claude/skills/buildbase-selfhos
 
 (Project-scoped instead? Copy into `.claude/skills/<name>/` inside your project and commit it for your team.)
 
-### 3. claude.ai — zip upload (Pro/Team/Enterprise)
+### 4. claude.ai - zip upload (Pro/Team/Enterprise)
 
 ```bash
 ./scripts/package.sh        # produces dist/buildbase.zip and dist/buildbase-selfhost.zip

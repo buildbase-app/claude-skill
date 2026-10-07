@@ -1,0 +1,377 @@
+{
+  "_comment": "Vendored copy of the BuildBase webhook event catalog. Do not edit by hand: regenerate per MAINTENANCE.md. Every event name an app may switch on is here; a name that is not here does not exist.",
+  "source": {
+    "repo": "saas-os/os",
+    "path": "packages/shared/src/constants/system-events.ts",
+    "constant": "SYSTEM_EVENTS (ALL_WEBHOOK_EVENTS)",
+    "categoriesFrom": "packages/shared/src/constants/platform-stats.ts EVENT_CATEGORIES",
+    "commit": "f5d9c776e1efd694987a77ddefba3fb1b796c2c9",
+    "syncedOn": "2026-10-07"
+  },
+  "count": 112,
+  "headers": {
+    "signature": "x-buildbase-signature",
+    "timestamp": "x-buildbase-timestamp",
+    "event": "x-buildbase-event"
+  },
+  "events": [
+    "user.registered",
+    "user.logged_in",
+    "user.new_device_login",
+    "user.email_verified",
+    "user.password_changed",
+    "user.password_reset_requested",
+    "user.profile_updated",
+    "user.tag_added",
+    "user.tag_removed",
+    "user.blocked",
+    "user.unblocked",
+    "organization.member_invited",
+    "organization.member_accepted",
+    "organization.member_role_changed",
+    "organization.member_removed",
+    "organization.public_write_limit_reached",
+    "organization.end_user_ceiling_reached",
+    "workspace.created",
+    "workspace.updated",
+    "workspace.deleted",
+    "workspace.settings_updated",
+    "workspace.features_updated",
+    "workspace.member_added",
+    "workspace.member_removed",
+    "workspace.member_role_changed",
+    "workspace.member_invited",
+    "workspace.invitation_accepted",
+    "workspace.invitation_declined",
+    "workspace.invitation_revoked",
+    "workspace.invitation_expired",
+    "subscription.created",
+    "subscription.updated",
+    "subscription.upgraded",
+    "subscription.canceled",
+    "subscription.cancel_scheduled",
+    "subscription.resumed",
+    "subscription.suspended",
+    "subscription.trial_started",
+    "subscription.trial_will_end",
+    "subscription.trial_expired",
+    "payment.succeeded",
+    "payment.failed",
+    "payment.action_required",
+    "payment.refunded",
+    "quota.limit_exceeded",
+    "credit.purchased",
+    "credit.consumed",
+    "credit.expired",
+    "credit.granted",
+    "credit.revoked",
+    "credit.low_balance",
+    "workflow.created",
+    "workflow.deleted",
+    "workflow.published",
+    "workflow.paused",
+    "workflow.resumed",
+    "workflow.instance_completed",
+    "workflow.instance_failed",
+    "audience.member_created",
+    "audience.member_updated",
+    "audience.added_to_list",
+    "audience.removed_from_list",
+    "audience.attribute_changed",
+    "audience.tag_added",
+    "audience.tag_removed",
+    "audience.unsubscribed",
+    "audience.resubscribed",
+    "audience.email_invalidated",
+    "audience.blocked",
+    "audience.unblocked",
+    "audience.import_completed",
+    "audience.list_created",
+    "audience.list_updated",
+    "audience.list_deleted",
+    "email.domain_added",
+    "email.domain_verified",
+    "email.sent",
+    "email.opened",
+    "email.clicked",
+    "email.bounced",
+    "email.unsubscribed",
+    "email.campaign_sent",
+    "push.campaign_sent",
+    "auth.method_deleted",
+    "auth.domain_added",
+    "auth.domain_verified",
+    "auth.domain_deleted",
+    "auth.client_self_registered",
+    "subscription.downgraded",
+    "token.created",
+    "token.updated",
+    "token.revoked",
+    "group_version.published",
+    "form.submitted",
+    "blog.published",
+    "blog.updated",
+    "blog.unpublished",
+    "blog.deleted",
+    "doc.published",
+    "doc.updated",
+    "doc.unpublished",
+    "doc.deleted",
+    "faq.updated",
+    "faq_collection.updated",
+    "testimonial.updated",
+    "testimonial.deleted",
+    "rich_content.updated",
+    "rich_content.deleted",
+    "collection.version_published",
+    "collection.record_created",
+    "collection.record_updated",
+    "collection.record_deleted"
+  ],
+  "categories": [
+    {
+      "category": "User",
+      "domain": "user",
+      "events": [
+        "user.registered",
+        "user.logged_in",
+        "user.new_device_login",
+        "user.email_verified",
+        "user.password_changed",
+        "user.password_reset_requested",
+        "user.profile_updated",
+        "user.tag_added",
+        "user.tag_removed",
+        "user.blocked",
+        "user.unblocked"
+      ]
+    },
+    {
+      "category": "Organization",
+      "domain": "organization",
+      "events": [
+        "organization.member_invited",
+        "organization.member_accepted",
+        "organization.member_role_changed",
+        "organization.member_removed",
+        "organization.public_write_limit_reached",
+        "organization.end_user_ceiling_reached"
+      ]
+    },
+    {
+      "category": "Workspace",
+      "domain": "workspace",
+      "events": [
+        "workspace.created",
+        "workspace.updated",
+        "workspace.deleted",
+        "workspace.settings_updated",
+        "workspace.features_updated",
+        "workspace.member_added",
+        "workspace.member_removed",
+        "workspace.member_role_changed",
+        "workspace.member_invited",
+        "workspace.invitation_accepted",
+        "workspace.invitation_declined",
+        "workspace.invitation_revoked",
+        "workspace.invitation_expired"
+      ]
+    },
+    {
+      "category": "Subscription",
+      "domain": "subscription",
+      "events": [
+        "subscription.created",
+        "subscription.updated",
+        "subscription.upgraded",
+        "subscription.canceled",
+        "subscription.cancel_scheduled",
+        "subscription.resumed",
+        "subscription.suspended",
+        "subscription.trial_started",
+        "subscription.trial_will_end",
+        "subscription.trial_expired",
+        "subscription.downgraded"
+      ]
+    },
+    {
+      "category": "Payment",
+      "domain": "payment",
+      "events": [
+        "payment.succeeded",
+        "payment.failed",
+        "payment.action_required",
+        "payment.refunded"
+      ]
+    },
+    {
+      "category": "Quota",
+      "domain": "quota",
+      "events": [
+        "quota.limit_exceeded"
+      ]
+    },
+    {
+      "category": "Credit",
+      "domain": "credit",
+      "events": [
+        "credit.purchased",
+        "credit.consumed",
+        "credit.expired",
+        "credit.granted",
+        "credit.revoked",
+        "credit.low_balance"
+      ]
+    },
+    {
+      "category": "Workflow",
+      "domain": "workflow",
+      "events": [
+        "workflow.created",
+        "workflow.deleted",
+        "workflow.published",
+        "workflow.paused",
+        "workflow.resumed",
+        "workflow.instance_completed",
+        "workflow.instance_failed"
+      ]
+    },
+    {
+      "category": "Audience",
+      "domain": "audience",
+      "events": [
+        "audience.member_created",
+        "audience.member_updated",
+        "audience.added_to_list",
+        "audience.removed_from_list",
+        "audience.attribute_changed",
+        "audience.tag_added",
+        "audience.tag_removed",
+        "audience.unsubscribed",
+        "audience.resubscribed",
+        "audience.email_invalidated",
+        "audience.blocked",
+        "audience.unblocked",
+        "audience.import_completed",
+        "audience.list_created",
+        "audience.list_updated",
+        "audience.list_deleted"
+      ]
+    },
+    {
+      "category": "Email",
+      "domain": "email",
+      "events": [
+        "email.domain_added",
+        "email.domain_verified",
+        "email.sent",
+        "email.opened",
+        "email.clicked",
+        "email.bounced",
+        "email.unsubscribed",
+        "email.campaign_sent"
+      ]
+    },
+    {
+      "category": "Push",
+      "domain": "push",
+      "events": [
+        "push.campaign_sent"
+      ]
+    },
+    {
+      "category": "Auth",
+      "domain": "auth",
+      "events": [
+        "auth.method_deleted",
+        "auth.domain_added",
+        "auth.domain_verified",
+        "auth.domain_deleted",
+        "auth.client_self_registered"
+      ]
+    },
+    {
+      "category": "Token",
+      "domain": "token",
+      "events": [
+        "token.created",
+        "token.updated",
+        "token.revoked"
+      ]
+    },
+    {
+      "category": "Group version",
+      "domain": "group_version",
+      "events": [
+        "group_version.published"
+      ]
+    },
+    {
+      "category": "Form",
+      "domain": "form",
+      "events": [
+        "form.submitted"
+      ]
+    },
+    {
+      "category": "Blog",
+      "domain": "blog",
+      "events": [
+        "blog.published",
+        "blog.updated",
+        "blog.unpublished",
+        "blog.deleted"
+      ]
+    },
+    {
+      "category": "Doc",
+      "domain": "doc",
+      "events": [
+        "doc.published",
+        "doc.updated",
+        "doc.unpublished",
+        "doc.deleted"
+      ]
+    },
+    {
+      "category": "FAQ",
+      "domain": "faq",
+      "events": [
+        "faq.updated"
+      ]
+    },
+    {
+      "category": "FAQ collection",
+      "domain": "faq_collection",
+      "events": [
+        "faq_collection.updated"
+      ]
+    },
+    {
+      "category": "Testimonial",
+      "domain": "testimonial",
+      "events": [
+        "testimonial.updated",
+        "testimonial.deleted"
+      ]
+    },
+    {
+      "category": "Rich content",
+      "domain": "rich_content",
+      "events": [
+        "rich_content.updated",
+        "rich_content.deleted"
+      ]
+    },
+    {
+      "category": "Collection",
+      "domain": "collection",
+      "events": [
+        "collection.version_published",
+        "collection.record_created",
+        "collection.record_updated",
+        "collection.record_deleted"
+      ]
+    }
+  ]
+}

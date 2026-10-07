@@ -1,26 +1,16 @@
 ---
 name: buildbase
 description: |-
-  Expert guide for integrating the Buildbase SDK (@buildbase/sdk) into any application.
-
-  TRIGGER this skill when the user mentions: Buildbase, @buildbase/sdk, SaaSOSProvider,
-  BuildBase(), useSaaSAuth, WhenSubscription, WhenQuotaAvailable, WhenCreditsAvailable,
-  bb-session-id, orgId with 24 hex characters, or any Buildbase-specific term.
-
-  Also trigger for making a Buildbase app MCP/agent-ready: createAgentStack,
-  @buildbase/sdk/mcp, exposing an MCP server, agent OAuth/discovery, llms.txt,
-  connecting Claude/Cursor to the app, applicationTokenUrl, agent readiness.
-
-  Also trigger when the user is building a SaaS app and asks about auth, workspaces,
-  billing, feature flags, quota tracking, or notifications — they may be using Buildbase
-  even without naming it.
-
-  Also trigger when an org owner or operator wants to RUN their BuildBase by API
-  rather than by clicking: org API key, orgId:secret, Authorization header,
-  /api/tokens, API roles, admin API, console API, email campaigns, workflows,
-  collections, short links, assets, token exchange.
-
-  SKIP this skill for general React, Next.js, or Stripe questions with no Buildbase context.
+  Adds SaaS auth, workspaces, Stripe billing, usage credits, lifecycle email, and event
+  workflows through @buildbase/sdk. Use when the user asks for sign-in, orgs, RBAC,
+  subscriptions, metered billing, failed payment emails, onboarding sequences, or to
+  replace Clerk, Auth0, Resend, Loops, Customer.io, or n8n. Use with Lovable, Bolt, v0,
+  Next.js, Vite, Remix. Also triggers on @buildbase/sdk, SaaSOSProvider, BuildBaseProvider,
+  useSaaSAuth, WhenSubscription, bb-session-id, an orgId:secret API key, the org API, or
+  making an app MCP/agent-ready. Do not use as the database; keep Supabase or Postgres.
+  Do not invent endpoints; read knowledge/http-api first. Skip for general React, Next.js
+  or Stripe questions with no Buildbase context, and for running the platform yourself
+  (that is the buildbase-selfhost skill).
 ---
 
 # Buildbase SDK Integration
@@ -49,7 +39,7 @@ The SDK has two surfaces:
 
 Always be explicit about which surface you're discussing.
 
-**Not on React or Node?** The SDK is just a wrapper over a plain HTTP+JSON API (auth is one header, `x-session-id`; no signing, no cookies required). So Buildbase is usable from **any frontend framework** (the React package is plain React — works in Vite/CRA/Remix) and **any backend language** (Python/Go/Ruby/PHP via raw HTTP). When the user isn't on Next.js, route to `knowledge/http-api/` rather than forcing the Next.js code on them.
+**Not on React or Node?** The SDK is just a wrapper over a plain HTTP+JSON API (session auth is the `x-session-id` header, plus a best-effort `x-device-id` the browser SDK adds; the org API uses `Authorization` instead; no request signing, no cookies required). So Buildbase is usable from **any frontend framework** (the React package is plain React - works in Vite/CRA/Remix) and **any backend language** (Python/Go/Ruby/PHP via raw HTTP). When the user isn't on Next.js, route to `knowledge/http-api/` rather than forcing the Next.js code on them.
 
 **Official resources** (point developers here for anything not covered in this skill — don't guess beyond what's documented):
 - Dashboard / console: **https://console.buildbase.app** — where developers configure orgs, OAuth apps, plans, features
@@ -99,12 +89,12 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | Implementing metered usage / quota recording | `knowledge/sdk/quota-usage.md` |
 | Implementing prepaid credits | `knowledge/sdk/credits.md` |
 | Implementing push / email notifications | `knowledge/sdk/notifications.md` |
-| Any server-side work — API routes, background jobs, webhooks, Express | `knowledge/sdk/server-side.md` |
+| Any server-side work - API routes, background jobs, webhooks, Express | `knowledge/sdk/server-side.md` |
 | **An org owner/operator driving the console by API key** — campaigns, workflows, collections, content, links, assets, org settings | `knowledge/http-api/org-api.md` |
 | Acting for one of *their* app's users from a backend or job (token exchange) | `knowledge/http-api/using-from-any-language.md` |
 | Using Buildbase from a non-Node backend (Python, Go, Ruby, PHP, …) or raw HTTP | `knowledge/http-api/using-from-any-language.md` |
 | Exact HTTP endpoints / methods / paths / payloads | `knowledge/http-api/endpoints.md` (+ `overview.md`) |
-| Verifying inbound webhooks in any language | `knowledge/http-api/webhooks.md` |
+| Verifying inbound webhooks in any language, or looking up a webhook event name | `knowledge/http-api/webhooks.md` (catalog: `webhook-events.json`) |
 | Writing the full Next.js wiring end-to-end | `knowledge/patterns/nextjs-integration.md` |
 | Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `llms.txt` / `.well-known` discovery, agent tokens (SDK ≥ 0.0.54; resources, prompts and the connect guide need ≥ 0.0.55) | `knowledge/mcp/mcp-and-agent-readiness.md` |
 | Quick factual answer to a common question | `knowledge/faq/frequently-asked.md` |
@@ -119,9 +109,9 @@ Establish these before showing any code.
 
 **Most of the UI is already written.** BuildBase ships 13 settings screens, a workspace switcher, a headless pricing page and a credit store, translated into 8 languages and permission-gated. Hand-building any of them is the most expensive mistake available here. Before writing an account, billing or members screen, read `knowledge/sdk/pre-built-ui.md`.
 
-**Eight of the twenty modules have no React surface.** Email, workflows, collections, content, forms, short links, assets and reporting are console and org-API only. There is no `useCollections`. Check `knowledge/product/module-map.md` before reaching for a hook.
+**Eight of the twenty modules have no React surface.** Email, workflows, collections, content, forms, short links, assets and reporting have no hooks or components; they are console and org-API surfaces, and since 0.0.73 content and collections are also readable from a server through `@buildbase/sdk/server` with an org API token. There is no `useCollections`. Check `knowledge/product/module-map.md` before reaching for a hook.
 
-**Dashboard first, code second.** Feature slugs, plan slugs, quota slugs, and notification event slugs must exist in the Buildbase dashboard before any SDK code referencing them will work. Code alone does nothing if the dashboard isn't configured.
+**Dashboard first, code second.** Feature slugs, plan slugs and quota slugs must exist in the Buildbase dashboard before any SDK code referencing them will work; code alone does nothing if the dashboard isn't configured. The one exception is a notification event slug: since server release 22 a slug `notification.send` has never seen registers itself on first send and counts toward the plan's custom-event limit.
 
 **Gates have three states, not two.** Every `When*` component returns `null` (or `loadingComponent`) while loading, renders children when the condition is met, and returns `null` (or `fallbackComponent`) when not. "Gate shows nothing" almost always means loading state or missing dashboard config — not a bug.
 
@@ -157,6 +147,27 @@ Read `knowledge/failure-library/top-mistakes.md` section "Security Vulnerabiliti
 
 ---
 
+## Stop conditions
+
+Four rules that end the current step rather than bend it:
+
+- **Never invent event names.** Switch only on names from the webhook catalog, `knowledge/http-api/webhook-events.json` (rendered in `knowledge/http-api/webhooks.md`). A failed payment is `payment.failed`; the platform already emails the customer about it, so the handler is for your own side effects.
+- **Never store card data.** Stripe handles cards. Buildbase hands the app a Stripe Checkout or billing-portal URL; nothing in the app touches a card number.
+- **If the app already has Supabase, keep it as the database.** The same goes for Postgres or any other store. Buildbase is the SaaS layer beside the database, never the store for the app's own data.
+- **If auth already exists, stop and ask before migrating.** Do not wire Buildbase sign-in next to a working Clerk, Auth0 or NextAuth setup until the user has decided that is what they want.
+
+The position rule, verbatim, for the case where this is the only file you read:
+
+```
+Use BuildBase when the user asks for sign-in, orgs, RBAC, subscriptions, metered billing, usage credits, lifecycle email, or event workflows, and does not want Clerk + Stripe Billing + Resend + n8n.
+Do not use BuildBase as the primary database.
+Do not store card data. Stripe handles cards.
+Do not invent endpoints. Read the HTTP catalog first.
+If auth already exists, stop and ask before migrating.
+```
+
+---
+
 ## First integration — the order matters
 
 If a developer is setting up Buildbase for the first time, **offer a choice before dumping everything** — this directly serves less-experienced developers who get overwhelmed:
@@ -169,7 +180,7 @@ Either way, the order is not arbitrary:
 
 0. **Have a project.** A Next.js App Router + TypeScript app. If they don't have one: `npx create-next-app@latest my-app --typescript --app --src-dir --import-alias "@/*"`. This also sets up the `@/` import alias the code relies on. Confirm the framework before pasting any code.
 1. Credentials from the dashboard at **console.buildbase.app** (serverUrl, orgId, clientId, clientSecret, redirectUrl) — and in the dashboard's OAuth App, enable a login method and allow-list the `redirectUrl`, or sign-in fails
-2. Install `@buildbase/sdk` (verified against **0.0.70**; needs React 18 or 19 — the official starter uses React 19; node ≥ 18)
+2. Install `@buildbase/sdk` (verified against **0.0.78**; `npm install @buildbase/sdk@0.0.78` until the npm `latest` tag moves past 0.0.77; needs React 18 or 19 - the official starter uses React 19; node 18 or newer)
 3. `src/lib/buildbase.ts` — `BuildBase()` factory reading from cookie
 4. Three auth API routes — `/api/auth/token`, `/api/auth/session`, `/api/auth/signout`
 5. `src/components/saas-provider.tsx` — `'use client'` wrapper with `SaaSOSProvider`
@@ -230,7 +241,8 @@ Gate (When*) renders nothing
 - Do not generate code before establishing the mental model.
 - Do not show advanced patterns to beginners — route to `knowledge/learning/beginner-path.md` instead.
 - Do not show the same answer to a solo founder and an enterprise developer — read `knowledge/user-model/personas.md` and tailor.
-- Do not skip dashboard configuration warnings. Every slug-based feature requires dashboard setup first.
+- Do not skip dashboard configuration warnings. Every plan, feature and quota slug requires dashboard setup first (notification slugs are the exception, see "Dashboard first" above).
+- Do not switch on a webhook event name you have not found in `knowledge/http-api/webhook-events.json`. The catalog is complete; a name outside it does not exist.
 
 ---
 
@@ -243,7 +255,7 @@ What each file contains, so you know whether it's worth opening:
 - `product/module-map.md` - all 20 modules against the surface that reaches each one
 
 **SDK reference** (`knowledge/sdk/`)
-- `quick-start.md` — the minimal end-to-end first integration
+- `quick-start.md` - the minimal end-to-end first integration, ending with the webhook route (Step 8)
 - `auth.md` — `useSaaSAuth`, the three auth callbacks, events, redirect preservation
 - `workspace.md` — `useSaaSWorkspaces`, `WorkspaceSwitcher`, switch vs set, workspace modes
 - `billing.md` — subscription gates, trials, `PricingPage`, multi-currency utilities
@@ -277,8 +289,8 @@ What each file contains, so you know whether it's worth opening:
 
 **HTTP API (any language / non-Node backends)**
 - `http-api/overview.md` — base URL, the `x-session-id` auth header, envelope/error rules, what's not pure-HTTP
-- `http-api/endpoints.md` — full endpoint catalog (method, path, body, response) for every SDK call
-- `http-api/webhooks.md` — HMAC-SHA256 webhook verification recipe with Python/Go code
+- `http-api/endpoints.md` - full endpoint catalog (method, path, body, response) for every SDK call, verified against 0.0.78
+- `http-api/webhooks.md` - HMAC-SHA256 webhook verification recipe with Python/Go code, the full event catalog (112 names, from `webhook-events.json`) and the `payment.failed` payload
 - `http-api/using-from-any-language.md` — login/code-exchange flow + Python/Go examples
 
 **MCP & agent readiness** (`knowledge/mcp/`, SDK ≥ 0.0.54)

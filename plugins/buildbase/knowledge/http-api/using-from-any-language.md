@@ -1,25 +1,25 @@
 # Using Buildbase from Any Backend Language
 
-There is no official Buildbase SDK for Python, Go, Ruby, PHP, Java, etc. — but you don't need one. The SDK is a thin wrapper over HTTP+JSON, so you can do everything it does with your language's HTTP client plus one header. This guide shows the end-to-end flow and minimal examples.
+There is no official Buildbase SDK for Python, Go, Ruby, PHP, Java, etc. - but you don't need one. The SDK is a thin wrapper over HTTP+JSON, so you can do everything it does with your language's HTTP client plus one header. This guide shows the end-to-end flow and minimal examples.
 
 Read [overview.md](./overview.md) and [endpoints.md](./endpoints.md) for the full contract; [webhooks.md](./webhooks.md) for inbound verification.
 
 ## Contents
 
-- [The whole model in four facts](#the-whole-model-in-four-facts) — core concepts in brief
-- [Step 1 — Log the user in and get a `sessionId`](#step-1--log-the-user-in-and-get-a-sessionid) — OAuth-style login flow
-- [Step 2 — Call any endpoint](#step-2--call-any-endpoint) — Python and Go examples
-- [Step 3 — Server-to-server, jobs, acting for a user](#step-3--server-to-server-background-jobs-and-acting-for-one-of-your-app-users) — token exchange
-- [Step 4 — Webhooks](#step-4--webhooks) — verifying inbound webhooks
-- [What you must implement yourself (no single endpoint)](#what-you-must-implement-yourself-no-single-endpoint) — permission and feature checks
-- [Honest limits](#honest-limits) — caveats about this reference
+- [The whole model in four facts](#the-whole-model-in-four-facts) - core concepts in brief
+- [Step 1 - Log the user in and get a `sessionId`](#step-1--log-the-user-in-and-get-a-sessionid) - OAuth-style login flow
+- [Step 2 - Call any endpoint](#step-2--call-any-endpoint) - Python and Go examples
+- [Step 3 - Server-to-server, jobs, acting for a user](#step-3--server-to-server-background-jobs-and-acting-for-one-of-your-app-users) - token exchange
+- [Step 4 - Webhooks](#step-4--webhooks) - verifying inbound webhooks
+- [What you must implement yourself (no single endpoint)](#what-you-must-implement-yourself-no-single-endpoint) - permission and feature checks
+- [Honest limits](#honest-limits) - caveats about this reference
 
 ---
 
 ## The whole model in four facts
 
 1. **Base URL:** `https://api.console.buildbase.app/api/v1/public/<path>` (the hosted value; your own origin if self-hosting).
-2. **Auth:** one header — `x-session-id: <sessionId>` — on every authenticated call.
+2. **Auth:** one header, `x-session-id: <sessionId>`, on every session-authenticated call (the org-token surfaces use `Authorization` instead; see [overview.md](./overview.md#2-authentication---one-header-for-the-session-api)).
 3. **Data:** JSON bodies; query strings for GET params. Responses are JSON, sometimes wrapped in `{ success, data, message }`.
 4. **You need two secrets from the dashboard** (console.buildbase.app): `clientId` + `clientSecret` (for the login exchange) and your `orgId`.
 
@@ -27,7 +27,7 @@ The only real "flow" is getting a `sessionId` for a user. After that, it's just 
 
 ---
 
-## Step 1 — Log the user in and get a `sessionId`
+## Step 1 - Log the user in and get a `sessionId`
 
 This is the OAuth-style flow. Your backend acts as the confidential client (it holds the `clientSecret`).
 
@@ -46,14 +46,14 @@ This is the OAuth-style flow. Your backend acts as the confidential client (it h
 
    > Source note: this token-exchange endpoint + response shape is taken from the official Next.js starter's server route, not from the SDK client package (the browser SDK uses a simpler client-only path). For a backend in any language, this **server-side exchange is the correct, secure flow** because your backend can safely hold the `clientSecret`.
 
-4. **Store the `sessionId`** in your own session store / signed cookie (treat it like a session token — keep it server-side, e.g. an httpOnly cookie).
+4. **Store the `sessionId`** in your own session store / signed cookie (treat it like a session token - keep it server-side, e.g. an httpOnly cookie).
 5. **Use it** on every subsequent call as `x-session-id`.
 
-To validate a session later, call `GET /api/v1/public/profile` with the header — a 401 means it's no longer valid (re-login; sessions don't auto-refresh).
+To validate a session later, call `GET /api/v1/public/profile` with the header - a 401 means it's no longer valid (re-login; sessions don't auto-refresh).
 
 ---
 
-## Step 2 — Call any endpoint
+## Step 2 - Call any endpoint
 
 Pick from [endpoints.md](./endpoints.md). Examples:
 
@@ -113,11 +113,11 @@ func bbPost(path, sessionID string, body []byte) (*http.Response, error) {
 }
 ```
 
-Any language with an HTTP client works the same way — set `x-session-id`, send/parse JSON, unwrap `{ success, data }` if present.
+Any language with an HTTP client works the same way - set `x-session-id`, send/parse JSON, unwrap `{ success, data }` if present.
 
 ---
 
-## Step 3 — Server-to-server, background jobs, and acting for one of your app users
+## Step 3 - Server-to-server, background jobs, and acting for one of your app users
 
 <a id="acting-for-one-of-your-app-users"></a>
 
@@ -137,7 +137,7 @@ Four things to get right:
 - **`expiresIn` is seconds, optional, and defaults to 30 days (2592000).** Thirty days is also the ceiling, and it is a refusal rather than a clamp: a larger value is rejected with `400 {"error":true,"path":"expiresIn","message":"Expires in must be 2592000 or less"}` and you get no session at all. Ask for less, never more. Get one session and reuse it rather than exchanging per request; the endpoint is rate limited to 10/min.
 - **Omit `userId` and the session belongs to the key's creator**, not to a service identity. Pass the `userId` you mean to act as. Mint the key from a least-privilege API role either way, because a session inherits real permissions.
 - **This is the org key crossing into the user plane**, so treat it as privileged. Keep the key server-side and never send it from a browser.
-- The Node SDK's `withSession(sessionId)` wraps exactly this. There is nothing Node-specific about it.
+- The Node SDK does **not** call this endpoint for you. `withSession(sessionId)` only binds a session id you already hold to a set of actions; do the exchange with one POST as above, then pass the returned `sessionId` to `withSession`. There is nothing Node-specific about either step.
 
 For an agent acting on behalf of a signed-in user of *your* app, prefer the OAuth path instead, where the user consents and your app mints the token: [../mcp/mcp-and-agent-readiness.md](../mcp/mcp-and-agent-readiness.md). Use token exchange for your own backend and jobs.
 
@@ -147,15 +147,15 @@ If the job is administrative - campaigns, workflows, collections, content, links
 
 ---
 
-## Step 4 — Webhooks
+## Step 4 - Webhooks
 
-Verify inbound webhooks with HMAC-SHA256 — full recipe + Python/Go code in [webhooks.md](./webhooks.md).
+Verify inbound webhooks with HMAC-SHA256 - full recipe, Python/Go code and the complete event catalog in [webhooks.md](./webhooks.md). Switch only on names from that catalog.
 
 ---
 
 ## What you must implement yourself (no single endpoint)
 
-- **Permission checks.** There's no "can this user do X?" endpoint. Fetch `GET workspaces/{id}`, `GET {orgId}/settings`, and `GET workspaces/{id}/users`, find the caller's role, and check the requested permission against that role's set (platform `workspace:*` perms + your app perms). See [endpoints.md](./endpoints.md#permissions).
+- **Permission checks for someone other than the caller.** `GET workspaces/{id}/permissions/me` (0.0.73) answers for the session's own user in one call. For another member there is no endpoint: fetch `GET workspaces/{id}`, `GET {orgId}/settings`, and `GET workspaces/{id}/users`, find their role, and check the permission against that role's set. See [endpoints.md](./endpoints.md#permissions).
 - **Feature/quota "checks."** Fetch the feature map (`users/features` or `workspaces/features`) or quota status, then decide in your code. There's no boolean-check endpoint.
 
 ---
@@ -164,4 +164,4 @@ Verify inbound webhooks with HMAC-SHA256 — full recipe + Python/Go code in [we
 
 - The endpoint catalog here is reverse-engineered from the SDK source, so it is accurate for what the SDK sends, but the server exposes far more than the SDK uses. Two places to confirm against: the package README on npm (`npmjs.com/package/@buildbase/sdk`, and `unpkg.com/@buildbase/sdk/README.md` for the raw file), and [docs.buildbase.app](https://docs.buildbase.app). The console's own REST API is a separate surface entirely, documented in [org-api.md](./org-api.md).
 - Request/response field lists reflect what the SDK's TypeScript types declare; servers can return extra fields. Treat responses leniently (ignore unknown fields).
-- The token-exchange endpoint shape (`/api/v1/auth/token`) comes from the official starter app, not the SDK package — verify against your dashboard's auth settings if it differs.
+- The token-exchange endpoint shape (`/api/v1/auth/token`) comes from the official starter app, not the SDK package - verify against your dashboard's auth settings if it differs.
