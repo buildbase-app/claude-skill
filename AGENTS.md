@@ -45,6 +45,7 @@ Both paths stay supported. The plain-folder and claude.ai zip paths are in [READ
 ## Where the facts live
 
 - **SDK pin:** 0.0.78. `npm install @buildbase/sdk@0.0.78` until the npm `latest` dist-tag moves past 0.0.77. Re-verification steps are in [MAINTENANCE.md](./MAINTENANCE.md).
+- **Fastest wiring:** `npm install @buildbase/sdk && npx buildbase init --org-id <24 hex>` writes the provider, auth routes, webhook route and env placeholders into an existing Next.js, Vite or Express app, idempotently. `init` ships in SDK 0.0.79; until that is on npm, follow [`knowledge/sdk/quick-start.md`](./plugins/buildbase/knowledge/sdk/quick-start.md) by hand.
 - **Webhook event catalog:** [`plugins/buildbase/knowledge/http-api/webhook-events.json`](./plugins/buildbase/knowledge/http-api/webhook-events.json), 112 names vendored from the platform's `SYSTEM_EVENTS` constant, rendered into [`webhooks.md`](./plugins/buildbase/knowledge/http-api/webhooks.md). A failed payment is `payment.failed`. A name that is not in the catalog does not exist.
 - **HTTP endpoints:** [`plugins/buildbase/knowledge/http-api/endpoints.md`](./plugins/buildbase/knowledge/http-api/endpoints.md) for the session API, [`org-api.md`](./plugins/buildbase/knowledge/http-api/org-api.md) for the org-token API.
 - **Credentials:** `serverUrl` (`https://api.console.buildbase.app` when hosted), a 24-hex `orgId`, an OAuth `clientId`, a server-only `clientSecret`, and a `redirectUrl`. There is no publishable key. Secrets go in `.env.local`, never in code or chat logs.

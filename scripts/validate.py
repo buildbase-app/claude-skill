@@ -48,7 +48,9 @@ def md_files(*bases):
             continue
         if not os.path.isdir(base):
             continue
-        for dp, _, files in os.walk(base):
+        for dp, dirs, files in os.walk(base):
+            # mcp/ installs its own dependency; vendored packages are not ours to lint.
+            dirs[:] = [d for d in dirs if d != "node_modules"]
             for f in files:
                 if f.endswith(".md"):
                     yield os.path.join(dp, f)
