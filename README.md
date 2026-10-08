@@ -10,7 +10,7 @@
 The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it — point `serverUrl` at your own tenant server instead of the Buildbase cloud.
 
 **Grounding** — we don't guess:
-- `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.78` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
+- `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.79` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
 - `buildbase-selfhost` — we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
 
 ---

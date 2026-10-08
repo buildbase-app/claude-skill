@@ -18,7 +18,7 @@ If auth already exists, stop and ask before migrating.
 
 ## Protocol revision
 
-The server speaks MCP **2025-11-25**, the revision `@buildbase/sdk@0.0.78` implements. The current specification is **2026-07-28**, which is stateless: it drops the `initialize` handshake and protocol sessions and adds a mandatory `server/discover` RPC. The spec defines a [backward-compatibility path](https://modelcontextprotocol.io/specification/versioning) for handshake-based servers, so a current client that implements it still connects here, and a client declaring a version this server does not know gets an `UnsupportedProtocolVersionError` listing what it does know. Moving to 2026-07-28 is an SDK change, not a change to this directory.
+The server speaks MCP **2025-11-25**, the revision `@buildbase/sdk@0.0.79` implements. The current specification is **2026-07-28**, which is stateless: it drops the `initialize` handshake and protocol sessions and adds a mandatory `server/discover` RPC. The spec defines a [backward-compatibility path](https://modelcontextprotocol.io/specification/versioning) for handshake-based servers, so a current client that implements it still connects here, and a client declaring a version this server does not know gets an `UnsupportedProtocolVersionError` listing what it does know. Moving to 2026-07-28 is an SDK change, not a change to this directory.
 
 ## The four tools
 

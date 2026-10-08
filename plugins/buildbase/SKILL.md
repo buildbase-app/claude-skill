@@ -180,7 +180,7 @@ Either way, the order is not arbitrary:
 
 0. **Have a project.** A Next.js App Router + TypeScript app. If they don't have one: `npx create-next-app@latest my-app --typescript --app --src-dir --import-alias "@/*"`. This also sets up the `@/` import alias the code relies on. Confirm the framework before pasting any code.
 1. Credentials from the dashboard at **console.buildbase.app** (serverUrl, orgId, clientId, clientSecret, redirectUrl) — and in the dashboard's OAuth App, enable a login method and allow-list the `redirectUrl`, or sign-in fails
-2. Install `@buildbase/sdk` (verified against **0.0.78**; `npm install @buildbase/sdk@0.0.78` until the npm `latest` tag moves past 0.0.77; needs React 18 or 19 - the official starter uses React 19; node 18 or newer)
+2. Install `@buildbase/sdk` (verified against **0.0.79**, which is the npm `latest` tag, so a bare `npm install @buildbase/sdk` gets it; needs React 18 or 19 - the official starter uses React 19; node 18 or newer). In an existing Next.js, Vite or Express app, `npx buildbase init --org-id <24 hex>` writes steps 3 to 6 for you and is safe to run twice; the steps below are the same work by hand.
 3. `src/lib/buildbase.ts` — `BuildBase()` factory reading from cookie
 4. Three auth API routes — `/api/auth/token`, `/api/auth/session`, `/api/auth/signout`
 5. `src/components/saas-provider.tsx` — `'use client'` wrapper with `SaaSOSProvider`
@@ -289,7 +289,7 @@ What each file contains, so you know whether it's worth opening:
 
 **HTTP API (any language / non-Node backends)**
 - `http-api/overview.md` — base URL, the `x-session-id` auth header, envelope/error rules, what's not pure-HTTP
-- `http-api/endpoints.md` - full endpoint catalog (method, path, body, response) for every SDK call, verified against 0.0.78
+- `http-api/endpoints.md` - full endpoint catalog (method, path, body, response) for every SDK call, verified against 0.0.79
 - `http-api/webhooks.md` - HMAC-SHA256 webhook verification recipe with Python/Go code, the full event catalog (112 names, from `webhook-events.json`) and the `payment.failed` payload
 - `http-api/using-from-any-language.md` — login/code-exchange flow + Python/Go examples
 

@@ -22,7 +22,7 @@ If auth already exists, stop and ask before migrating.
 
 | # | Condition | How the judge checks it |
 |---|---|---|
-| 1 | `@buildbase/sdk` is in `package.json` | dependency key present (version not checked: `npm install @buildbase/sdk` resolves 0.0.77 until the owner moves the `latest` tag to 0.0.78) |
+| 1 | `@buildbase/sdk` is in `package.json` | dependency key present; the version is not checked. Since 0.0.79 was published on 2026-10-08 the npm `latest` tag matches the skill's pin, so a bare install and the pinned install agree |
 | 2 | Clerk, Auth0, Resend, Loops and n8n were not added | none of `@clerk/*`, `auth0`, `@auth0/*`, `resend`, `loops`, `@loops/*`, `n8n`, `@n8n/*` in `package.json` |
 | 3 | the webhook handler uses an event name from the published catalog | a route file whose path contains `webhook` calls `parseWebhookEvent` or `verifyWebhookSignature` and contains `payment.failed` in single quotes, double quotes or a template literal; every other `domain.action` literal in it is in `webhook-events.txt` |
 | 4 | the app typechecks | `npx tsc --noEmit` exits 0 |
