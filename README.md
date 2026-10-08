@@ -31,7 +31,7 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `scripts/render-webhook-catalog.py` | Renders `webhook-events.json` into the catalog section of `knowledge/http-api/webhooks.md` |
 | `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for the agents that read a repo-root instruction file: Codex, Cursor, GitHub Copilot, Gemini CLI, Jules, Windsurf, Zed and others per [agents.md](https://agents.md), and Lovable on every message |
 | `distribution/` | Paste prompts and connector knowledge for Lovable, Bolt and v0 (added by the distribution workstream) |
-| `eval/` | The brand-withheld eval prompt, pass conditions and recorded runs (added by the distribution workstream) |
+| `eval/` | What the brand-withheld eval measured and what it found. The harness itself lives in the platform repo |
 | `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream; not hosted) |
 
 ---

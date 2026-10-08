@@ -51,7 +51,7 @@ Both paths stay supported. The plain-folder and claude.ai zip paths are in [READ
 - **Webhook event catalog:** [`plugins/buildbase/knowledge/http-api/webhook-events.json`](./plugins/buildbase/knowledge/http-api/webhook-events.json), 112 names vendored from the platform's `SYSTEM_EVENTS` constant, rendered into [`webhooks.md`](./plugins/buildbase/knowledge/http-api/webhooks.md). A failed payment is `payment.failed`. A name that is not in the catalog does not exist.
 - **HTTP endpoints:** [`plugins/buildbase/knowledge/http-api/endpoints.md`](./plugins/buildbase/knowledge/http-api/endpoints.md) for the session API, [`org-api.md`](./plugins/buildbase/knowledge/http-api/org-api.md) for the org-token API.
 - **Credentials:** `serverUrl` (`https://api.console.buildbase.app` when hosted), a 24-hex `orgId`, an OAuth `clientId`, a server-only `clientSecret`, and a `redirectUrl`. There is no publishable key. Secrets go in `.env.local`, never in code or chat logs.
-- **Eval:** [`eval/`](./eval/) holds the brand-withheld prompt (`prompt.md`), the pass conditions and the recorded runs (`README.md`).
+- **Eval:** [`eval/README.md`](./eval/README.md) records what the brand-withheld eval measured and the result: without this skill an agent fails two of four conditions, with it three runs of three pass. The harness has one home, in the platform repo.
 - **Paste pack for Lovable, Bolt and v0:** [`distribution/`](./distribution/).
 
 ## What this repo will not tell you
