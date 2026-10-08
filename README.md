@@ -29,7 +29,7 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `scripts/package.sh` | Builds `dist/buildbase.zip` and `dist/buildbase-selfhost.zip` for claude.ai upload |
 | `scripts/validate.py` | Validates both plugins (manifests, SKILL size, description budget, links, regressions, the webhook catalog, the org-API paths) |
 | `scripts/render-webhook-catalog.py` | Renders `webhook-events.json` into the catalog section of `knowledge/http-api/webhooks.md` |
-| `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for agents that read the repo root (Lovable after export, `npx skills add`) |
+| `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for the agents that read a repo-root instruction file: Codex, Cursor, GitHub Copilot, Gemini CLI, Jules, Windsurf, Zed and others per [agents.md](https://agents.md), and Lovable on every message |
 | `distribution/` | Paste prompts and connector knowledge for Lovable, Bolt and v0 (added by the distribution workstream) |
 | `eval/` | The brand-withheld eval prompt, pass conditions and recorded runs (added by the distribution workstream) |
 | `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream; not hosted) |
@@ -48,6 +48,15 @@ Works for Claude Code, Cursor, Codex, Copilot, Windsurf and every other agent th
 npx skills add buildbase-app/claude-skill                      # both skills, pick agents interactively
 npx skills add buildbase-app/claude-skill --skill buildbase    # the SDK skill only
 npx skills add buildbase-app/claude-skill -a cursor            # install for one agent
+
+Agent names are the CLI's own identifiers, not the product names: `claude-code`,
+`cursor`, `codex`, `github-copilot` (not `copilot`), `gemini-cli`, `windsurf`,
+`cline`, `continue`, `zed` and around seventy more. Run the command with no
+`-a` to pick from the list. Verified on 2026-10-08: `cursor`, `codex`,
+`github-copilot`, `gemini-cli`, `opencode` and `windsurf` each install this
+skill byte-identically, with all 33 knowledge files; most share
+`.agents/skills/`, while Claude Code uses `.claude/skills/` and Windsurf
+`.windsurf/skills/`.
 ```
 
 The repo's root [`AGENTS.md`](./AGENTS.md) carries the position rule and points at both skills, so an agent that reads only that file still knows when BuildBase applies.

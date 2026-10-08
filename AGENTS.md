@@ -1,6 +1,8 @@
 # BuildBase skills for coding agents
 
-This repository holds two Agent Skills for building with [BuildBase](https://www.buildbase.app), one SDK for SaaS auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows. Package: `@buildbase/sdk`, pinned here at **0.0.78**. Lovable reads this file after export; Claude Code, Cursor, Codex and Copilot read it through the `npx skills add` install below.
+This repository holds two Agent Skills for building with [BuildBase](https://www.buildbase.app), one SDK for SaaS auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows. Package: `@buildbase/sdk`, pinned here at **0.0.78**.
+
+`AGENTS.md` is the cross-vendor instruction file ([agents.md](https://agents.md), donated to the Linux Foundation's Agentic AI Foundation in December 2025) and is read natively by Codex, Cursor, GitHub Copilot, Gemini CLI, Jules, Windsurf, Zed, Aider, Devin, Junie and others. Lovable reads a root-level `AGENTS.md` on every message, whatever the session length. The skills below install the same guidance as an Agent Skill for agents that prefer that.
 
 ## Position rule
 

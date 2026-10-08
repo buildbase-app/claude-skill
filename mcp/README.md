@@ -16,6 +16,10 @@ If auth already exists, stop and ask before migrating.
 
 [buildbase-app/nextjs-agent-mcp-starter](https://github.com/buildbase-app/nextjs-agent-mcp-starter) is a **template app you deploy yourself**, not a hosted server: its README ends with `claude mcp add --transport http my-app https://<your-public-origin>/mcp`, where the origin is yours. It exposes the SDK's full built-in tool set for a product's own users. The server here is the opposite: four tools for a developer wiring BuildBase into an app.
 
+## Protocol revision
+
+The server speaks MCP **2025-11-25**, the revision `@buildbase/sdk@0.0.78` implements. The current specification is **2026-07-28**, which is stateless: it drops the `initialize` handshake and protocol sessions and adds a mandatory `server/discover` RPC. The spec defines a [backward-compatibility path](https://modelcontextprotocol.io/specification/versioning) for handshake-based servers, so a current client that implements it still connects here, and a client declaring a version this server does not know gets an `UnsupportedProtocolVersionError` listing what it does know. Moving to 2026-07-28 is an SDK change, not a change to this directory.
+
 ## The four tools
 
 | Tool | What it does | Source of truth |
