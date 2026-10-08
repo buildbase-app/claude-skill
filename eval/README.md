@@ -79,9 +79,10 @@ redact them before sharing.
 ## Results
 
 Model is whatever the logged-in `claude` CLI (2.1.292) ran with; every run below
-reported `claude-fable-5-1`. Verdict tables are committed in `results/`; the
-working copies land in `work/<variant>-<run>/` (gitignored). Raw transcripts
-stay out of git.
+reported `claude-fable-5-1`. Verdict tables are committed once, as
+`eval/results/<variant>-<run>.md` in the skill repo (`buildbase-app/claude-skill`);
+the working copies land in `work/<variant>-<run>/` beside this file, which is
+gitignored. Raw transcripts stay out of git.
 
 | Date | Model | Variant | Run | 1 sdk | 2 no vendor | 3 catalog event | 4 tsc | Skill read | Turns | Wall clock |
 |---|---|---|---|---|---|---|---|---|---|---|
