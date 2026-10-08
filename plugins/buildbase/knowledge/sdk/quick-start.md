@@ -19,6 +19,7 @@ This is the **golden path**: follow it top to bottom and you'll go from an empty
 - [Step 5 — Create the React provider](#step-5--create-the-react-provider) — wrap your app with `SaaSOSProvider`
 - [Step 6 — Wrap your app and import the CSS](#step-6--wrap-your-app-and-import-the-css) — root layout setup
 - [Step 7 — Add a sign-in page and confirm it works](#step-7--add-a-sign-in-page-and-confirm-it-works) — test the full login flow
+- [Step 8 - The webhook route](#step-8---the-webhook-route) - hear about failed payments and other events
 - [One concept to carry forward: gates have THREE states](#one-concept-to-carry-forward-gates-have-three-states) — loading vs met vs not-met
 - [If something didn't work](#if-something-didnt-work) — symptom-to-cause troubleshooting table
 - [What's next](#whats-next) — billing, feature flags, quotas, deeper guides
@@ -401,6 +402,71 @@ If that worked — **you've integrated Buildbase.** Everything else (billing, fe
 
 ---
 
+## Step 8 - The webhook route
+
+Sign-in works. The last piece of the foundation is the route Buildbase calls *you* on: when a payment fails, a subscription changes, a member joins. Without it your app only learns about these things when a user happens to reload a page.
+
+In the dashboard, create a webhook endpoint (**Webhooks**, then add an endpoint) pointing at `https://<your-domain>/api/webhooks/buildbase`, pick the events you care about, and copy its **signing secret**. Add the secret to `.env.local`, server-side only, with no `NEXT_PUBLIC_` prefix:
+
+```env
+# Server-side only. Signs every webhook Buildbase sends you.
+BUILDBASE_WEBHOOK_SECRET=your-webhook-signing-secret
+```
+
+Then create `src/app/api/webhooks/buildbase/route.ts`. Two rules the code follows: read the body as **raw text** (the signature covers the exact bytes, so `request.json()` would break it), and switch only on event names that exist. The full list of 112 names is in [webhook-events.json](../http-api/webhook-events.json), rendered in [webhooks.md](../http-api/webhooks.md#event-catalog). A failed payment is `payment.failed`.
+
+```ts
+// src/app/api/webhooks/buildbase/route.ts
+import { parseWebhookEvent } from '@buildbase/sdk';
+
+export async function POST(request: Request) {
+  // Raw text, not request.json(): the signature is over these exact bytes.
+  const body = await request.text();
+
+  // Verifies the HMAC signature and the 5-minute timestamp window, then parses.
+  // Returns null when anything is off, so an unsigned request never reaches the switch.
+  const event = parseWebhookEvent({
+    body,
+    signature: request.headers.get('x-buildbase-signature'),
+    timestamp: request.headers.get('x-buildbase-timestamp'),
+    secret: process.env.BUILDBASE_WEBHOOK_SECRET!,
+  });
+
+  if (!event) {
+    return Response.json({ error: 'Invalid webhook' }, { status: 401 });
+  }
+
+  switch (event.event) {
+    case 'payment.failed': {
+      // data: workspaceId, subscriptionId, invoiceId, dunningState,
+      //       amount (minor units), currency, failedAt, nextRetryAt (or null)
+      // Buildbase already emails the customer. This is for YOUR side effects:
+      // flag the workspace, pause a job, tell your team.
+      console.log('payment failed for workspace', event.data.workspaceId, 'retry at', event.data.nextRetryAt);
+      break;
+    }
+    case 'subscription.created':
+    case 'subscription.upgraded':
+    case 'subscription.canceled':
+      console.log('subscription changed', event.event, event.data);
+      break;
+    default:
+      // Unknown to this app: acknowledge so Buildbase does not retry it.
+      break;
+  }
+
+  return Response.json({ received: true });
+}
+```
+
+**Why `console.log` and not an email?** A failed-payment email is a *lifecycle* email, and Buildbase sends it already: the console's notification event for `payment.failed` (with the `payment-failed` template) goes to the customer, and the Workflows module can run a sequence on the same event. Adding Resend or another email vendor here would send the customer two emails. Your handler's job is what only your app can do.
+
+> **Deliveries carry no event id.** A retry repeats the same `event`, `timestamp` and `data`, so if your side effect must run once, hash the raw body and skip one you have seen.
+
+✅ **Check:** With `npm run dev` running, `curl -X POST http://localhost:3000/api/webhooks/buildbase -d '{}'` returns `401 {"error":"Invalid webhook"}`: the route exists and rejects an unsigned body. Then use **Send test event** on the endpoint in the dashboard (or a tunnel such as `ngrok` to your local port) and watch the log line appear.
+
+---
+
 ## One concept to carry forward: gates have THREE states
 
 This trips up everyone, so learn it now. A gate like `<WhenAuthenticated>` doesn't just show/hide — it has three states:
@@ -438,6 +504,7 @@ For a deeper list, see [common-errors.md](../troubleshooting/common-errors.md) a
 
 - **Protect more pages** → use `WhenAuthenticated` anywhere, or check `useSaaSAuth().isAuthenticated` in code
 - **Add billing** → [billing.md](./billing.md) (needs plans set up in the dashboard first)
+- **Handle more webhook events** → [server-side.md](./server-side.md#webhook-verification) and the catalog in [webhooks.md](../http-api/webhooks.md#event-catalog)
 - **Feature flags** → [feature-flags.md](./feature-flags.md)
 - **Metered usage / quotas** → [quota-usage.md](./quota-usage.md)
 - **The full milestone-by-milestone path** → [beginner-path.md](../learning/beginner-path.md)

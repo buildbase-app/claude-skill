@@ -6,19 +6,22 @@ How to keep this skill accurate as the Buildbase SDK / API grows. The golden rul
 
 | What | Where |
 |------|-------|
-| SDK package | [`@buildbase/sdk`](https://www.npmjs.com/package/@buildbase/sdk) (source: [buildbase-app/sdk](https://github.com/buildbase-app/sdk)) — verified against **v0.0.70**. The `/mcp` surface is accurate for 0.0.54 plus the 0.0.55 additions (resources, prompts, rich tool results, the connect guide); the newer 0.0.56-0.0.70 changes it must track are `signOut` ending the server session (0.0.70), the `tracking` prop (0.0.62), and devices and sessions (0.0.57) |
+| SDK package | [`@buildbase/sdk`](https://www.npmjs.com/package/@buildbase/sdk) (source: [buildbase-app/sdk](https://github.com/buildbase-app/sdk), which lags npm; the npm tarball is the truth) - verified against **v0.0.79**. Check `npm view @buildbase/sdk dist-tags` first; as of 2026-10-08 `latest` is 0.0.79, so a bare `npm install` resolves the pinned version. The `/mcp` surface is accurate for 0.0.54 plus the 0.0.55 additions (resources, prompts, rich tool results, the connect guide); later changes the skill tracks are devices and sessions (0.0.57), the `tracking` prop (0.0.62), `signOut` ending the server session (0.0.70), workspace invitations, the notification inbox routes and per-member notification preferences (0.0.71), the org-token content client in `@buildbase/sdk/server` and `GET workspaces/{id}/permissions/me` (0.0.73) |
+| Webhook event catalog | `plugins/buildbase/knowledge/http-api/webhook-events.json`, vendored from `packages/shared/src/constants/system-events.ts` (`SYSTEM_EVENTS`) in the platform repo; its `source` block records the commit and date. Re-render `webhooks.md` with `python3 scripts/render-webhook-catalog.py` after refreshing it |
 | Reference apps | [buildbase-app/nextjs-starter](https://github.com/buildbase-app/nextjs-starter) (auth wiring, token-exchange shape, React version); [buildbase-app/nextjs-agent-mcp-starter](https://github.com/buildbase-app/nextjs-agent-mcp-starter) for the MCP/agent-readiness wiring |
 | Official docs | https://docs.buildbase.app — for facts not in the package. `reference/admin-api` is the source for `knowledge/http-api/org-api.md`, and `self-hosted/*` is the source for the self-host plugin's compose blocks, which are generated output and must be copied rather than paraphrased |
 | Dashboard | https://console.buildbase.app |
 
 ## When the SDK version bumps
 
+0. **Check the dist-tags first**: `npm view @buildbase/sdk dist-tags versions --json`. Pin the newest *published* version, and say in the install line when `latest` has not caught up with it, because that is the version `npm install @buildbase/sdk` will actually resolve.
 1. **Re-point at the new source** and check `package.json` for the new version, exports, and peer deps.
 2. **Re-verify the public surface** the skill documents:
    - Hooks/gates/components — confirm each named symbol still exists (`src/react.ts`, `src/providers/**`, `src/hooks/**`).
    - Server modules/methods — `src/lib/server-client.ts`.
    - Field shapes inside code samples (this is where drift hides — e.g. credit consume uses `amount`, not `quantity`). Check `src/api/types.ts`.
-3. **Regenerate the HTTP-API catalog** (`plugins/buildbase/knowledge/http-api/`) from `src/lib/api-base.ts` + `src/api/services/*-api.ts` if endpoints changed.
+3. **Regenerate the HTTP-API catalog** (`plugins/buildbase/knowledge/http-api/`) from `src/lib/api-base.ts` + `src/api/services/*-api.ts` if endpoints changed. HTTP calls also live outside `services/`: `src/tracking/*` (tracking config, consent, checkout return), `src/lib/agent-discovery.ts` (agent readiness) and `src/lib/server-content/client.ts` (the org-token content client), plus a socket.io channel in `src/lib/inbox-socket.ts`. Diff all of them.
+3b. **Refresh the webhook catalog** from the platform's `SYSTEM_EVENTS` constant (regenerate `webhook-events.json`, update its `source.commit` and `source.syncedOn`, run `python3 scripts/render-webhook-catalog.py`). `validate.py` fails when the rendered section and the JSON disagree.
 4. **Update `plugins/buildbase/SKILL.md`** version note and any changed validation rules (orgId format, `ApiVersion`, etc.).
 5. **Bump the version** in `plugins/buildbase/.claude-plugin/plugin.json` (semver). Plugin installs pin to this; bumping it is how users get the update.
 
@@ -28,9 +31,12 @@ Re-run the verification that caught real bugs during authoring — for each know
 
 - `switchToWorkspace(workspace)` takes the **object**, not an id
 - credit consume uses **`amount`** (usage record uses `quantity`)
-- runtime values (`AuthStatus`, pricing utils) import from `@buildbase/sdk`, not `@buildbase/sdk/react` (the `/react` entry is types-only)
-- `IWorkspace` / `IUser` are **not** exported from the public type surface
+- runtime values (`AuthStatus`, pricing utils) import from `@buildbase/sdk`; since 0.0.51 `@buildbase/sdk/react` re-exports them by value too, so either import is correct
+- `IWorkspace` / `IUser` / `ISettings` **are** exported by name since 0.0.53 (the older claim that they were not is itself a regression rule now)
 - only `INSUFFICIENT_CREDITS` is a guaranteed error-code string
+- `users.invite` / `users/add` adds an **existing** account and answers 404 otherwise; reaching an address with no account is the invitations surface (0.0.71)
+- there **is** a permission endpoint since 0.0.73, `GET workspaces/{id}/permissions/me`; the local three-GET computation is the fallback for older servers, not the only way
+- every interpolated path segment is URL-encoded (0.0.51), not only slugs
 
 ## Verifying a change (the three gates)
 
@@ -44,6 +50,10 @@ A skill is prose plus sample commands, so "it works" has to be shown three ways.
 4. **Self-host block check.** Every fenced compose, env and nginx block in the self-host plugin must byte-match the corresponding fence in `docs/content/self-hosted/*.mdx`, which is generated from `packages/shared/src/constants/self-hosted.ts`. Those blocks are copied, never paraphrased.
 
 When adding a regression rule, plant the defect and confirm the rule fires before trusting it. Every rule in the current list was confirmed that way, and doing so found a stale `(Node.js only)` claim in `SKILL.md` that had been missed by hand.
+
+**Re-verification, 2026-10-08 (pin 0.0.78 -> 0.0.79).** 0.0.79 was published from the release workflow and the npm `latest` tag now points at it, so the "install the pinned version explicitly" caveat is gone from this file, `AGENTS.md`, `README.md` and `SKILL.md`. 0.0.79 adds `npx buildbase init`, which writes the provider, the three auth routes, the webhook route and the env placeholders into an existing Next.js, Vite or Express app, and exports the webhook catalog as `WEBHOOK_EVENTS`, `WebhookEventName` and `isWebhookEvent`. The HTTP catalog itself did not change between 0.0.78 and 0.0.79: the release adds a CLI command and one export, no endpoints. Checked against the published tarball: `npx buildbase init --help` runs from a bare `npm install @buildbase/sdk`, and `dist/cli.mjs` ships in the package. The quick-start now names `init` as the shortcut past steps 3 to 6 while keeping every step written out.
+
+**Re-verification, 2026-10-07 (pin 0.0.70 -> 0.0.78).** The HTTP catalog was diffed line by line against the 0.0.78 source. Added to `endpoints.md`: `POST logout`, `GET device-token`, passkeys, devices, sessions, connected agents, workspace invitations (0.0.71), `GET workspaces/{id}/permissions/me` (0.0.73), the notification inbox routes and `notification-preferences/me` (0.0.71), the unauthenticated tracking, consent, checkout-return and agent-readiness routes, the beta routes, and the org-token content client (`@buildbase/sdk/server`, 0.0.73). Corrected: the "one header" claim (browser mode also sends `x-device-id`), path encoding, the `auth/request` and create-workspace bodies, the checkout, update and purchase response fields, what the `notification-preferences` routes hold, what `users/add` does, the factory's module list and `version` option, where app permissions come from, and the Node-only wording in `webhooks.md`. Added the vendored webhook event catalog (112 names) and Step 8 (the webhook route) to the quick-start. Gate 2 typecheck re-run against 0.0.78: see the eval table in `eval/README.md`.
 
 **Gate 2 results, 2026-09-22.** Three of the five parts ran here; the live-API parts cannot, because the agent proxy denies `api.console.buildbase.app` (403 on CONNECT) regardless of credentials.
 
