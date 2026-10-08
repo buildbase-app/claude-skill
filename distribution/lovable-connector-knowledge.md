@@ -36,13 +36,17 @@ There is no `GET /v1/me`. The real credential and health checks are below.
 
 ## Test request
 
-Unauthenticated, no body, returns the text `OK`:
+Unauthenticated, no body, returns a small JSON object:
 
 ```text
-GET /health
+GET /api/ready
 ```
 
-`GET /api/ready` is also unauthenticated and returns `{ "ready": true, ... }` or a `503` with `{ "ready": false, "reason": ... }`. To check that a token works, call any authenticated read, for example `GET /api/tokens`, which returns the token list with masked previews; a bad token returns `401` with the plain-text body `Unauthorized`.
+It answers `{"ready":true}`, or a `503` carrying `{"ready":false,"reason":"..."}` when the service is not serving yet. Use this one as the connector's health check.
+
+`GET /health` also exists and is also unauthenticated, but on the cloud it returns a detailed operational report rather than a short answer, so it is the wrong shape for a connector test. A self-hosted tenant server answers the same path with the plain text `OK`, so the two differ by deployment; `/api/ready` is the same small answer on both. Verified against `https://api.console.buildbase.app` on 2026-10-08.
+
+To check that a token works, call any authenticated read, for example `GET /api/tokens`, which returns the token list with masked previews; a bad token returns `401` with the plain-text body `Unauthorized`.
 
 ## Key endpoints
 
