@@ -1,10 +1,11 @@
 # Every literal '/api/...' path in API_ROUTES
 # (packages/shared/src/constants/api-routes.ts in the BuildBase platform repo).
 # Vendored because this repo cannot import the monorepo. Refresh per MAINTENANCE.md.
-# Last synced: 2026-09-22 from origin/main.
+# Last synced: 2026-11-24 from origin/main.
 /api/access-control
 /api/analytics/integrations/monday.com/actions
 /api/analytics/integrations/monday.com/events
+/api/analytics/web
 /api/assets
 /api/audience
 /api/audience-lists
@@ -14,12 +15,15 @@
 /api/auth/audit-logs
 /api/auth/configs
 /api/auth/domains
+/api/auth/enterprise
 /api/auth/methods
 /api/auth/settings
+/api/auth/sign-in-addresses
 /api/blogs
 /api/blogs/authors
 /api/blogs/folders
 /api/blogs/tags
+/api/blueprint
 /api/collections
 /api/deployments/history
 /api/deployments/hooks
@@ -32,6 +36,7 @@
 /api/emails/campaigns
 /api/emails/domains
 /api/emails/drafts
+/api/emails/health
 /api/emails/senders
 /api/emails/templates
 /api/emails/unsubscribe/groups
@@ -42,32 +47,47 @@
 /api/forms
 /api/links
 /api/links-analytics
+/api/marketplace
 /api/monday.com/credentials
 /api/onboarding
+/api/organizations/agent/identity
 /api/organizations/audit
 /api/organizations/auth
 /api/organizations/config
 /api/organizations/email/library/tags
 /api/organizations/email/library/templates
 /api/organizations/payment/stripe
+/api/organizations/payment/stripe/coupons
 /api/organizations/payment/stripe/webhooks-data
 /api/organizations/push
 /api/organizations/push/campaigns
 /api/organizations/settings
+/api/organizations/tracking/ad-conversions
 /api/organizations/tracking/scripts
 /api/organizations/users
+/api/organizations/users/claims
+/api/organizations/users/device
 /api/organizations/users/installations
 /api/organizations/users/invitations
+/api/organizations/users/security
 /api/organizations/webhooks
 /api/payments
 /api/rich-content
+/api/storage/settings
+/api/storage/usage
 /api/subscriptions
+/api/subscriptions/actions
+/api/subscriptions/claims
 /api/subscriptions/credit-packages
 /api/subscriptions/credits
+/api/subscriptions/grants
 /api/subscriptions/groups
+/api/subscriptions/import
 /api/subscriptions/item-categories
 /api/subscriptions/items
 /api/subscriptions/logs
+/api/subscriptions/offers
+/api/subscriptions/overrides
 /api/subscriptions/plans
 /api/testimonials
 /api/tokens
@@ -86,4 +106,5 @@
 /api/workflows/templates
 /api/workspaces
 /api/workspaces/features
+/api/workspaces/notification-deliveries
 /api/workspaces/notification-events

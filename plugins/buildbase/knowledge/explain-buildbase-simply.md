@@ -24,18 +24,19 @@ Building all of that yourself takes months and is easy to get wrong (especially 
 |------|----------------------|
 | **SDK** | The toolbox (`@buildbase/sdk`) you install to talk to Buildbase. "SDK" = "Software Development Kit" = a bundle of ready-made code. |
 | **Org (organization)** | Your company/product as Buildbase knows it. You get one when you sign up. |
-| **Workspace** | A single customer account or team. If you build a team tool, each team is one workspace. Billing and limits attach to a workspace. |
+| **Workspace** | A single customer account or team. If you build a team tool, each team is one workspace. Billing and limits usually attach to a workspace; an app for individuals can sell the plan to the person instead. |
 | **User** | A person who logs in. A user can belong to one or more workspaces. |
 | **Session** | Proof that a user is logged in right now. Stored as a `sessionId`. |
-| **Cookie** | A small note the browser keeps. We store the login proof in a special **httpOnly** cookie — one that page scripts can't read, so it can't be stolen. |
-| **Provider** | One React component (`SaaSOSProvider`) you wrap your whole app in. It makes Buildbase available everywhere. You write one; the SDK does the rest. |
+| **Cookie** | A small note the browser keeps. We store the login proof in a special **httpOnly** cookie - one that page scripts can't read, so it can't be stolen. |
+| **Provider** | One React component (`SaaSOSProvider`, also exported under its brand name `BuildBaseProvider`) you wrap your whole app in. It makes Buildbase available everywhere. You write one; the SDK does the rest. |
 | **Factory** | A function (`BuildBase(...)`) you call once on your server that hands back a set of tools. |
-| **Gate** | A component whose name starts with `When…` (like `WhenAuthenticated`). It shows its contents only when a condition is true. |
+| **Gate** | A component whose name starts with `When` (like `WhenAuthenticated` or `WhenEntitled`). It shows its contents only when a condition is true. |
 | **Slug** | A short lowercase id for something you set up in the dashboard, like `pro` for a plan or `analytics` for a feature. Your code refers to things by their slug. |
 | **Dashboard** | The Buildbase website ([console.buildbase.app](https://console.buildbase.app)) where you (the developer) configure plans, features, and login methods. Not the same as your app. Official docs: [docs.buildbase.app](https://docs.buildbase.app). |
 | **Plan** | A pricing tier (Free, Pro, Enterprise). You define these in the dashboard; Buildbase charges cards via Stripe. |
-| **Quota** | A usage limit that resets each billing period (e.g. "5,000 API calls/month"). |
+| **Quota** | A usage limit that resets on a schedule, usually monthly (e.g. "5,000 API calls/month"). |
 | **Credits** | Prepaid units a customer buys up front (e.g. "100 AI generations"). They don't reset. |
+| **Environment** | A separate development or staging copy of your setup, with its own users and data, named by a short key. Leave it unset and you are in production. |
 
 ---
 
@@ -43,11 +44,13 @@ Building all of that yourself takes months and is easy to get wrong (especially 
 
 **Dashboard first, then code.**
 
-Many Buildbase features depend on something you set up in the dashboard *before* your code can use it. If you write `<WhenWorkspaceFeatureEnabled slug="analytics">` but never created an "analytics" feature in the dashboard, nothing shows up — and there's no error, just silence. That silence confuses everyone.
+Many Buildbase features depend on something you set up in the dashboard *before* your code can use it. If you write `<WhenWorkspaceFeatureEnabled slug="analytics">` but never created an "analytics" feature in the dashboard, nothing shows up - and there's no error, just silence. That silence confuses everyone.
 
 So whenever a feature involves a **slug** (a plan, a feature, a quota), the order is always:
 1. Create it in the dashboard (give it a slug).
 2. Reference that exact slug in your code.
+
+Two shortcuts exist for step 1. The whole setup can be written as one file (a **blueprint**) and applied by the account's owner. And an AI assistant can work in the dashboard for you through BuildBase's own hosted MCP server (`https://api.console.buildbase.app/mcp`), signed in as you, asking before anything risky.
 
 ---
 
@@ -58,13 +61,13 @@ So whenever a feature involves a **slug** (a plan, a feature, a quota), the orde
 3. Your app's server quietly trades that code (using a secret key) for a **session**, and remembers it in a cookie.
 4. The user is now logged in, and stays logged in across refreshes.
 
-You don't have to build the login page or handle passwords — Buildbase does. You just wire up the hand-off. The step-by-step is in [sdk/quick-start.md](./sdk/quick-start.md).
+You don't have to build the login page or handle passwords - Buildbase does. You just wire up the hand-off, and one command writes it for you: `npx @buildbase/sdk init`. With no Buildbase account yet, `npx @buildbase/sdk init --claim --yes` makes a temporary organization to try it with; it is deleted after 72 hours unless you claim it. The step-by-step is in [sdk/quick-start.md](./sdk/quick-start.md).
 
 ---
 
 ## What Buildbase does NOT do
 
 So you don't go looking for features that aren't there:
-- It's **not your database.** Your app's own data (todos, posts, whatever) lives in your own database. Buildbase handles accounts, billing, and limits — not your business data.
+- It's **not your database.** Your app's own data (todos, posts, whatever) lives in your own database. Buildbase handles accounts, billing, and limits - not your business data.
 - It's **not a UI framework.** It gives you some ready-made screens (login, pricing, settings), but you build your actual app's interface.
 - It **doesn't replace your backend.** You still have your own API routes; Buildbase plugs into them.

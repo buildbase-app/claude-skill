@@ -7,7 +7,8 @@ Keep Supabase as the database. Add BuildBase as the SaaS layer:
 auth, workspaces, Stripe billing, and lifecycle email.
 Package: @buildbase/sdk. Docs: https://www.buildbase.app/llms.txt
 Hosted sign-in on our domain. Do not add Clerk, Auth0, Resend, or n8n.
-Ask me for the BuildBase publishable key before writing env files.
+Ask me for the BuildBase org ID, client ID and redirect URL before writing env files.
+Secrets go in the secret store, never in the chat or a file.
 ```
 
 ```text
@@ -20,7 +21,7 @@ If auth already exists, stop and ask before migrating.
 
 ## What the agent will actually ask you for
 
-BuildBase has no publishable key. The prompt keeps the author's wording; what the app needs is:
+BuildBase has no publishable key (an earlier version of this prompt asked for one, from the original task wording; the live SDK wins, so it now asks for what exists). What the app needs is:
 
 | Value | Where it comes from | Env name (Vite) |
 |---|---|---|
@@ -28,6 +29,7 @@ BuildBase has no publishable key. The prompt keeps the author's wording; what th
 | Organization id | Console, 24 hex characters | `VITE_BUILDBASE_ORG_ID` |
 | OAuth client id | Console, Authentication, your app's client | `VITE_BUILDBASE_CLIENT_ID` |
 | Redirect URL | Your app's callback route | `VITE_BUILDBASE_REDIRECT_URL` |
+| Environment key (optional) | Console, a development or staging environment's eight-letter key; empty is production | `VITE_BUILDBASE_ENVIRONMENT` |
 | OAuth client secret | Console, shown once | `BUILDBASE_CLIENT_SECRET`, server-side only, never `VITE_` |
 | Webhook signing secret | Console, Webhooks | `BUILDBASE_WEBHOOK_SECRET`, server-side only |
 

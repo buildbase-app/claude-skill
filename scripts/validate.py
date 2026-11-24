@@ -8,7 +8,8 @@ Checks:
      distribution/, eval/, mcp/)
   4. No known regression bugs reappear (e.g. switchToWorkspace(id))
   5. Descriptions fit the Agent Skills budget (1024 chars)
-  6. The webhook event catalog: webhooks.md matches webhook-events.json, and
+  6. The webhook event catalog: webhooks.md matches webhook-events.json, a
+     stated count of event names equals its count, and
      every backticked `domain.action` token whose domain is a catalog domain is
      a real event name
   7. Root AGENTS.md carries the position rule verbatim
@@ -115,7 +116,11 @@ def check_regressions():
         (r"getAuthContext\(", "getAuthContext is not an SDK helper; use the app's own auth() factory"),
         (r"result\.hasOverage", "IRecordUsageResponse has no hasOverage; that field is on the quota status shape"),
         # Claims that later became false.
-        (r"event\.id", "webhook deliveries carry no event id; dedupe on a hash of the raw body"),
+        # Reversed on 2026-11-24: deliveries now carry `id` (evt_..., also the
+        # x-buildbase-event-id header) and SDK 1.x types it, so the old ban on
+        # `event.id` became the wrong advice. What is banned now is the old claim.
+        (r"(have|has|carry|carries|with) no (unique )?event id|(there is|is there) no event id|no event id (in|on|to)",
+         "deliveries carry an `id` (evt_..., the x-buildbase-event-id header) since the platform added event ids; dedupe on it and fall back to a body hash only when it is absent"),
         (r"`IWorkspace` and `IUser` are \*\*not\*\*", "IUser/IWorkspace/ISettings are exported since SDK 0.0.53"),
         (r"\(Node\.js only\)", "webhook verification is runtime-agnostic since SDK 0.0.50"),
         (r"localdev_", "the self-host composes have no development fallbacks; secrets are required"),
@@ -124,7 +129,7 @@ def check_regressions():
         # these sends a developer looking for an export that was never built.
         # Requires a call paren, so naming one as non-existent stays allowed.
         (r"use(Collections?|Workflows?|EmailCampaigns?|Forms?|ShortLinks?|Assets?|Blogs?)\s*\(",
-         "that module has no React SDK surface; it is console and org-API only (see product/module-map.md)"),
+         "that hook does not exist; see product/module-map.md for the module's real surface (assets has only useUpload)"),
         (r"^\s+update_config:", "update_config is gone from the compose and is a Swarm-only key"),
         # Verified live against a tenant on 2026-09-23: `pagination=false`
         # returns the same {docs,...} object with limit 0, never a bare array,
@@ -149,9 +154,29 @@ def check_regressions():
         # Worded to miss the corrective prose ("there is no GET /v1/me"), which
         # names the wrong route in order to rule it out.
         (r"^(?!.*\b(no|not|never|does not exist|doesn't exist|nonexistent)\b).*/v1/me\b", "there is no GET /v1/me; the current user is GET /api/v1/public/profile and the health route is GET /health"),
-        (r"mcp\.buildbase\.app", "no MCP server is hosted at that name; the in-repo server runs locally"),
+        (r"mcp\.buildbase\.app", "nothing is hosted at that name; BuildBase's hosted MCP server is https://api.console.buildbase.app/mcp"),
+        # Became false in November 2026 (SDK 1.x and the platform release that
+        # added them): BuildBase hosts its console MCP server, and a coding
+        # agent can create a claimable organization with no account.
+        (r"(no|not a|never a) hosted (BuildBase )?MCP server|none exists; the in-repo server",
+         "BuildBase hosts an MCP server, https://api.console.buildbase.app/mcp (BuildBase Console); the in-repo mcp/ server is a separate local helper"),
+        (r"no claimable (cloud )?(workspace|organi[sz]ation)",
+         "claimable organizations exist: `npx @buildbase/sdk init --claim` (central POST /api/organizations/agent/identity)"),
         (r"replace Supabase", "BuildBase never replaces the app's database; it sits beside Supabase or Postgres"),
         (r"there is \*\*no permission-check endpoint", "GET workspaces/{id}/permissions/me exists since 0.0.73"),
+        # Read in the platform's code on 2026-11-24 (rateLimit/index.ts,
+        # server-core page-size.ts) and in the org API's generated spec. The
+        # platform's own admin-api.mdx still carries the first two; do not copy them.
+        (r"token exchange[^\n]{0,40}10 ?/ ?min|rate limited to 10/min",
+         "the token exchange limit is 120 a minute per IP (TOKEN_EXCHANGE_PER_MINUTE)"),
+        (r"[Cc]apped at 1000|clamped to 1000", "list pages are capped at 500 rows (MAX_PAGE_SIZE) on current servers"),
+        (r"no OpenAPI document", "the org API has a generated OpenAPI document at /api/v1/openapi/org-api.json"),
+        # 1.x ERROR_CODES.md: these were never thrown. Worded to miss the
+        # SKILL.md sentence that names them in order to rule them out.
+        (r"^(?!.*\b(never|not|gone|no longer)\b).*`(AUTH_REQUIRED|SESSION_EXPIRED|NETWORK_ERROR|WORKSPACE_NOT_FOUND)`",
+         "that error code was never thrown and is gone from the SDK's ERROR_CODES.md; branch only on codes it lists"),
+        (r"BuildBase publishable key", "BuildBase has no publishable key; ask for the org id, client id and redirect URL"),
+        (r"Eight of (the )?twenty modules", "six of the twenty modules have no React surface; assets and analytics have a narrow one"),
     ]
     roots = (SKILL_DIR, SELFHOST_DIR, os.path.join(ROOT, "AGENTS.md"), os.path.join(ROOT, "README.md"),
              DISTRIBUTION_DIR, EVAL_DIR, MCP_DIR)
@@ -282,7 +307,9 @@ def check_event_tokens(catalog):
     # Backticked tokens that share a domain word but are not events: the
     # parsed envelope's own fields, and SDK action-module calls that are
     # always written with their verb.
-    allow = {"event.event", "event.data", "event.timestamp"}
+    # `invoice.payment_failed` is Stripe's own name, written to rule it out
+    # (`invoice` became a BuildBase webhook domain in 1.x).
+    allow = {"event.event", "event.data", "event.timestamp", "event.id", "invoice.payment_failed"}
     sdk_verbs = {"get", "list", "create", "update", "delete", "send", "record", "recordBatch",
                  "consume", "purchase", "check", "resolve", "checkout", "cancel", "resume",
                  "can", "permissions", "getBalance", "getQuota", "getAll", "getLogs", "getPackages",
@@ -301,6 +328,34 @@ def check_event_tokens(catalog):
             if action in sdk_verbs:
                 continue
             errors.append(f"{rel}: `{token}` looks like a webhook event but is not in webhook-events.json")
+
+
+def check_stated_catalog_count(catalog):
+    """A stated number of webhook event names must be the catalog's own count.
+    The 112 the skill carried for seven weeks after the platform passed 250 is
+    why. A line naming the SDK's `WEBHOOK_EVENTS` may state that constant's
+    own, smaller count."""
+    if catalog is None:
+        return
+    want = catalog.get("count")
+    roots = (SKILL_DIR, DISTRIBUTION_DIR, EVAL_DIR, MCP_DIR,
+             os.path.join(ROOT, "AGENTS.md"), os.path.join(ROOT, "README.md"))
+    # "N webhook events" anywhere; a bare "N names" only on a line that is
+    # about webhooks or events (the MCP page counts tool names the same way).
+    pat = re.compile(r"\b(\d{2,3})\s+(?:webhook\s+events|event\s+types)\b")
+    bare = re.compile(r"\b(\d{2,3})\s+(?:webhook\s+)?(?:event\s+)?names\b")
+    topical = re.compile(r"(?i)webhook|\bevents?\b")
+    for p in md_files(*roots):
+        rel = os.path.relpath(p, ROOT)
+        for i, line in enumerate(open(p).read().splitlines(), 1):
+            if "WEBHOOK_EVENTS" in line:
+                continue
+            found = [m.group(1) for m in pat.finditer(line)]
+            if topical.search(line):
+                found += [m.group(1) for m in bare.finditer(line)]
+            for n in found:
+                if int(n) != want:
+                    errors.append(f"{rel}:{i}: states {n} event names; webhook-events.json has {want}")
 
 
 def check_agents_md():
@@ -377,6 +432,7 @@ def main():
     catalog = load_catalog()
     check_webhook_catalog(catalog)
     check_event_tokens(catalog)
+    check_stated_catalog_count(catalog)
     check_agents_md()
     check_no_secrets()
     check_eval_prompt()

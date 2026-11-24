@@ -4,11 +4,13 @@ This is the **operator's** half of BuildBase. An org API key authorizes as a rol
 
 Wrong page if: they are wiring auth into their product (that is [../sdk/quick-start.md](../sdk/quick-start.md)), or acting on behalf of one of *their* end users (that is [using-from-any-language.md](./using-from-any-language.md#acting-for-one-of-your-app-users)).
 
-> **Source:** [docs.buildbase.app/reference/admin-api](https://docs.buildbase.app/reference/admin-api). Every base path below is mirrored from `API_ROUTES` in the platform's shared constants.
+> **Source:** [docs.buildbase.app/reference/admin-api](https://docs.buildbase.app/reference/admin-api) and the platform's generated OpenAPI document for this API (`openapi/org-api.json` in the platform repo, served at `GET https://api.console.buildbase.app/api/v1/openapi/org-api.json` and by a self-hosted server at the same path). Every base path below is mirrored from `API_ROUTES` in the platform's shared constants (`scripts/api-routes.txt`, synced 2026-11-24).
+
+**A person, not a script?** BuildBase's hosted MCP server, `https://api.console.buildbase.app/mcp` ("BuildBase Console", OAuth sign-in as the person), drives the same console from an AI tool with no key at all: `list_orgs`, `console_get`, `console_write` for reversible changes and `console_destructive_change` for anything that deletes, sends or moves money, each of those approved by the person. Prefer it when the user is at the keyboard; use a key for unattended jobs.
 
 ## Contents
 
-- [Get a key](#get-a-key) - console or API, and give it a role
+- [Get a key](#get-a-key) - console or API, give it a role and a key type
 - [Authenticate](#authenticate) - one header
 - [What a key can reach](#what-a-key-can-reach) - and the limits that are real
 - [Response and error shapes](#response-and-error-shapes) - three of them, branch on status
@@ -20,7 +22,7 @@ Wrong page if: they are wiring auth into their product (that is [../sdk/quick-st
 
 ## Get a key
 
-Console: **Settings -> API tokens**. Or over the API:
+Console: **Settings -> API keys**. Or over the API:
 
 ```bash
 curl -X POST https://api.console.buildbase.app/api/tokens \
@@ -29,7 +31,7 @@ curl -X POST https://api.console.buildbase.app/api/tokens \
   -d '{"name":"changelog-bot","role":"content-editor"}'
 ```
 
-The body accepts `name` (required), `description`, `expiresAt` and `role`. Nothing else - `scopes` was removed and is rejected with a message pointing at API Roles.
+The body accepts `name` (required), `description`, `expiresAt`, `role` and `keyRole`. Nothing else - `scopes` was removed and is rejected with a message pointing at API Roles.
 
 **`POST` is the only response that ever contains the full secret.** A listing returns a masked `tokenPreview` and omits `token` entirely, so a key that is lost cannot be read back; delete it and make another.
 
@@ -46,6 +48,19 @@ Two consequences worth stating to the user before they mint anything:
 
 `expiresAt` is optional, validated as a future date, and re-checked on the cached path as well as the database, so an expired key stops working when it expires. Set one where you can.
 
+A role's name, of either kind, is lowercase letters, numbers, `-` and `_`, up to 64 characters. The role is resolved on every request, so a key whose role is wider than its creator's **current** role (after a demotion) is refused until that changes, and removing a person from the organization revokes every key they created.
+
+### Key type: `app-server` or `admin`
+
+Every key is one of two types, set with `keyRole` on create and fixed after:
+
+| `keyRole` | For | Reaches |
+|---|---|---|
+| `app-server` | Your app's backend: the server SDK and the people and billing routes it calls | Never an admin route, whatever its role |
+| `admin` | An owner's or admin's tool, such as a blueprint run | The admin routes too. Needs the `owner` or `admin` role, or `400` |
+
+The admin routes change what the organization sells or how it is set up: the catalog and its versions, coupons and promotion codes, the Stripe keys, organization settings, blueprints and environments. An app-server key gets `403 ADMIN_SCOPE_REQUIRED` there. Leave `keyRole` out and the key is `admin` when its role (or yours, with no role) is owner or admin, otherwise `app-server`. Only the console or an admin key can issue an admin key.
+
 ---
 
 ## Authenticate
@@ -59,7 +74,9 @@ curl https://api.console.buildbase.app/api/links \
 
 The token is `<orgId>:<secret>` - the org's ObjectId, a colon, then a 60-character secret. The router decides which credential it holds by looking for a colon, so an API token always contains one and a session JWT never may.
 
-Keep the key server-side. It carries real permissions and must never reach a browser.
+Keep the key server-side. It carries real permissions and must never reach a browser. This API answers no CORS headers to other origins, on purpose, so a browser cannot read it anyway.
+
+A key works only in the environment it was made in: a development or staging environment (`<orgId>-<key>`) is a separate tenant with its own keys, so make the key inside that environment. Validated keys are cached for five minutes, but deactivating, archiving, deleting or expiring one takes effect at once.
 
 ---
 
@@ -71,6 +88,8 @@ The limits that are actually real:
 
 - **The role governs organization permissions, not workspace ones.** Workspace permissions resolve from the person who created the key, and resource ownership treats the key as owning what they own. So a key issued as `viewer` by an admin is a viewer across the org and still an admin inside the workspaces that person belongs to. For a key that must be narrow inside a workspace too, create it from an account whose membership is already limited.
 - **A few actions are closed to custom roles by design**, for a person and a key alike: claiming ownership of a shared template, resetting a system template. Those need owner or admin however the permission is granted.
+- **A key acts only on its own organization**, even where its creator runs others: a call that names another organization, or changes an installation serving one, answers `403`.
+- **An app-server key never reaches the admin routes** (above), whatever its role.
 - **Control-plane calls resolve through the server that owns the key.** Keys live in the org's own database, so the control plane asks that server rather than reading it. The result is cached, but if the tenant server is unreachable, control-plane calls made with a key fail closed while a browser session keeps working.
 - **Permission coverage is not uniform.** Authentication and authorization are separate layers: every `/api` route needs a valid token, but only routes that opt in check a specific permission. Some groups authenticate without a permission check, so a valid key reaches them whatever role it carries. A key created by an `admin` bypasses permission checks entirely.
 
@@ -94,12 +113,14 @@ Three different error shapes, depending on which layer rejected the request:
 
 **Branch on the HTTP status, not the body shape.** Reading `body.error` alone misses the `success: false` family, and calling `.json()` on a 401 throws.
 
+Refusals that carry a `code` put it beside `message`: a `402` is `NO_ACTIVE_PLAN` (no plan or trial), `FEATURE_NOT_IN_PLAN` or `PLAN_LIMIT_REACHED`; an app-server key on an admin route is `403 ADMIN_SCOPE_REQUIRED`; a suspended organization's keys get `403 API_KEYS_SUSPENDED`. Every response carries an `x-request-id` header to quote to support.
+
 Two more traps:
 
-- **`503`, not `500`, is the server-error code** in the shared error map. Retry logic keyed on 500 misses BuildBase server errors.
+- **Server errors are `503` and `500`.** A failure a handler caught is `503` with `{ error: true, code: "server_error", message }` (the shared error map); an unexpected one reaches the global handler and is `500` with `code: "server_error"` and a `requestId`. Retry logic keyed on 500 alone misses most of them.
 - **A `200` does not always mean success.** Some handlers report failure in the body while returning 200. Workflow publishing is the clearest case: a validation failure is a `200` carrying `{ "success": false }`. Check `success` wherever it appears.
 
-Rate limits are **500 requests per 3 seconds per IP** globally, with stricter per-minute limits on auth (20/min login, 10/min OTP, 10/min token exchange), usage recording (60/min) and credit consumption (30/min). **Limits count per IP, not per token**, so every key behind one egress address shares a budget. A 429 carries the standard `RateLimit-*` headers; the legacy `X-RateLimit-*` ones are disabled.
+Rate limits stack: **500 requests per 3 seconds per IP** across all of `/api`, **1000 a minute per API key**, and **1200 writes a minute per organization** on this API (every key and console session together). Stricter per-minute limits sit on sign-in and codes (20 login, 10 OTP, 30 other auth steps), the token exchange (120, per IP), usage recording (60) and credit consumption (30). The global limit counts per IP, so every key behind one egress address shares that budget. A 429 answers `{ success: false, message, reason: "rate_limited", retryAfter }` with `Retry-After` and the standard `RateLimit-*` headers; the legacy `X-RateLimit-*` ones are disabled. Each operation's limiters are listed in the OpenAPI document's `x-rateLimit`.
 
 ---
 
@@ -110,16 +131,16 @@ Every collection endpoint runs the same handler, so this works identically acros
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `$page` | number | `1` | Page number, 1-indexed |
-| `$limit` | number | controller default (10) | Items per page. Capped at 1000 |
+| `$limit` | number | controller default (10) | Items per page. Capped at 500 on current servers |
 | `filter` | object | `{}` | Mongo-style query, flattened before use |
 | `sort` | object | - | Field to direction, e.g. `{"createdAt":-1}` |
 | `populate` | string | `''` | Space-separated reference fields to expand |
 | `projection` | object | `{}` | Fields to include or exclude |
-| `pagination` | boolean | `true` | `false` returns every match, unpaged |
+| `pagination` | boolean | `true` | `false` asks for the largest page (500), still paged |
 
 Note the `$` on `$page` and `$limit` and its absence on the others. Neither has a route-level default, so set `$limit` explicitly.
 
-**`$limit` is clamped, not refused.** Ask for more than 1000 and you get 1000, with nothing in the response saying so - the `limit` field reports what you were given, not what you asked for. A `0`, a negative or an unparseable value falls back to the controller default rather than erroring. Page through on `hasNextPage` rather than on arithmetic over a limit you assumed you had.
+**`$limit` is clamped, not refused.** Every list read is bounded at 500 rows a page on current servers (an older server capped `$limit` at 1000), with nothing in the response saying so - the `limit` field reports what you were given, not what you asked for. A `0`, a negative or an unparseable value falls back to the controller default rather than erroring. Page through on `hasNextPage` rather than on arithmetic over a limit you assumed you had.
 
 ```bash
 curl -G https://api.console.buildbase.app/api/links \
@@ -130,11 +151,11 @@ curl -G https://api.console.buildbase.app/api/links \
   --data-urlencode 'sort={"createdAt":-1}'
 ```
 
-**`filter` is not passed to Mongo verbatim.** It is flattened to dot-notation then re-nested one level, so operators survive (`{"status":{"$in":["a","b"]}}` works) but a path two or more levels deep does not round-trip. For a deep field send the dotted path yourself as a flat key: `{"owner.profile.city":"X"}`.
+**`filter` is not passed to Mongo verbatim.** Send it with brackets (`filter[archived]=false`) or as one JSON object; both are held to an operator allowlist, and a `filter` that is not a JSON object is a `400`. It is flattened to dot-notation then re-nested one level, so operators survive (`{"status":{"$in":["a","b"]}}` works) but a path two or more levels deep does not round-trip. For a deep field send the dotted path yourself as a flat key: `{"owner.profile.city":"X"}`.
 
 A paged response uses `mongoose-paginate-v2` labels: `{ docs, totalDocs, limit, page, totalPages, pagingCounter, hasPrevPage, hasNextPage, prevPage, nextPage }`, with `prevPage`/`nextPage` null at the ends.
 
-**`pagination=false` does not change that shape.** It returns every match, still wrapped in the same object, reporting `limit: 0`. The rows are always at `.docs`, there is no array form, and code that branches on `Array.isArray` takes the wrong branch every time.
+**`pagination=false` does not change that shape.** The rows are always at `.docs`, still wrapped in the same object, so code that branches on `Array.isArray` takes the wrong branch every time. On current servers (since saas-os/os#1891) it no longer returns every row: it returns the largest page, 500 rows, with `hasNextPage` and `nextPage` saying whether there is more, so page on until `hasNextPage` is false. An older server returned every match in that wrapper reporting `limit: 0`; code that pages on `hasNextPage` works on both.
 
 ---
 
@@ -145,24 +166,31 @@ Which base path serves which module, and where its docs are. Mirrored from `API_
 | Module | Base paths | Docs |
 |---|---|---|
 | Access Control (RBAC) | `/api/access-control` | [/permissions/overview](https://docs.buildbase.app/permissions/overview) |
-| Assets & Media | `/api/assets` | [/assets/overview](https://docs.buildbase.app/assets/overview) |
-| Authentication | `/api/auth` `/api/tokens` | [/authentication/overview](https://docs.buildbase.app/authentication/overview) |
-| Billing & Subscriptions | `/api/subscriptions` `/api/subscriptions/plans` `/api/payments` | [/billing/overview](https://docs.buildbase.app/billing/overview) |
+| Assets & Media | `/api/assets` `/api/storage/usage` `/api/storage/settings` | [/assets/overview](https://docs.buildbase.app/assets/overview) |
+| Authentication | `/api/auth` `/api/auth/methods` `/api/auth/domains` `/api/auth/sign-in-addresses` `/api/auth/audit-logs` `/api/tokens` | [/authentication/overview](https://docs.buildbase.app/authentication/overview) |
+| Enterprise SSO and Directory Sync (the owner's own WorkOS account) | `/api/auth/enterprise` | [/authentication/enterprise-sso](https://docs.buildbase.app/authentication/enterprise-sso) |
+| Billing & Subscriptions | `/api/subscriptions` `/api/subscriptions/plans` `/api/subscriptions/groups` `/api/subscriptions/items` `/api/subscriptions/overrides` `/api/subscriptions/import` `/api/subscriptions/actions` `/api/payments` `/api/organizations/payment/stripe` `/api/organizations/payment/stripe/coupons` | [/billing/overview](https://docs.buildbase.app/billing/overview) |
+| Add-ons and grants | `/api/subscriptions/offers` `/api/subscriptions/grants` `/api/subscriptions/claims` | [/billing/add-ons](https://docs.buildbase.app/billing/add-ons) |
+| Blueprints (configuration as a file) | `/api/blueprint` | [/blueprints/overview](https://docs.buildbase.app/blueprints/overview) |
 | Collections & Custom Data | `/api/collections` | [/collections/overview](https://docs.buildbase.app/collections/overview) |
+| Commerce (selling through Stripe Connect) | `/api/marketplace` | [/billing/selling](https://docs.buildbase.app/billing/selling) |
 | Content Management | `/api/blogs` `/api/docs` `/api/faqs` `/api/rich-content` `/api/testimonials` | [/content/overview](https://docs.buildbase.app/content/overview) |
 | Credits & Usage Metering | `/api/subscriptions/credits` `/api/subscriptions/credit-packages` | [/credits/overview](https://docs.buildbase.app/credits/overview) |
-| Email Campaigns | `/api/emails` `/api/emails/campaigns` `/api/emails/templates` `/api/emails/senders` `/api/emails/domains` | [/email/overview](https://docs.buildbase.app/email/overview) |
+| Email Campaigns | `/api/emails` `/api/emails/campaigns` `/api/emails/templates` `/api/emails/senders` `/api/emails/domains` `/api/emails/health` | [/email/overview](https://docs.buildbase.app/email/overview) |
 | Feature Flags | `/api/features` | [/feature-flags/overview](https://docs.buildbase.app/feature-flags/overview) |
 | Forms & Data Collection | `/api/forms` | [/forms/overview](https://docs.buildbase.app/forms/overview) |
-| Multi-Tenant Workspaces | `/api/workspaces` | [/workspaces/overview](https://docs.buildbase.app/workspaces/overview) |
+| Multi-Tenant Workspaces | `/api/workspaces` `/api/workspaces/notification-deliveries` | [/workspaces/overview](https://docs.buildbase.app/workspaces/overview) |
 | Push Notifications | `/api/organizations/push` `/api/organizations/push/campaigns` | [/push-notifications/overview](https://docs.buildbase.app/push-notifications/overview) |
 | Short Links | `/api/links` `/api/links-analytics` | [/links/overview](https://docs.buildbase.app/links/overview) |
-| Tracking & Tags | `/api/organizations/tracking/scripts` | [/tracking/overview](https://docs.buildbase.app/tracking/overview) |
+| Tracking & Tags | `/api/organizations/tracking/scripts` `/api/organizations/tracking/ad-conversions` | [/tracking/overview](https://docs.buildbase.app/tracking/overview) |
+| Web analytics | `/api/analytics/web` | [/tracking/web-analytics](https://docs.buildbase.app/tracking/web-analytics) |
 | User & Audience Management | `/api/users` `/api/audience` `/api/audience-lists` `/api/users-list` | [/users/overview](https://docs.buildbase.app/users/overview) |
 | Webhooks & Events | `/api/organizations/webhooks` | [/webhooks/overview](https://docs.buildbase.app/webhooks/overview) |
 | Workflow Automation | `/api/workflows` `/api/workflows/templates` `/api/workflows/definitions` `/api/workflows/instances` | [/workflows/overview](https://docs.buildbase.app/workflows/overview) |
 
-There is **no endpoint that lists endpoints**, and no OpenAPI document, so do not promise the user a machine-readable catalog. `GET /api/workflows/definitions` is the one self-describing exception: it publishes the workflow node catalog with inputs and outputs. For anything else, read the module's docs page and the shared list contract above.
+Two related surfaces take the same key but are not the console's routes: the **server API** (`POST /api/v1/server/emails/send` and the other routes under that prefix: transactional email, subscribers, the commerce back office; an API key only, never a console session, 300 requests a minute per key), wrapped by `createServerClient` in `@buildbase/sdk/server` and listed in [endpoints.md](./endpoints.md#org-token-routes-the-sdk-calls); and a named person's billing under `/api/subscriptions`, which `BuildBase({ apiToken })` calls. On central (`https://central.console.buildbase.app`), `POST /api/organizations/agent/identity` creates a **claimable organization** with no account at all (an API key, a claim URL and a claim code, answered once; deleted after 72 hours unless a person claims it); `npx @buildbase/sdk init --claim` calls it. That is how an agent starts before any person has signed up; the claim itself is always the person's.
+
+**Is there a machine-readable catalog?** Yes, now: the platform generates an OpenAPI 3.1 document for this API from its running router (`openapi/org-api.json` in the platform repo), served at `GET <serverUrl>/api/v1/openapi/org-api.json` (live on the hosted server as of 2026-11-24). Each operation names its credential (`x-auth`), the role grant it needs (`x-permission`, a resource and an action) and its rate limits (`x-rateLimit`). The docs site's per-operation reference covers the app API so far; the organization API's reference pages arrive later, so until then read the module's docs page, the document itself, and the shared list contract above. `GET /api/workflows/definitions` also publishes the workflow node catalog with inputs and outputs.
 
 ---
 
