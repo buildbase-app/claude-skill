@@ -27,7 +27,7 @@ This is everything about logging users in and knowing who they are: starting sig
 
 BuildBase uses OAuth2 - an industry-standard login handshake where your app never sees the user's password; it gets a one-time **code** it trades for proof of login. When a user clicks "Sign In":
 
-1. The SDK redirects to the BuildBase-hosted login page (in the provider's `locale`, or `auth.locale` when you set one)
+1. The SDK redirects to the BuildBase-hosted login page (in the provider's `locale`, or the `locale` you set in `auth`)
 2. The user authenticates (Google, magic link, passkey, enterprise SSO, etc. - configured in the dashboard)
 3. BuildBase redirects back to your `redirectUrl` with `?code=...` in the URL - a one-time code proving the user just logged in
 4. The SDK reads that `?code=` from the URL **automatically** when the provider mounts, then calls your `handleAuthentication(code)` callback (a function you supply that the SDK calls at the right moment). Because of this, your `redirectUrl` must point at a page the provider wraps; the docs use `/callback`.
@@ -231,7 +231,7 @@ For custom screens on the headless enterprise hooks, `useStepUp(scope, { workspa
 
 ## Access refusals and ended sessions
 
-Three kinds of refusal come from a person's company (enterprise single sign-on customers) rather than from the session itself. None of them is a reason to sign out, and the SDK says each one once.
+Three kinds of refusal come from a person's company (enterprise single sign-on customers) rather than from the session itself. The first two keep the session; the third ends it and the SDK signs out for you. Never sign out yourself on any of them.
 
 | Refusal | What it is | Read it with |
 |---|---|---|
@@ -248,7 +248,11 @@ function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <>
       {refusal && <div role="alert">{refusal.message}</div>}
-      {ended && <div role="status" onClick={dismiss}>{ended.message}</div>}
+      {ended && (
+        <p role="status">
+          {ended.message} <button onClick={dismiss}>OK</button>
+        </p>
+      )}
       {children}
     </>
   );
@@ -279,7 +283,7 @@ openWorkspaceSettings('enterprise');        // Single sign-on, when the org offe
 openWorkspaceSettings('danger');            // Delete (owner) or leave (other members)
 ```
 
-Since 1.0.0 a person in no workspace can still open their own sections: `openWorkspaceSettings()` and `openAccountBilling()` open the dialog on Profile once the workspace list has answered, instead of reporting "No current workspace". An app that wants its own "create a workspace first" prompt checks `currentWorkspace` before calling.
+Since 1.0.0 a person in no workspace can still open their own sections: `openWorkspaceSettings()` opens the dialog on Profile, and `openAccountBilling()` on their own Billing, once the workspace list has answered, instead of reporting "No current workspace". An app that wants its own "create a workspace first" prompt checks `currentWorkspace` before calling.
 
 ---
 
@@ -422,7 +426,7 @@ The settings dialog's account sections already cover the person's own sign-in. P
 
 - **`security`**: change password, phone number and text message codes, two-step sign-in (authenticator app, or text message where the app allows it), connected social accounts and Ethereum or Solana wallets, passkeys (rename and remove), and Delete account with a grace period. Each part can be hidden through `ui.settings.security` (`password`, `phone`, `twoStep`, `connectedAccounts`, `wallets`, `deleteAccount`, `passkeyRename`, `passkeyDelete`).
 - **`profile`**: name, email (with change of email where the server allows it), username where the app has usernames on, language, country, currency, timezone.
-- **Guests**: a guest (`user.isAnonymous`) becomes a real account, keeping their id, data and session, with `<GuestUpgrade />` or `useGuestUpgrade()`.
+- **Guests**: a guest (`useSaaSAuth().user.isAnonymous`) becomes a real account, keeping their id, data and session, with `<GuestUpgrade />` or `useGuestUpgrade()`.
 
 For your own UI the same calls are on `WorkspaceApi` (`getConnectedAccounts`, `linkAccount`, `completeAccountLink`, `addPhone`, `confirmPhone`, `getMfaStatus`, `renamePasskey`, `deletePasskey`, `requestAccountDeletion`, `setUsername`, ...). Refusals carry the server's sentence and a `code`; the SDK package's `docs/ERROR_CODES.md` lists them.
 

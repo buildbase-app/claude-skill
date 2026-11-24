@@ -244,7 +244,7 @@ function NotificationsPage() {
 }
 ```
 
-- `<NotificationInbox />` props: `workspaceId`, `pageSize` (default 20, at most 100), `pollIntervalMs`, `live`, `title` and `description` (`null` hides), `showFilter`, `onSelect(item)` (default opens `item.link`; pass your router for an app path), `emptyLabel`, `markSeenOnView`, `compact`, `className`.
+- `<NotificationInbox />` props: `workspaceId`, `pageSize` (default 20, at most 100), `pollIntervalMs`, `live`, `title` and `description` (`null` hides), `showFilter`, `onSelect(item)` (by default opens the item's `link`; pass your router's navigation for an app path), `emptyLabel`, `markSeenOnView`, `compact`, `className`.
 - `<NotificationBell />` takes the same scope options plus `align`, `maxCount` (default 99, then "99+") and `inboxProps`.
 - `useNotifications(options)` is the hook behind both: `{ notifications, unread, counts: { unread, unseen }, loading, loadingMore, hasMore, error, refresh, loadMore, markRead, markUnread, archive, markAllRead, markSeen }`. Every consumer of the same scope shares one list, so a bell and an inbox page make one request and a read in either updates both. New items arrive over one live connection per tab (`live`, default true), with polling every minute while the tab is visible as the fallback (`pollIntervalMs`, 0 to turn it off).
 - `useNotificationsApi()` is the memoized `NotificationsApi` (`list`, `counts`, `markRead`, `markUnread`, `archive`, `unarchive`, `markAllRead`, `markSeen`).

@@ -1,37 +1,38 @@
-# Top 30 Integration Mistakes
+# Top Integration Mistakes
 
-Organized from most common to most dangerous. Most bugs are in the first two categories.
+Organized from most common to most dangerous. Most bugs are in the first two categories. Mistakes 31 to 36 come from surfaces added in the 1.x releases (`@buildbase/sdk` 1.8.0 is current).
 
 ## Contents
 
-- **Setup & Configuration (1–8)** — orgId format, clientSecret in NEXT_PUBLIC_, missing CSS import, wrong version string, nested provider, missing auth endpoints, cookie name mismatch, env vars not loaded in production
-- **Authentication (9–14)** — handleAuthentication return value, getSession undefined vs null, cookie not httpOnly, wrong token URL, signout not clearing cookie, silent code-exchange failure
-- **Workspace & Billing (15–19)** — setCurrentWorkspace vs switchToWorkspace, checking features before workspace loads, onWorkspaceChange JWT, workspace mode mismatch, subscription not immediate after checkout
-- **Feature Flags & Quota (20–24)** — feature slug missing in dashboard, feature not on plan, quota slug undefined, client-side recording of server-validated actions, missing idempotencyKey
-- **Security Vulnerabilities (25–28)** — clientSecret exposed to browser, sessionId in localStorage, no auth check in API routes, webhook not signature-verified
-- **Performance & Architecture (29–30)** — BuildBase() called per request, excessive re-renders from subscription context
+- **Setup & Configuration (1 to 8)** - orgId format, clientSecret in NEXT_PUBLIC_, missing CSS import, wrong version string, nested provider, missing auth endpoints, cookie name mismatch, env vars not loaded in production
+- **Authentication (9 to 14)** - handleAuthentication return value, getSession undefined vs null, cookie not httpOnly, wrong token URL, signout not clearing cookie, silent code-exchange failure
+- **Workspace & Billing (15 to 19)** - setCurrentWorkspace vs switchToWorkspace, checking features before workspace loads, onWorkspaceChange JWT, workspace mode mismatch, subscription not immediate after checkout
+- **Feature Flags & Quota (20 to 24)** - feature slug missing in dashboard, feature not on plan, quota slug undefined, client-side recording of server-validated actions, missing or per-attempt idempotencyKey
+- **Security Vulnerabilities (25 to 28)** - clientSecret exposed to browser, your own sessionId copy in localStorage, no auth check in API routes, webhook not signature-verified
+- **Performance & Architecture (29 to 30)** - BuildBase() called per request, excessive re-renders from subscription context
+- **New Surfaces in 1.x (31 to 36)** - plan-name gates for capabilities, lapsed subscriptions and the live default, entitlement gates as enforcement, half-configured environments, server email from the browser, a guessed regional serverUrl
 
 ---
 
-## Setup & Configuration (Mistakes 1–8)
+## Setup & Configuration (Mistakes 1 to 8)
 
 ### Mistake 1: Wrong orgId Format
 
-**What the developer did**: Set `orgId="mycompany"` or `orgId="my-app-name"` — a human-readable name.
+**What the developer did**: Set `orgId="mycompany"` or `orgId="my-app-name"` - a human-readable name.
 
-**Symptom**: App crashes on load: `Error: Invalid orgId. Must be a 24-character hexadecimal string.`
+**Symptom**: The provider throws on load, `Invalid orgId: "mycompany". Must be a valid MongoDB ObjectId (24 hexadecimal characters).`, and the SDK's error card replaces the app. (An empty or unset `orgId` does not throw: the app renders, the console warns that the prop is missing, and every hook reports `not_configured` until it is set.)
 
 **Why it happens**: The prop name sounds like an identifier you'd name yourself. The 24-hex-char constraint isn't obvious from the prop name alone.
 
 **Detection**: Check `process.env.NEXT_PUBLIC_BUILDBASE_ORG_ID?.length`. Must be exactly 24. Log `JSON.stringify(orgId)` to check for hidden whitespace or quotes.
 
-**Recovery**: Open Buildbase dashboard → Settings → General → Organization ID. Copy the value exactly (it looks like `64a3f5b2c1d4e7890abc1234`). Paste into env var.
+**Recovery**: Open Buildbase dashboard → Settings → General → Organization ID. Copy the value exactly (it looks like `64a3f5b2c1d4e7890abc1234`). Paste into env var. A development or staging environment is not a different org id: keep the 24-hex `orgId` and pass the environment's key as `environment`.
 
 ---
 
 ### Mistake 2: clientSecret in NEXT_PUBLIC_ Env Var
 
-**What the developer did**: Set `NEXT_PUBLIC_BUILDBASE_CLIENT_SECRET=sk_...` in `.env.local`.
+**What the developer did**: Set `NEXT_PUBLIC_BUILDBASE_CLIENT_SECRET=<the secret>` in `.env.local`.
 
 **Symptom**: App works normally, but the secret is embedded in the JavaScript bundle and visible to anyone who opens browser DevTools → Sources.
 
@@ -53,7 +54,7 @@ Organized from most common to most dangerous. Most bugs are in the first two cat
 
 **Detection**: Search for `buildbase/css` in your codebase: `grep -r "buildbase/css" .`. If no results, the import is missing.
 
-**Recovery**: Add `import '@buildbase/sdk/css'` to `app/layout.tsx` (Next.js App Router) or `pages/_app.tsx` (Pages Router). Must be at the top level, not inside a `'use client'` component.
+**Recovery**: Add `import '@buildbase/sdk/css'` once: in the client component that renders `SaaSOSProvider` (the `'use client'` file `npx @buildbase/sdk init` writes has it at the top), or in `app/layout.tsx` (Next.js App Router) or `pages/_app.tsx` (Pages Router). Either works; what matters is that it is imported once, somewhere every page loads.
 
 ---
 
@@ -61,13 +62,13 @@ Organized from most common to most dangerous. Most bugs are in the first two cat
 
 **What the developer did**: Passed `version="v2"`, `version="1"`, or omitted the `version` prop on `SaaSOSProvider`.
 
-**Symptom**: App throws a validation error on load about an invalid version.
+**Symptom**: The provider throws on load: `Invalid version: "v2". Only "v1" is currently supported.` A bare `version="v1"` passes at runtime but fails `tsc`, because the prop is typed as the `ApiVersion` enum.
 
 **Why it happens**: The version requirement feels like boilerplate. Developers guess the format.
 
-**Detection**: Check the `version` prop value on `SaaSOSProvider`. Only `'v1'` or `ApiVersion.V1` (imported from `@buildbase/sdk`) are valid.
+**Detection**: Check the `version` prop value on `SaaSOSProvider`. It must be `ApiVersion.V1`.
 
-**Recovery**: Use `version={ApiVersion.V1}` (import `ApiVersion` from `@buildbase/sdk`) or `version="v1"`. The `ApiVersion` enum is preferred as it's refactor-safe.
+**Recovery**: Use `version={ApiVersion.V1}` and import `ApiVersion` from `@buildbase/sdk`, the root entry. Importing it from `@buildbase/sdk/react` into a server layout fails `next build`, because `/react` is a `"use client"` boundary.
 
 ---
 
@@ -96,11 +97,11 @@ Organized from most common to most dangerous. Most bugs are in the first two cat
 **Detection**: Make a GET request to `/api/auth/session` in the browser. If you get a 404, the route doesn't exist.
 
 **Recovery**: Create three route handlers:
-- `app/api/auth/token/route.ts` — POST, exchanges code, sets cookie
-- `app/api/auth/session/route.ts` — GET, reads cookie, returns sessionId
-- `app/api/auth/signout/route.ts` — POST, clears cookie
+- `app/api/auth/token/route.ts` - POST, exchanges code, sets cookie
+- `app/api/auth/session/route.ts` - GET, reads cookie, returns sessionId
+- `app/api/auth/signout/route.ts` - POST, clears cookie
 
-See `knowledge/patterns/nextjs-integration.md` for full implementations.
+`npx @buildbase/sdk init` writes all three (and is idempotent); `createAuthHandler` from `@buildbase/sdk` (1.6.0) is the three as one `(request) => Response | null` handler for TanStack Start, Workers, Hono or a Vite app's serverless functions. Outside a project that already has the SDK installed, always run `npx @buildbase/sdk <command>`, never `npx buildbase`: the unscoped `buildbase` package on npm is not ours. See `knowledge/patterns/nextjs-integration.md` for full implementations.
 
 ---
 
@@ -114,7 +115,7 @@ See `knowledge/patterns/nextjs-integration.md` for full implementations.
 
 **Detection**: In browser DevTools → Application → Cookies, check what cookie name is actually set after login. Compare to what `/api/auth/session` reads and what the factory's `getSessionId` reads.
 
-**Recovery**: Define the cookie name as a single constant: `export const SESSION_COOKIE_NAME = 'bb-session-id'` in `lib/buildbase.ts`. Import and use it in all three auth routes and the factory.
+**Recovery**: Use one name everywhere. The SDK exports it: `SESSION_COOKIE` (`'bb-session-id'`) from `@buildbase/sdk`, or `sessionCookieName(environment)` when the app sets a development or staging `environment` (it appends `-<key>`, so two environments on localhost never read each other's session). Import it in all three auth routes and the factory's `getSessionId`.
 
 ---
 
@@ -133,7 +134,7 @@ See `knowledge/patterns/nextjs-integration.md` for full implementations.
 
 That happens because `src/lib/buildbase.ts` calls `BuildBase()` at module scope, and Next imports every route module while collecting page data. No env, no `serverUrl`, and the factory throws during the build. Verified in a clean container: the same project builds and serves correctly the moment `.env.local` exists.
 
-If the build does succeed with the vars missing at runtime instead, the older symptom applies: `Invalid orgId`, `Invalid serverUrl`, or `Cannot read properties of undefined`, working fine in local dev.
+An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the first call that reaches the platform throws an error naming `NEXT_PUBLIC_BUILDBASE_ORG_ID` / `BUILDBASE_ORG_ID`. In the browser, a missing `orgId` or `serverUrl` renders the app with a console warning and hooks that report `not_configured`. A malformed value still throws (`Invalid orgId`, `Invalid serverUrl`).
 
 **Why it happens**: `.env.local` is gitignored by default. Developers forget to set the same vars in their hosting provider (Vercel, Railway, Fly.io).
 
@@ -143,7 +144,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 ---
 
-## Authentication (Mistakes 9–14)
+## Authentication (Mistakes 9 to 14)
 
 ### Mistake 9: handleAuthentication Not Returning sessionId
 
@@ -183,7 +184,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: In browser DevTools → Application → Cookies → localhost. Check if the `bb-session-id` cookie has the HttpOnly checkbox checked. If not, it's missing the flag.
 
-**Recovery**: In your `/api/auth/token` route, use `response.cookies.set()` with `{ httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' }`. Never use `document.cookie` to set session cookies.
+**Recovery**: In your `/api/auth/token` route, use `response.cookies.set()` with `{ httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' }`. Never use `document.cookie` to set session cookies. (The browser SDK still keeps its own working copy in `localStorage` for its API calls, so the cookie flag is one layer, not the whole defence against injected scripts.)
 
 ---
 
@@ -197,7 +198,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: Check the fetch call in `/api/auth/token`. Log the full URL being called and the response status.
 
-**Recovery**: The correct endpoint is `${process.env.NEXT_PUBLIC_BUILDBASE_SERVER_URL}/api/v1/auth/token`. Body must include `code`, `clientId`, `clientSecret`, and `orgId`.
+**Recovery**: Don't hand-write the fetch. Since 1.6.0, `exchangeAuthCode({ code, orgId, clientId, clientSecret, environment?, serverUrl? })` from `@buildbase/sdk` (or `BuildBase().exchangeCode({ code, clientId, clientSecret })`) does the exchange and returns `{ sessionId }`. If you must write it yourself, the endpoint is `${process.env.NEXT_PUBLIC_BUILDBASE_SERVER_URL}/api/v1/auth/token` and the body includes `code`, `clientId`, `clientSecret`, and `orgId`.
 
 ---
 
@@ -225,11 +226,11 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: Add logging to the token route. Check what the Buildbase server returns when the code exchange fails. Ensure non-200 responses are returned on failure.
 
-**Recovery**: Return `NextResponse.json({ error: 'Auth failed' }, { status: 401 })` when the exchange fails. The SDK will surface this as an auth error rather than silently doing nothing.
+**Recovery**: Return `NextResponse.json({ error: 'Auth failed' }, { status: 401 })` when the exchange fails. The SDK will surface this as an auth error rather than silently doing nothing. `exchangeAuthCode` throws an `AuthCodeExchangeError` carrying the platform's `status`, `code` and sentence ("Invalid client secret", "Invalid or expired authorization code"), never the secret: log the sentence and answer with an error status.
 
 ---
 
-## Workspace & Billing (Mistakes 15–19)
+## Workspace & Billing (Mistakes 15 to 19)
 
 ### Mistake 15: setCurrentWorkspace Instead of switchToWorkspace
 
@@ -247,7 +248,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 ### Mistake 16: Checking Workspace Features Before Workspace Loads
 
-**What the developer did**: Checks `isFeatureEnabled('analytics')` or renders `WhenWorkspaceFeatureEnabled` before `currentWorkspace` is set.
+**What the developer did**: Reads `currentWorkspace?.features?.analytics` or renders `WhenWorkspaceFeatureEnabled` before `currentWorkspace` is set.
 
 **Symptom**: Feature flag always returns false on first load. After workspace selection, it works correctly.
 
@@ -255,7 +256,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: Log `currentWorkspace` in the component where the feature check fails. If it's null when the check runs, that's the cause.
 
-**Recovery**: Guard feature checks behind workspace loading: `if (!currentWorkspace) return null`. Or use `WhenWorkspaceFeatureEnabled` which handles loading state internally.
+**Recovery**: Guard feature checks behind workspace loading: `if (!currentWorkspace) return null`. Or use `WhenWorkspaceFeatureEnabled` which handles loading state internally. (`useUserFeatures().isFeatureEnabled` reads the per-user flags, not the workspace's.)
 
 ---
 
@@ -283,7 +284,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: The workspace setup step in the user onboarding flow reveals the issue. If users see workspace creation prompts when they shouldn't, or can't invite members when they should, the mode is wrong.
 
-**Recovery**: Change workspace mode in Buildbase dashboard → Settings → Workspace. Personal mode = one user, one auto-created workspace (B2C). Platform mode = multi-user, multi-workspace (B2B).
+**Recovery**: Change workspace mode in Buildbase dashboard → Workspaces → Settings → Mode. Personal mode = one user, one auto-created workspace (B2C). Platform mode = multi-user, multi-workspace (B2B). A new org starts in Personal; Platform needs a BuildBase plan that includes it, and switching back to Personal is refused while anyone owns more than one workspace. A consumer app usually sells the plan to the person (`{ user: true }`) rather than to the workspace.
 
 ---
 
@@ -297,11 +298,11 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: The subscription state is correct after 2-5 seconds but wrong immediately after the Stripe redirect.
 
-**Recovery**: Don't check subscription state immediately after checkout redirect. Either: (1) poll `subscription.get(workspaceId)` with a short delay, (2) handle the server-side webhook (`subscription.created`/`subscription.updated`) to update your own records, or (3) show a "processing..." state for a few seconds before redirecting to a confirmed state. (Note: there is no client `subscription:changed` event via `handleEvent` — use webhooks or polling.)
+**Recovery**: Don't check subscription state immediately after checkout redirect. On the client, let the SDK confirm the return: since 1.2.0 the provider recognises the return from Stripe and confirms it (`ui.behavior.checkoutReturn`, a dialog by default), `useCheckoutStatus()` and `<CheckoutStatus />` read the same state on your own page, and `ui.behavior.onCheckoutComplete(result)` runs once on `complete`. On the server, handle the webhook (`subscription.created`/`subscription.updated`) to update your own records, or poll `subscription.get(workspaceId)` with a short delay. (Note: there is no client `subscription:changed` event via `handleEvent` - use the checkout return, webhooks or polling.)
 
 ---
 
-## Feature Flags & Quota (Mistakes 20–24)
+## Feature Flags & Quota (Mistakes 20 to 24)
 
 ### Mistake 20: Feature Slug Doesn't Exist in Dashboard
 
@@ -327,7 +328,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: Dashboard → Features → click "dark-mode" → check which plans include it. If none, that's the issue.
 
-**Recovery**: In the Buildbase dashboard, edit each plan that should include the feature. Add the feature to the plan's feature list.
+**Recovery**: In the Buildbase dashboard, edit each plan that should include the feature. Add the feature to the plan's feature list. For a feature sold on a plan, `WhenEntitled` / `useEntitlement` (1.0.0) answer from the plan plus add-ons and overrides; note that they treat a slug the plan does not mention as `unknown` and allow it by default (see Mistake 33).
 
 ---
 
@@ -369,11 +370,11 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **Detection**: Trigger the action twice in rapid succession (double-click). Check the quota usage counter — if it increments by 2, there's no idempotency protection.
 
-**Recovery**: Add `idempotencyKey: generateUniqueId()` to every `usage.record` call for user-initiated or retryable actions. Use a UUID tied to the specific request (not the user ID or workspace ID).
+**Recovery**: Pass an `idempotencyKey` on every `usage.record`, `usage.recordBatch`, `credits.consume` and `credits.reserve` call, derived from the unit of work: `gen-<requestId>`, `email-<messageId>`, the job's own id. Not the user ID or workspace ID (too broad), and not a fresh UUID generated inside the call (a retry then carries a new key and bills twice). The SDK does not retry these POSTs for you, so your retry must send the first attempt's key. A replayed `usage.record` answers 200 with `used: 0`.
 
 ---
 
-## Security Vulnerabilities (Mistakes 25–28)
+## Security Vulnerabilities (Mistakes 25 to 28)
 
 ### Mistake 25: clientSecret Exposed to Browser
 
@@ -389,17 +390,17 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 ---
 
-### Mistake 26: sessionId in localStorage
+### Mistake 26: Your Own sessionId Copy in localStorage
 
-**What the developer did**: Stored the sessionId in `localStorage` after receiving it from the `/api/auth/token` response.
+**What the developer did**: Stored the sessionId in `localStorage` after receiving it from the `/api/auth/token` response, and made that copy the source of truth (`getSession` reads it, their own API reads it from a header).
 
-**Symptom**: No immediate issue — auth works. But any XSS attack can read `localStorage.getItem('sessionId')` and steal the session.
+**Symptom**: No immediate issue - auth works. But the session no longer survives in a place the app's server can read, signing out clears one copy and not the other, and any injected script can read `localStorage.getItem('sessionId')`.
 
 **Why it happens**: JWT-in-localStorage is common in tutorials. Looks equivalent to cookie storage.
 
-**Detection**: Check `localStorage` in DevTools. If `sessionId` or `bb-session-id` appears there, it's wrong.
+**Detection**: Check your own code for `localStorage.setItem` with the session. In DevTools, a key your code wrote (`sessionId`, `bb-session-id`) is the problem; `saas-session-id` is the SDK's own working copy, which it writes after sign-in to send as the `x-session-id` header, and is expected.
 
-**Recovery**: Never store the sessionId in localStorage. The `/api/auth/token` route sets an httpOnly cookie. The `getSession` callback calls `/api/auth/session` to read it server-side. JavaScript never touches the token directly.
+**Recovery**: Don't keep your own copy. The `/api/auth/token` route sets an httpOnly cookie, and the `getSession` callback calls `/api/auth/session` to read it server-side; that cookie is the source of truth on every page load. Because the SDK still holds a working copy in the browser, keep the usual defences against injected scripts (a Content-Security-Policy, no untrusted script).
 
 ---
 
@@ -421,7 +422,7 @@ If the build does succeed with the vars missing at runtime instead, the older sy
 
 **What the developer did**: Built a webhook handler that processes events without verifying the `x-buildbase-signature` header.
 
-**Symptom**: No immediate issue — the app works. But any malicious party can send fake webhook events (fake subscription.created, fake subscription.canceled) to your endpoint.
+**Symptom**: No immediate issue - the app works. But any malicious party can send fake webhook events (a fake `subscription.created`, a fake `subscription.canceled`) to your endpoint.
 
 **Why it happens**: Signature verification feels like an optional hardening step.
 
@@ -437,12 +438,15 @@ const event = parseWebhookEvent({
   secret: process.env.BUILDBASE_WEBHOOK_SECRET!,
 });
 if (!event) return Response.json({ error: 'Invalid webhook' }, { status: 401 });
-// event.event is the type string; event.data is the payload
+// event.event is the type string; event.data is the payload.
+// event.id (evt_..., also the x-buildbase-event-id header) is the same on every
+// retry: process each id once. It is optional, absent on a delivery from an
+// older platform release, so fall back to a hash of the raw body then.
 ```
 
 ---
 
-## Performance & Architecture (Mistakes 29–30)
+## Performance & Architecture (Mistakes 29 to 30)
 
 ### Mistake 29: BuildBase() Called Per Request Instead of as a Singleton
 
@@ -464,8 +468,94 @@ if (!event) return Response.json({ error: 'Invalid webhook' }, { status: 401 });
 
 **Symptom**: The app re-renders frequently when subscription data loads or refetches. Noticeable performance issues on slow networks where subscription data refetches often.
 
-**Why it happens**: React context causes all consumers to re-render when context changes. Subscription data refetches on workspace change and on a regular poll interval.
+**Why it happens**: React context causes all consumers to re-render when context changes. Subscription data refetches on workspace change and whenever it is invalidated (a plan change, or `invalidateSubscription()` after a server-side change); there is no poll interval.
 
 **Detection**: Use React DevTools Profiler. If many components highlight on subscription data updates, context consumption is too broad.
 
 **Recovery**: Memoize components that use subscription data with `React.memo`. Extract subscription checks into a single gate component (`WhenSubscription`) rather than reading the raw context in many places. Use gate components for rendering decisions — they're optimized for this. Access the raw context only when you genuinely need the subscription data object, not just a boolean.
+
+---
+
+## New Surfaces in 1.x (Mistakes 31 to 36)
+
+### Mistake 31: Gating a Capability on the Plan Name
+
+**What the developer did**: Wrapped a paid feature in `<WhenSubscriptionToPlans plans={['pro', 'enterprise']}>`, or checked `response?.plan?.slug === 'pro'`.
+
+**Symptom**: A customer who bought the feature as an add-on, or a plan renamed or added later, is locked out (or let in) wrongly. Every pricing change needs a code change.
+
+**Why it happens**: Plan names are what the developer sees on the pricing page. The entitlement hooks arrived in 1.0.0, after most tutorials were written.
+
+**Detection**: Search for `WhenSubscriptionToPlans` and `plan?.slug` around features that are sold.
+
+**Recovery**: Gate the capability by its slug: `<WhenEntitled slug="advanced-analytics">`, `useEntitlement('advanced-analytics')`, or `useLimit('max-projects', { current })` for a ceiling. They answer from the server's composed entitlement (the plan, add-ons and overrides). Keep `WhenSubscriptionToPlans` for showing which plan someone is on.
+
+---
+
+### Mistake 32: Expecting a Lapsed Subscription to Pass `WhenSubscription`
+
+**What the developer did**: Put the "update your card" screen inside `<WhenSubscription>`, or relied on a canceled, unpaid or paused subscription still opening a gate.
+
+**Symptom**: A customer whose payment failed sees the "subscribe" branch instead of the "fix your card" screen.
+
+**Why it happens**: Since 1.0.0 the subscription gates count only a **live** subscription by default: `active`, `trialing` until the trial ends, and `past_due` while Stripe retries. `canceled`, `unpaid`, `paused` and `incomplete` do not count, nor a trial past its end date. Before, every status counted.
+
+**Detection**: The gate behaves differently for a test customer with a failed payment than it did on an older SDK.
+
+**Recovery**: For screens a lapsed customer still needs, pass `status="any"` (`<WhenSubscription status="any">`). `WhenNoSubscription` is the exact complement for the same `status`.
+
+---
+
+### Mistake 33: Treating an Entitlement Gate as Enforcement
+
+**What the developer did**: Hid a premium action behind `<WhenEntitled slug="exports">` and trusted that to stop non-paying users, or misspelled the slug.
+
+**Symptom**: Users without the plan can still call the API route directly. With a misspelled or not-yet-created slug, everyone sees the feature.
+
+**Why it happens**: The entitlement gates fail open on purpose: nothing locks while loading, and a slug the plan does not mention reads as `unknown`, which `WhenEntitled` renders as entitled (`whileUnknown` defaults to `'allow'`).
+
+**Detection**: Render the gate with a slug that does not exist. If the children show, you are relying on the default.
+
+**Recovery**: Enforce on the server too: `entitlements.check` from the `BuildBase()` factory in the route, and the platform's own 402 refusals for plan limits. In the UI, pass `strictAbsent` (or `<SaaSOSProvider entitlement={{ strictAbsent: true }}>`) or `whileUnknown="deny"` where an unknown slug must lock.
+
+---
+
+### Mistake 34: An Environment Set on One Half of the App
+
+**What the developer did**: Set `environment` (a development or staging environment's key) on `SaaSOSProvider` but not on `BuildBase()` and the auth routes, or the other way round.
+
+**Symptom**: Sign-in completes in the browser but the server sees no session, or test users and test data show up in production.
+
+**Why it happens**: The SDK sends `<orgId>-<key>` only where `environment` is configured; unset means production, and it is never inferred from `NODE_ENV`. Each environment has its own database, users and sign-in client, so a session from one does not exist in another.
+
+**Detection**: Compare the `environment` value on the provider, the factory, `exchangeAuthCode` / `createAuthHandler` and the session cookie name (`sessionCookieName(environment)`).
+
+**Recovery**: Read the key from one env var (for example `NEXT_PUBLIC_BUILDBASE_ENVIRONMENT`) and pass it everywhere. `npx @buildbase/sdk init --dev` (after `npx @buildbase/sdk login`) wires an app to one environment consistently.
+
+---
+
+### Mistake 35: Sending Transactional Email from the Browser
+
+**What the developer did**: Looked for an email hook in `@buildbase/sdk/react`, or called the org API with a secret key from client code to send a receipt or add a subscriber.
+
+**Symptom**: No such hook exists, or the org API token ends up in the browser bundle.
+
+**Why it happens**: Email feels like an app feature, and the SDK has hooks for almost everything else.
+
+**Detection**: An org API token (`<orgId>:<secret>`) or `@buildbase/sdk/server` imported anywhere in client code.
+
+**Recovery**: Send from the server with `createServerClient({ serverUrl, apiToken })` from `@buildbase/sdk/server` (1.0.0): `emails.send({ to: { email }, templateId, data }, { idempotencyKey })` for one email from a console template, `subscribers.upsert(...)` for the audience. The key's API role needs `emails_api_sends` to send and `audience` for subscribers. The entry throws under the `browser` export condition.
+
+---
+
+### Mistake 36: Guessing a Regional serverUrl
+
+**What the developer did**: Built a hostname for another region by pattern, or hard-coded one organisation's `serverUrl` into an app that serves many.
+
+**Symptom**: Requests fail with `421 misdirected_request`, or never connect.
+
+**Why it happens**: Each organisation lives in one cell, and `serverUrl` must be that cell's URL. Today every organisation is on `https://api.console.buildbase.app`.
+
+**Detection**: A `421` whose body names a different `serverUrl`.
+
+**Recovery**: Use the URL the console (or central) gives for the organisation; never guess one. An app serving one organisation bakes it into the build; one serving many resolves it per request on the server with `resolveServerUrl({ orgId, centralUrl, apiKey })`, and on a `421` calls `clearResolvedServerUrl(...)` and resolves once more. `region` on the provider or the factory is a label only; it never routes a request.

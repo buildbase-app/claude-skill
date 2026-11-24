@@ -17,7 +17,7 @@ Make a BuildBase-powered app connectable by AI agents (Claude, ChatGPT, Cursor, 
 - [Check, connect and list: the `agent` commands](#check-connect-and-list-the-agent-commands): `agent doctor`, `agent-ready check`, `agent setup`, `agent listing`
 - [Regions and environments](#regions-and-environments): `serverUrl` and `environment`
 - [Reference implementation](#reference-implementation): the public starter
-- [Failure library](#failure-library): every one observed for real
+- [Failure library](#failure-library): what fails, why, and the fix
 - [Security invariants](#security-invariants): what to tell a worried developer
 
 ---
@@ -102,7 +102,7 @@ Agent -> POST /api/mcp (no token) -> 401 + WWW-Authenticate: resource_metadata=.
 | `app/api/auth/agent-token/route.ts` | The `applicationTokenUrl`: `handleAppTokenRequest` with `BUILDBASE_AGENT_CLIENT_SECRET`, `mintAgentToken` with `SYSTEM_SECRET` |
 | `app/api/auth/agent-revoke/route.ts` | The `applicationRevokeUrl`: `handleAppRevokeRequest` |
 
-`.env.local` gets a generated `SYSTEM_SECRET` (only when unset) and, with `--claim`, `BUILDBASE_AGENT_CLIENT_ID` and `BUILDBASE_AGENT_CLIENT_SECRET` (the platform makes the agent client in the same create). Vite, TanStack Start and Express get the env names and a pointer to the guide's recipes. Nothing secret is printed, and secrets are never flags.
+`.env.local` gets a generated `SYSTEM_SECRET` (only when unset) and, with `--claim`, `BUILDBASE_AGENT_CLIENT_ID` and `BUILDBASE_AGENT_CLIENT_SECRET` (the platform makes the agent client in the same create when it can; otherwise init says to make it in the console). Vite, TanStack Start and Express get the env names and a pointer to the guide's recipes. Nothing secret is printed, and secrets are never flags.
 
 Agents can sign in only after a person turns it on: the "Let AI agents sign in" tick when claiming, or the console's **Agent readiness** tab (step 5 below). Once the app is deployed, run `npx @buildbase/sdk agent doctor --url <site>/api/mcp --site <site>`.
 
@@ -120,7 +120,7 @@ Agents can sign in only after a person turns it on: the "Let AI agents sign in" 
 
 ```ts
 import { createAgentStack, defineMcpTool } from '@buildbase/sdk/mcp';
-import { z } from 'zod';
+import { z } from 'zod'; // zod 4, the major the SDK depends on
 
 export const agent = createAgentStack({
   serverUrl: process.env.NEXT_PUBLIC_BUILDBASE_SERVER_URL!,   // the org's regional URL
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
 }
 ```
 
-`mintAgentToken` signs HS256 with the app's secret, binds `aud` to the RFC 8707 resource, embeds the session as an encrypted `sid` claim, lasts an hour unless `expiresInSec` says less, and never outlives `claims.expiresInMax` (sent with the `id_jag` grant, an agent the company's identity provider approved).
+`mintAgentToken` signs HS256 with the app's secret, binds `aud` to the RFC 8707 resource, embeds the session as an encrypted `sid` claim, lasts an hour by default (`expiresInSec`; keep agent tokens short), and never outlives `claims.expiresInMax` (sent with the `id_jag` grant, an agent the company's identity provider approved).
 
 ### 4. Console: an OAuth 2.0 client for agents
 
@@ -212,7 +212,7 @@ In the console: **Users** (User management) > **Access** > **Authentication** > 
 - **Edit** the client: **Client kind** `Agent (third-party)`, which is what makes people see the consent screen (`Application (first-party)` skips consent: wrong for agents). **Application revoke URL:** `https://<public-origin>/api/auth/agent-revoke`. Keep **Require PKCE** ticked.
 - **Redirect URLs:** leave empty when agents register themselves (they send their own `redirect_uris` through DCR); add one only for a known agent you made this client for.
 
-`init --claim --agent` makes this client for you.
+`init --claim --agent` asks the platform to make this client in the same create, pointed at `/api/auth/agent-token` and `/api/auth/agent-revoke`, when the plan includes the OAuth 2.0 server; otherwise make it here.
 
 ### 5. Console: turn on agent readiness
 
@@ -451,26 +451,30 @@ All need SDK 1.0.0 or later (`agent setup` and `agent-ready`: 1.4.0). Outside a 
 
 ---
 
-## Failure library (every one observed for real)
+## Failure library
+
+Observed live in July 2026 (SDK 0.0.54, Next.js, Claude Code) unless the row says it comes from the SDK or platform docs.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Client error: *"Protected resource `.../mcp` does not match expected `.../api/mcp`"* (Claude Code, July 2026) | Before 1.0.0, `createAgentStack` advertised `<host>/mcp` whatever `mcp.path` was, and a client refuses metadata whose `resource` differs from the URL it called | Upgrade to 1.0.0 or later: the resource now derives from `siteUrl` plus `mcp.path`. On an older SDK, set `mcp.path: '/mcp'` and serve the route there |
+| Client error: *"Protected resource `.../mcp` does not match expected `.../api/mcp`"* | Before 1.0.0, `createAgentStack` advertised `<host>/mcp` whatever `mcp.path` was, and a client refuses metadata whose `resource` differs from the URL it called | Upgrade to 1.0.0 or later: the resource now derives from `siteUrl` plus `mcp.path`. On an older SDK, set `mcp.path: '/mcp'` and serve the route there |
 | Platform's call to `applicationTokenUrl` returns **401 `invalid_signature`**; agent auth dies after consent | The app verified with the **login client's** secret; the platform signs with the **base (agent) client's** secret, which self-registered agents inherit | Use the agent client's secret (`BUILDBASE_AGENT_CLIENT_SECRET`) in `handleAppTokenRequest` and `handleAppRevokeRequest` |
 | `/auth.md` and OAuth pointers 404 while everything else works | The org's **Agent readiness** toggle is off, or it was just turned on and the SDK's 5-minute bundle cache has not expired | Turn it on (Authentication > Agent readiness). Call `clearAgentReadinessCache()`, restart, or lower `discovery.cacheTtlSeconds` |
 | The agent completes login and consent, then the token exchange fails; the app never receives the mint call | The token and revoke URLs point at `localhost`: the platform cannot reach it, and its SSRF guard blocks loopback in production | A public HTTPS origin (deploy or tunnel) in the console client's URLs |
 | Changed env or code but behaviour did not change | `NEXT_PUBLIC_*` is inlined at build; `next start` serves the last build | Rebuild after env or code changes; restart after server-only env changes |
 | Added tools but the agent does not see them | MCP clients fetch `tools/list` once per connection | Reconnect the server in the client (`/mcp`, Reconnect) |
-| A write built-in is missing from `tools/list`, or a call answers `forbidden` with `details.requiredScopes` | The token carries scopes but not the area's write scope (`commerce:write` at once; the others after the 30-day grace) | Add the scope to the `scopes` catalog so the agent asks for it, or set `builtinWriteScopes` |
-| `agent doctor` warns `auth.prm.scopes` | A custom tool, resource or prompt requires a scope and no `scopes` catalog names it, so `scopes_supported` is left out | Declare `scopes: [{ name, description }]` on the stack |
-| `invite_workspace_user` answers *"User with email ... not found, ask them to sign up first"* (July 2026) | The tool adds an existing platform user to the workspace (`users.invite`) | The invitee signs up once, then re-invite; an invitation by email from your own server is `invitations.create` |
+| A write built-in is missing from `tools/list`, or a call answers `forbidden` with `details.requiredScopes` (SDK docs) | The token carries scopes but not the area's write scope (`commerce:write` at once; the others after the 30-day grace) | Add the scope to the `scopes` catalog so the agent asks for it, or set `builtinWriteScopes` |
+| `agent doctor` warns `auth.prm.scopes` (SDK docs) | A custom tool, resource or prompt requires a scope and no `scopes` catalog names it, so `scopes_supported` is left out | Declare `scopes: [{ name, description }]` on the stack |
+| `invite_workspace_user` answers *"User with email ... not found, ask them to sign up first"* | The tool adds an existing platform user to the workspace (`users.invite`) | The invitee signs up once, then re-invite. To invite someone with no account yet, call `invitations.create(workspaceId, email, role)` from the app's server (`BuildBase()`), or wrap it in a custom tool |
 | Console form demands an Application profile URL | Required field, but never called in the OAuth 2.0 agent flow (DCR fallback only) | Point it at the token URL or a trivial authenticated route |
 | Free-ngrok client fails discovery mysteriously | ngrok's browser-warning interstitial intercepts requests without `ngrok-skip-browser-warning` | Suspect the interstitial first; paid ngrok or a deploy avoids it |
-| Claude's custom connector cannot sign in to BuildBase's hosted server (track b) | The default OAuth client choice, "Use Claude's published identity", needs Client ID Metadata Documents, which BuildBase's authorization server does not take | Pick **Register automatically**, or connect from BuildBase's page in the connectors directory |
+| Claude's custom connector cannot sign in to BuildBase's hosted server (track b; SDK and platform docs) | The default OAuth client choice, "Use Claude's published identity", needs Client ID Metadata Documents, which BuildBase's authorization server does not take | Pick **Register automatically**, or connect from BuildBase's page in the connectors directory |
 
 ---
 
-## Security invariants (what to tell a worried developer)
+## Security invariants
+
+What to tell a worried developer.
 
 - The app's `SYSTEM_SECRET` and minted tokens never reach the platform; the platform relays tokens opaquely and can neither forge nor decode them.
 - The user's BuildBase session rides inside the token as an AES-256-GCM-encrypted `sid` claim; only the app (holder of `SYSTEM_SECRET`) can decrypt it. It is never stored, and it expires with the token.

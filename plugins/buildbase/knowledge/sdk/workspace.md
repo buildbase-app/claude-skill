@@ -104,7 +104,7 @@ if (loading) return <Skeleton />;
 if (loaded && !currentWorkspace) return <NoWorkspaceScreen />; // really none
 ```
 
-Two behaviours behind it, both since 0.0.90:
+Two behaviours behind it, both since 1.0.0:
 - When the organization makes a person's first workspace (`autoCreateFirst`, on unless turned off), an empty first list is asked for once more after 1.5 s, because the platform creates that workspace on the first read and a racing read can answer `[]`.
 - A list that failed (timeout, server down) is asked for again with backoff (up to one ask every 30 s) and when the browser comes back online, until it is in.
 
@@ -207,7 +207,7 @@ function NoWorkspaceScreen() {
 
 `useMyInvitations()` is `{ invitations, loading, error, busy, refresh, accept, decline }` for the invitee, and `useWorkspaceInvitations(workspaceId)` is the admin's list with `resend` and `revoke`. Invitation errors carry `status` and a `code` (`INVITATION_ERROR_CODE`: `SEAT_LIMIT_REACHED` with `currentUserCount` and `limit`, `INVITATION_RATE_LIMITED` with `retryAfterSeconds`, `INVITATION_EMAIL_MISMATCH`, `EMAIL_NOT_VERIFIED`, `INVITATION_EXPIRED`, `INVITATION_ALREADY_HANDLED`). With `canInviteMembers` off, every invite surface hides and the server refuses with 403 `WORKSPACE_INVITES_DISABLED`. Invitations need SDK 0.0.71 or later and a server from release 22.
 
-**Leaving.** `leaveWorkspace(id)` (since 0.0.90) removes the signed-in member. The creator cannot leave (409 `WORKSPACE_OWNER_CANNOT_LEAVE`; they delete instead), and a member who pays for the workspace's subscription is refused with 409 `PAYER_STILL_PAYS` until its billing moves or it is cancelled (`WORKSPACE_MEMBERSHIP_CODE`). The `danger` settings screen offers Leave to every member who did not create the workspace; `ui.settings.danger.leave: false` hides Leave alone.
+**Leaving.** `leaveWorkspace(id)` (since 1.0.0) removes the signed-in member. The creator cannot leave (409 `WORKSPACE_OWNER_CANNOT_LEAVE`; they delete instead), and a member who pays for the workspace's subscription is refused with 409 `PAYER_STILL_PAYS` until its billing moves or it is cancelled (`WORKSPACE_MEMBERSHIP_CODE`). The `danger` settings screen offers Leave to every member who did not create the workspace; `ui.settings.danger.leave: false` hides Leave alone.
 
 ---
 
@@ -228,7 +228,7 @@ Check permissions, not role names:
 import { Permission, usePermissions, WhenPermission, WhenWorkspaceRoles } from '@buildbase/sdk/react';
 
 function Team() {
-  const { can, isOwner, role } = usePermissions(); // the current workspace by default
+  const { can, isOwner } = usePermissions(); // the current workspace by default
   return (
     <>
       <WhenPermission permission={Permission.WORKSPACE_MEMBERS_INVITE}>
