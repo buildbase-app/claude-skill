@@ -13,7 +13,7 @@
     {
       "name": "buildbase-selfhost",
       "source": "./plugins/buildbase-selfhost",
-      "description": "Deploy and operate the self-hosted Buildbase platform on your own infrastructure - the four-component architecture, Docker Compose quick start, environment-variable reference, production hardening (Nginx, replicas, TLS), zero-downtime upgrades, and backups."
+      "description": "Deploy and operate the self-hosted Buildbase platform on your own infrastructure - the four-component architecture and installation licensing, Docker Compose quick start, environment-variable reference, production hardening (Nginx, replicas, TLS), updates with migrations at boot, and what the docs say about backups."
     }
   ]
 }

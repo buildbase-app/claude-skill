@@ -34,7 +34,7 @@
 
 ### `tenant-server` exits at start and names an installation variable
 
-- **Documented:** with no `INSTALLATION_ID` or `INSTALLATION_API_KEY`, the tenant server does not start, and says which variable is missing. The composes pass both as `${VAR:-}`, so Compose does not catch it.
+- **Documented:** with no `INSTALLATION_ID` or `INSTALLATION_API_KEY`, the tenant server does not start, and says which variable is missing. The quick-start compose passes both as `${VAR:-}` and the production compose through `env_file`, so Compose does not catch it.
 - **Fix:** copy both values from Account, then Installations in the console (regenerate the key there if it was lost; it is shown once).
 - **From the server source, not the docs** (`server/src/self-hosted-edition.ts` in the platform repo): the self-hosted image also refuses to start with `INTERNAL_API_KEY` set (the cloud tenant's credential) or `ORG_IDS` set. Remove them.
 

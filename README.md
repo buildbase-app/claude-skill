@@ -1,17 +1,17 @@
-# Buildbase — Claude Skills
+# Buildbase - Claude Skills
 
 [Agent Skills](https://code.claude.com/docs/en/skills) that turn Claude into a Buildbase expert. This repo is a Claude Code plugin marketplace shipping **two complementary skills**:
 
 | Skill | For | What it does |
 |-------|-----|--------------|
 | **`buildbase`** | App developers integrating Buildbase, **and org owners automating their own org** | Takes a developer from `npm install` (or `npx @buildbase/sdk init`) to a working sign-in, then guides auth, workspaces, billing for a workspace or a person, entitlements and add-ons, feature flags, quota, credits, notifications, devices and sessions, development environments, commerce, server-side usage, transactional email, webhooks, making the app agent-ready, and using Buildbase from a non-Node backend over raw HTTP. For operators it covers the console's own REST API: an API key with a role, the shared list contract, and what a key can and cannot reach. |
-| **`buildbase-selfhost`** | Operators running Buildbase themselves | Deploys and operates the self-hosted platform — the four-component architecture, the real Docker Compose + Nginx configs, env-var reference, production hardening, upgrades. |
+| **`buildbase-selfhost`** | Operators running Buildbase themselves | Deploys and operates the self-hosted platform - the four-component architecture, the real Docker Compose + Nginx configs, env-var reference, production hardening, upgrades. |
 
-The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it — point `serverUrl` at your own tenant server instead of the Buildbase cloud.
+The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it - point `serverUrl` at your own tenant server instead of the Buildbase cloud.
 
-**Grounding** — we don't guess:
+**Grounding** - we don't guess:
 - `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@1.8.0` (the npm `latest` tag), the agent docs that package ships (`AGENTS.md`, `agents/*.md`), and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
-- `buildbase-selfhost` — we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
+- `buildbase-selfhost` - we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
 
 ---
 
@@ -23,7 +23,7 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `plugins/buildbase/knowledge/` | Integration knowledge base (SDK reference, learning path, HTTP API, troubleshooting, etc.) |
 | `plugins/buildbase-selfhost/SKILL.md` | Self-hosting skill entrypoint. **Ships.** |
 | `plugins/buildbase-selfhost/knowledge/` | Self-hosting knowledge base (architecture, deploy, config, operations, diagnostics, handoff) |
-| `plugins/buildbase-selfhost/GAPS.md` | Tracker of self-hosted-docs gaps (dev artifact — **not** shipped in the zip) |
+| `plugins/buildbase-selfhost/GAPS.md` | Tracker of self-hosted-docs gaps (dev artifact - **not** shipped in the zip) |
 | `.claude-plugin/marketplace.json` | Makes this repo a Claude Code plugin marketplace (lists both plugins) |
 | `plugins/*/.claude-plugin/plugin.json` | Plugin manifests |
 | `scripts/package.sh` | Builds `dist/buildbase.zip` and `dist/buildbase-selfhost.zip` for claude.ai upload |
@@ -103,22 +103,22 @@ Guides for each client: [buildbase-app/mcp](https://github.com/buildbase-app/mcp
 
 ## Using it
 
-Once installed, just ask Claude normally — each skill triggers on its own topics.
+Once installed, just ask Claude normally - each skill triggers on its own topics.
 
 **`buildbase` (integration):**
 > "Add Buildbase auth to my Next.js app."
 > "Why does my `WhenSubscription` gate render nothing?"
 > "How do I record metered usage from a Python backend?"
 
-It works best on **Next.js + TypeScript** — a step-by-step golden path that adds a ✅ check after each step. For other React frameworks it adapts the concepts; for non-Node backends it gives you a full HTTP-API reference (`plugins/buildbase/knowledge/http-api/`).
+It works best on **Next.js + TypeScript** - a step-by-step golden path that adds a ✅ check after each step. For other React frameworks it adapts the concepts; for non-Node backends it gives you a full HTTP-API reference (`plugins/buildbase/knowledge/http-api/`).
 
 **`buildbase-selfhost` (deploy/operate):**
 > "Deploy Buildbase self-hosted with Docker Compose."
 > "What does `DB_ENCRYPTION_KEY` do?"
-> "My `/api/ready` isn't returning true — what should I check?"
+> "My `/api/ready` isn't returning true - what should I check?"
 > "Set up the production stack with Nginx and replicas."
 
-It ships the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim, plus a config reference and doc-grounded diagnostics. For anything the self-hosted docs don't cover (e.g. a backup procedure), it says so rather than inventing — those open items live in [`GAPS.md`](./plugins/buildbase-selfhost/GAPS.md).
+It ships the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim, plus a config reference and doc-grounded diagnostics. For anything the self-hosted docs don't cover (e.g. a restore procedure or secret rotation), it says so rather than inventing - those open items live in [`GAPS.md`](./plugins/buildbase-selfhost/GAPS.md).
 
 ---
 
@@ -128,4 +128,4 @@ Both skills evolve with the SDK/API and the self-hosted docs. See [MAINTENANCE.m
 
 ## License
 
-MIT — see [LICENSE](./LICENSE). Buildbase and `@buildbase/sdk` belong to their owner; these are independent skills.
+MIT - see [LICENSE](./LICENSE). Buildbase and `@buildbase/sdk` belong to their owner; these are independent skills.

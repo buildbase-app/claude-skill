@@ -37,7 +37,7 @@ Provided by the console when you create an Installation (Account, then Installat
 | `INSTALLATION_API_KEY` | Installation API key (from dashboard) |
 | `INSTALLATION_ID` | Installation ID (from dashboard) |
 
-Without either one the tenant server does not start, and says which variable is missing. Both composes pass them as `${VAR:-}`, so Compose itself does not stop you: the server does.
+Without either one the tenant server does not start, and says which variable is missing. The quick-start compose passes them as `${VAR:-}` and the production compose through `env_file`, so Compose itself does not stop you: the server does.
 
 ---
 
