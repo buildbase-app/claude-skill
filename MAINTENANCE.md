@@ -15,6 +15,8 @@ How to keep this skill accurate as the Buildbase SDK / API grows. The golden rul
 
 ## When the SDK version bumps
 
+**Cadence: on every SDK minor release.** When npm `latest` moves to a new minor (1.9.0, 1.10.0, ...), re-verify and re-pin this skill and the three starters within a few days: [buildbase-app/nextjs-starter](https://github.com/buildbase-app/nextjs-starter), [buildbase-app/nextjs-agent-mcp-starter](https://github.com/buildbase-app/nextjs-agent-mcp-starter) and every app in [buildbase-app/examples](https://github.com/buildbase-app/examples), each passing its own typecheck and build. A patch release needs a re-pin only when it changes something the skill or a starter documents. The reason is os#1498: a caret on `0.0.x` matches exactly one version, so the skill and the starters sat on 0.0.54 to 0.0.79 for weeks after 1.0.0 shipped, and agents installed SDKs months old. The SDK's CHANGELOG lists every change since the pinned version; its ⚠️ entries are the ones that can need code changes.
+
 0. **Check the dist-tags first**: `npm view @buildbase/sdk dist-tags versions --json`. Pin the newest *published* version, and say in the install line when `latest` has not caught up with it, because that is the version `npm install @buildbase/sdk` will actually resolve.
 1. **Re-point at the new source** and check `package.json` for the new version, exports, and peer deps.
 2. **Re-verify the public surface** the skill documents:
