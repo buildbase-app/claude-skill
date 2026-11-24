@@ -13,6 +13,6 @@
     "check": "node --check server.mjs"
   },
   "dependencies": {
-    "@buildbase/sdk": "^1.8.0"
+    "@buildbase/sdk": "^1.9.0"
   }
 }
