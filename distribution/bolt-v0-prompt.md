@@ -24,4 +24,6 @@ If auth already exists, stop and ask before migrating.
 
 ## The event list
 
-"The BuildBase event list" is the webhook catalog: 112 `domain.action` names, published at https://docs.buildbase.app/webhooks/overview and vendored in this repo at `plugins/buildbase/knowledge/http-api/webhook-events.json`. A failed payment is `payment.failed`. Every delivery carries `x-buildbase-signature`, `x-buildbase-timestamp` (Unix seconds) and `x-buildbase-event`; verify with `parseWebhookEvent` from `@buildbase/sdk` against the raw request body.
+"The BuildBase event list" is the webhook catalog: 256 `domain.action` names, published at https://docs.buildbase.app/webhooks/overview and vendored in this repo at `plugins/buildbase/knowledge/http-api/webhook-events.json`. A failed payment is `payment.failed`. Every delivery carries `x-buildbase-signature`, `x-buildbase-timestamp` (Unix seconds), `x-buildbase-event` and `x-buildbase-event-id` (the body's `id`, starting `evt_`, the same on every retry: dedupe on it); verify with `parseWebhookEvent` from `@buildbase/sdk` against the raw request body. Deliveries also carry the Standard Webhooks headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`), checked by `parseStandardWebhookEvent`.
+
+The fastest wiring in either tool is `npx @buildbase/sdk init` in the project, which writes the provider, the auth routes (for a Vite SPA, `server/buildbase-auth.ts` to mount in the host's functions) and the webhook route, with secrets left empty.

@@ -182,7 +182,7 @@ Plans can belong to a workspace or to a person (account-level billing, since 1.0
 - `workspaces/{workspaceId}` - the workspace's plan, or
 - `me` - the signed-in person's own plan. Same bodies, same answer fields.
 
-The older usage routes (`subscription/usage/status`, `/all`, `/logs`) and the plan-group version routes exist only under `workspaces/{workspaceId}`.
+The SDK calls the older usage routes (`subscription/usage/status`, `/all`, `/logs`), the plan-group version routes and `transfer-payer` only under `workspaces/{workspaceId}`.
 
 ---
 

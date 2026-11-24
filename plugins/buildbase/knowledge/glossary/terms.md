@@ -28,7 +28,7 @@
 
 **Add-on** - Something sold beside a plan (one-time, lifetime, consumable or recurring) that grants entitlements on top of it. Hooks: `useAddOns`, `usePurchaseAddOn`, `useGrants`.
 
-**Quota** - A usage limit included in a plan (API calls, storage, emails). Resets each billing period. Can have overage pricing.
+**Quota** - A usage limit included in a plan (API calls, storage, emails). Resets on its own schedule: monthly from the subscription's start day by default, or daily, weekly, yearly, per billing period, or never (`resetPeriod`, `resetsAt`). Can have overage pricing.
 
 **Quota Slug** - The identifier for a quota (e.g., `api_calls`, `emails`, `storage`). Must match dashboard configuration.
 

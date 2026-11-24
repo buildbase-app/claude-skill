@@ -1,6 +1,6 @@
 # BuildBase sessions and Supabase RLS
 
-Short answer: **not supported today**, and the gap is on the BuildBase side. This file records exactly why, and the smallest change an app can make now.
+Short answer: **not supported today** (re-checked against `@buildbase/sdk` 1.8.0 and the platform's main branch on 2026-11-24), and the gap is on the BuildBase side. This file records exactly why, and the smallest change an app can make now.
 
 Position rule:
 
@@ -18,8 +18,9 @@ Supabase third-party auth (https://supabase.com/docs/guides/auth/third-party/ove
 
 ## What BuildBase has
 
-- A BuildBase **session is an opaque id**, not a JWT: a 35-character random string stored in Redis, sent as the `x-session-id` header (`os/server/src/routes/v1/auth/constants.ts`, `SESSION_ID_LENGTH = 35`). There are no claims in it to read.
-- The platform's own JWTs (used internally and for org tokens) are **HS256**, signed with a server secret (`packages/server-core/src/utils/jwt.ts`). There is no asymmetric key pair and **no JWKS endpoint**: `server/src/routes/wellKnown/index.ts` serves OAuth metadata, but no `jwks_uri`.
+- A BuildBase **session is an opaque id**, not a JWT: a 35-character random string stored in Redis, sent as the `x-session-id` header (`os/server/src/routes/v1/auth/constants.ts`, `SESSION_ID_LENGTH = 35`). An operator setting that is off by default (`SESSION_ID_ORG_SCOPED`, `server/src/services/auth/session-id.ts`) prefixes the 24-hex org id, making it 59 characters, so the server can rebuild a session whose cache entry was lost; that adds no claims and no signature. There are no claims in it to read.
+- The platform's own JWTs (used internally and for org tokens) are **HS256**, signed with a server secret and verified with the algorithm pinned to HS256 (`packages/server-core/src/utils/jwt.ts`). There is no asymmetric key pair and **no JWKS endpoint**: `server/src/routes/wellKnown/index.ts` serves the API catalog and OAuth authorization-server metadata, with no `jwks_uri`.
+- Key sets do appear elsewhere, and none of them helps here. The platform **fetches** other issuers' JWKS (a company's identity provider for enterprise agent access and workload identity, social sign-in providers), it never publishes one. Tokens an AI agent presents to an app's own MCP server are minted by the app, HS256 with the app's secret (`mintAgentToken` in `@buildbase/sdk`), and the platform never sees that secret. The JWKS an app can serve at `/.well-known/http-message-signatures-directory` (`buildWebBotAuthDirectory`) holds the app's own bot-signing keys for Web Bot Auth, not anything that identifies a user.
 
 So there is no BuildBase token Supabase could verify on its own. Do not claim otherwise, and do not invent a claim.
 
@@ -30,7 +31,7 @@ Mint the Supabase token yourself, in your own server route, after BuildBase has 
 1. The browser calls your route with its BuildBase session (`x-session-id` header, or the `bb-session-id` cookie your app set).
 2. Your route validates the session by calling BuildBase: `GET {serverUrl}/api/v1/public/profile` with headers `x-session-id: <session>` and `x-org-id` as the SDK sends them, or through the server SDK: `BuildBase({ serverUrl, orgId }).withSession(sessionId).users.getProfile()`. A `401` means the session is invalid; stop there.
 3. Your route signs a **Supabase-shaped JWT** with your Supabase project's JWT secret (HS256, the legacy shared secret Supabase documents at https://supabase.com/docs/guides/auth/jwts). Claims are Supabase's own, not BuildBase's:
-   - `sub`: the BuildBase user id from the profile
+   - `sub`: the BuildBase user id, the profile's `id`
    - `role`: `"authenticated"`
    - `aud`: `"authenticated"`
    - `exp`: no later than the BuildBase session's remaining lifetime; keep it short (minutes) and let the client refresh by calling the route again

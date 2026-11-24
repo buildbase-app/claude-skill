@@ -7,7 +7,7 @@ Read [../sdk/quick-start.md](../sdk/quick-start.md) for the file-by-file auth wi
 ## The three things a coding agent gets wrong here
 
 1. **Rebuilding UI that ships.** A settings dialog with 18 sections (`SettingsScreen`), a workspace switcher, a pricing page and a credit store already exist. Read [../sdk/pre-built-ui.md](../sdk/pre-built-ui.md) before writing any account, billing or members screen.
-2. **Inventing hooks for modules that have none.** Several of the twenty modules have no React surface. Check [../product/module-map.md](../product/module-map.md) before reaching for a hook like `useCollections`.
+2. **Inventing hooks for modules that have none.** Six of twenty modules have no React surface (two more have only a narrow one). Check [../product/module-map.md](../product/module-map.md) before reaching for a hook like `useCollections`.
 3. **Writing code for things only the console decides.** Plans, slugs, Stripe keys and published versions are console (or blueprint) work. Code that references a slug which does not exist fails silently, so the agent appears to succeed and the app quietly does nothing.
 
 ## Two MCP servers, two jobs

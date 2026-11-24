@@ -43,7 +43,7 @@ Notification events are not a module of their own: `notification.send` on the se
 
 **Six of the twenty modules have no React surface at all**: email campaigns, workflows, collections, content, forms and short links. There is no `useCollections`, no `useWorkflows`, no `useEmailCampaigns`. If a developer asks for a hook for one of them, say plainly that the SDK does not expose one and route them to the right surface:
 
-- Content and collections can be *read* from a server with an org token through `@buildbase/sdk/server` (see [../http-api/endpoints.md](../http-api/endpoints.md#org-token-content-client-buildbasesdkserver)).
+- Content and collections can be *read* from a server with an org token through `@buildbase/sdk/server` (see [../sdk/server-side.md](../sdk/server-side.md) and the routes in [../http-api/endpoints.md](../http-api/endpoints.md#org-token-routes-the-sdk-calls)).
 - Transactional email and subscribers are *written* from a server through the same client (`emails.send`, `subscribers.upsert`), never from the browser.
 - Everything else in those six is the org API or the console.
 

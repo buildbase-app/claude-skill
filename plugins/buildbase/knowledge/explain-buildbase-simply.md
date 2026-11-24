@@ -34,7 +34,7 @@ Building all of that yourself takes months and is easy to get wrong (especially 
 | **Slug** | A short lowercase id for something you set up in the dashboard, like `pro` for a plan or `analytics` for a feature. Your code refers to things by their slug. |
 | **Dashboard** | The Buildbase website ([console.buildbase.app](https://console.buildbase.app)) where you (the developer) configure plans, features, and login methods. Not the same as your app. Official docs: [docs.buildbase.app](https://docs.buildbase.app). |
 | **Plan** | A pricing tier (Free, Pro, Enterprise). You define these in the dashboard; Buildbase charges cards via Stripe. |
-| **Quota** | A usage limit that resets each billing period (e.g. "5,000 API calls/month"). |
+| **Quota** | A usage limit that resets on a schedule, usually monthly (e.g. "5,000 API calls/month"). |
 | **Credits** | Prepaid units a customer buys up front (e.g. "100 AI generations"). They don't reset. |
 | **Environment** | A separate development or staging copy of your setup, with its own users and data, named by a short key. Leave it unset and you are in production. |
 

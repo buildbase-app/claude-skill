@@ -123,7 +123,7 @@ Yes. In the dashboard, associate features with plans. When a workspace upgrades,
 ## Quota & Credits
 
 **Q: Can quotas reset on a custom date instead of billing cycle?**
-No - quotas reset at the start of each billing period (as defined by Stripe).
+On a schedule, yes; on an arbitrary date, no. Each quota on a plan version has a reset period: `month` (the default, anchored on the day the subscription started), `day`, `week` or `year` (calendar periods in the org's time zone), `billing_period`, or `never` for a lifetime allowance. Since 1.8.0 the quota's `resetPeriod` and `resetsAt` say which and when. Overage is still invoiced per billing period.
 
 **Q: What happens when a workspace runs out of quota?**
 - If overage is configured on the plan: usage continues, billed per-unit

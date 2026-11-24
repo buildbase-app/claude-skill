@@ -145,12 +145,12 @@ You're recording usage, tracking an event, or consuming credits. Should that hap
 
 Both involve "counting" how much of something a workspace uses. The billing model is different.
 
-**Ask yourself: Does usage reset automatically at the end of the billing period?**
+**Ask yourself: Does usage reset automatically on a schedule?**
 
 - Yes, it resets → **Quota**
-  - Example: 1000 API calls per month. When the billing period ends, the count resets.
+  - Example: 1000 API calls per month. When the period ends, the count resets.
   - Plan includes 1000 calls → workspace uses 750 → next month starts at 0 again.
-  - Configure as a quota on the plan in the dashboard.
+  - Configure as a quota on the plan in the dashboard. Its reset period is monthly by default (from the day the subscription started), or daily, weekly, yearly, per billing period, or never for an allowance included once.
 
 - No, it doesn't reset automatically → **Credits**
   - Example: 1000 AI tokens purchased. The user buys them, spends them down.
@@ -189,7 +189,7 @@ Both involve "counting" how much of something a workspace uses. The billing mode
 - Per-generation cost → Credits (consume N credits per generation)
 
 **The rule of thumb:**
-Credits are like a prepaid card - spend until empty, buy more. Quotas are like a data plan - use what's included, potentially pay for more, resets monthly.
+Credits are like a prepaid card - spend until empty, buy more. Quotas are like a data plan - use what's included, potentially pay for more, resets on its schedule (monthly by default).
 
 Both can belong to the person instead of the workspace: the credit hooks take `{ user: true }` for the signed-in person's own wallet, and the server records a person's own usage with `me.usage.record`.
 

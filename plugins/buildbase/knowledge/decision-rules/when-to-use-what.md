@@ -74,8 +74,9 @@ Anything that bills passes an `idempotencyKey` derived from the unit of work (`g
 |----------|-----|
 | Fixed monthly allocation included in plan | Quota |
 | Prepaid units purchased separately | Credits |
-| Resets every billing period | Quota |
-| Never resets (spend down until refilled) | Credits |
+| Resets on a schedule (monthly by default; daily, weekly, yearly or per billing period) | Quota |
+| Included once for the life of the plan | Quota with reset period `never` |
+| Never resets (spend down until refilled by buying more) | Credits |
 | AI token budget | Credits |
 | API call limit | Quota |
 | Storage limit | Quota |

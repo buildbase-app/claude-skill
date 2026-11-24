@@ -129,7 +129,7 @@ def check_regressions():
         # these sends a developer looking for an export that was never built.
         # Requires a call paren, so naming one as non-existent stays allowed.
         (r"use(Collections?|Workflows?|EmailCampaigns?|Forms?|ShortLinks?|Assets?|Blogs?)\s*\(",
-         "that module has no React SDK surface; it is console and org-API only (see product/module-map.md)"),
+         "that hook does not exist; see product/module-map.md for the module's real surface (assets has only useUpload)"),
         (r"^\s+update_config:", "update_config is gone from the compose and is a Swarm-only key"),
         # Verified live against a tenant on 2026-09-23: `pagination=false`
         # returns the same {docs,...} object with limit 0, never a bare array,
@@ -164,6 +164,19 @@ def check_regressions():
          "claimable organizations exist: `npx @buildbase/sdk init --claim` (central POST /api/organizations/agent/identity)"),
         (r"replace Supabase", "BuildBase never replaces the app's database; it sits beside Supabase or Postgres"),
         (r"there is \*\*no permission-check endpoint", "GET workspaces/{id}/permissions/me exists since 0.0.73"),
+        # Read in the platform's code on 2026-11-24 (rateLimit/index.ts,
+        # server-core page-size.ts) and in the org API's generated spec. The
+        # platform's own admin-api.mdx still carries the first two; do not copy them.
+        (r"token exchange[^\n]{0,40}10 ?/ ?min|rate limited to 10/min",
+         "the token exchange limit is 120 a minute per IP (TOKEN_EXCHANGE_PER_MINUTE)"),
+        (r"[Cc]apped at 1000|clamped to 1000", "list pages are capped at 500 rows (MAX_PAGE_SIZE) on current servers"),
+        (r"no OpenAPI document", "the org API has a generated OpenAPI document at /api/v1/openapi/org-api.json"),
+        # 1.x ERROR_CODES.md: these were never thrown. Worded to miss the
+        # SKILL.md sentence that names them in order to rule them out.
+        (r"^(?!.*\b(never|not|gone|no longer)\b).*`(AUTH_REQUIRED|SESSION_EXPIRED|NETWORK_ERROR|WORKSPACE_NOT_FOUND)`",
+         "that error code was never thrown and is gone from the SDK's ERROR_CODES.md; branch only on codes it lists"),
+        (r"BuildBase publishable key", "BuildBase has no publishable key; ask for the org id, client id and redirect URL"),
+        (r"Eight of (the )?twenty modules", "six of the twenty modules have no React surface; assets and analytics have a narrow one"),
     ]
     roots = (SKILL_DIR, SELFHOST_DIR, os.path.join(ROOT, "AGENTS.md"), os.path.join(ROOT, "README.md"),
              DISTRIBUTION_DIR, EVAL_DIR, MCP_DIR)

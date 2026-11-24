@@ -18,7 +18,7 @@ Twenty-five wrong beliefs developers bring to Buildbase integration, each checke
 - [12. "withSession replaces getSessionId"](#12-withsession-replaces-getsessionid-i-should-only-use-one) - they serve different contexts
 - [13. "I need to register a webhook URL in the SDK"](#13-i-need-to-register-a-webhook-url-in-the-sdk-config) - webhooks configured in dashboard
 - [14. "Plan slugs are case-sensitive"](#14-plan-slugs-are-case-sensitive) - matching is case-insensitive
-- [15. "The billing period resets on the 1st"](#15-the-billing-period-resets-at-midnight-on-the-1st-of-each-month) - resets on subscription anchor date
+- [15. "The billing period resets on the 1st"](#15-the-billing-period-resets-at-midnight-on-the-1st-of-each-month) - each quota has its own reset period
 - [16. "The SDK calls Stripe directly"](#16-the-sdk-calls-stripe-directly-i-need-to-set-up-stripe-in-my-app) - Buildbase is the Stripe integration
 - [17. "The dashboard is just for viewing data"](#17-the-dashboard-is-just-for-viewing-data-config-is-all-in-code) - Buildbase is dashboard-first, with a file option
 - [18. "handleEvent and onWorkspaceChange are the same"](#18-handleevent-and-onworkspacechange-do-the-same-thing) - credentials vs data sync
@@ -84,7 +84,7 @@ Twenty-five wrong beliefs developers bring to Buildbase integration, each checke
 
 **How to detect**: Developer says "my subscription gate shows nothing on first page load, then shows after a second." Or "my gate works after a refresh but not immediately."
 
-**Correction**: "Gates have three states, not two. While subscription data loads from Buildbase (usually under 500ms), the gate renders `null` - same as when the condition isn't met. Add `loadingComponent={<Skeleton />}` to distinguish loading from 'user doesn't have this'. Use `useSubscriptionContext().loading` to check loading state programmatically."
+**Correction**: "Gates have three states, not two. While subscription data loads from Buildbase, the gate renders `null` - same as when the condition isn't met. Add `loadingComponent={<Skeleton />}` to distinguish loading from 'user doesn't have this'. Use `useSubscriptionContext().loading` to check loading state programmatically."
 
 ---
 
@@ -120,7 +120,7 @@ Twenty-five wrong beliefs developers bring to Buildbase integration, each checke
 
 **Misconception**: Credits and quotas are interchangeable names for "usage limits."
 
-**Reality**: They model fundamentally different billing patterns. Quotas are metered limits per billing period (API calls per month, emails per month) that reset automatically. Credits are prepurchased units that don't reset and must be explicitly consumed.
+**Reality**: They model fundamentally different billing patterns. Quotas are metered limits included in a plan (API calls per month, emails per month) that reset automatically on the quota's schedule. Credits are prepurchased units that don't reset and must be explicitly consumed.
 
 **Why this happens**: Both involve numbers going up or down as features are used. The distinction only becomes important when the billing behavior diverges.
 
@@ -232,13 +232,13 @@ Twenty-five wrong beliefs developers bring to Buildbase integration, each checke
 
 **Misconception**: Quota resets happen on a fixed calendar date regardless of when the user subscribed.
 
-**Reality**: Billing periods are relative to the subscription start date and are managed by Stripe. A user who subscribed on the 15th has their quota reset on the 15th of each month. There's no global reset day.
+**Reality**: Billing periods are relative to the subscription start date and are managed by Stripe. Quotas follow their own reset period, a setting of each quota on the plan version (1.8.0 exposes it as `resetPeriod`): `month`, the default, is the usage month anchored on the day the subscription started, so a user who subscribed on the 15th resets on the 15th; `day`, `week` (Monday first) and `year` (January 1) are calendar periods in the org's time zone; `billing_period` follows the subscription's billing period; `never` is a lifetime allowance. There's no global reset day for the default.
 
 **Why this happens**: Developers think of billing periods as calendar months. This is a common assumption from consumer software.
 
 **How to detect**: Developer asks "when exactly do quotas reset?" or tries to calculate a global reset date.
 
-**Correction**: "Quota resets are tied to the workspace's billing cycle, which starts when they first subscribed. Stripe manages the billing anchor. A user who joined February 15 resets on March 15, April 15, etc. Use `subscription.get(workspaceId)` to see the current period dates."
+**Correction**: "By default a quota resets monthly on the day the subscription started: a user who joined February 15 resets on March 15, April 15, etc. A quota can instead reset daily, weekly, yearly, per billing period, or never, as set on the plan. Read the quota's `resetsAt` for the next reset (absent for `never`), and `subscription.get(workspaceId)` for the billing period dates."
 
 ---
 
@@ -252,7 +252,7 @@ Twenty-five wrong beliefs developers bring to Buildbase integration, each checke
 
 **How to detect**: Developer asks "where do I put my Stripe publishable key?", installs the `stripe` server package, or writes a Stripe webhook route.
 
-**Correction**: "You don't need Stripe's server SDK in your app. Connect Stripe to Buildbase once in the dashboard: Billing opens on Stripe payment setup, where you paste your Stripe publishable and secret keys (later under Configuration → Credentials). Buildbase handles all Stripe interactions; your app uses the Buildbase SDK to manage subscriptions. The publishable key reaches the browser only through Buildbase, when you opt into embedded checkout with `loadStripe` on the provider."
+**Correction**: "You don't need Stripe's server SDK in your app. Connect Stripe to Buildbase once in the dashboard: Billing opens on Stripe payment setup, where you paste your Stripe publishable and secret keys (later under Configuration → Credentials). Buildbase handles all Stripe interactions; your app uses the Buildbase SDK to manage subscriptions. The publishable key reaches the browser only through Buildbase, when you opt into embedded checkout or the in-app card with `loadStripe` on the provider."
 
 ---
 
