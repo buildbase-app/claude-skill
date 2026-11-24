@@ -60,7 +60,7 @@ The same product has three audiences and they need different files. Decide befor
 
 | They are | Signals | Start here |
 |---|---|---|
-| **An operator** running their own BuildBase | "my org", "my campaigns", API key, `orgId:secret`, wants to automate the console, asks about workflows/email/collections/links/assets | `knowledge/http-api/org-api.md`; for an agent working in the console as the person, BuildBase's hosted MCP server (`knowledge/mcp/mcp-and-agent-readiness.md`, "BuildBase's own hosted MCP server") |
+| **An operator** running their own BuildBase | "my org", "my campaigns", API key, `orgId:secret`, wants to automate the console, asks about workflows/email/collections/links/assets | `knowledge/http-api/org-api.md`; for an agent working in the console as the person, BuildBase's hosted MCP server (`knowledge/mcp/mcp-and-agent-readiness.md`, "Two tracks") |
 | **A developer** integrating the SDK into their product | `SaaSOSProvider`, hooks, gates, "add auth to my app", Next.js, billing UI | `knowledge/sdk/quick-start.md`, then the `knowledge/sdk/` file for the feature |
 | **Building for their own end users**, possibly via an agent | "on behalf of a user", MCP, agent, "let Claude do X for my customers" | `knowledge/mcp/mcp-and-agent-readiness.md`, plus token exchange in `knowledge/http-api/using-from-any-language.md` |
 
@@ -76,7 +76,7 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | When to load | File |
 |---|---|
 | **First** when asked to build a whole app, or "build me a SaaS with BuildBase" | `knowledge/patterns/build-an-app-with-an-agent.md` |
-| **Before writing ANY settings, billing, members or profile screen** | `knowledge/sdk/pre-built-ui.md` - 13 screens already exist |
+| **Before writing ANY settings, billing, members or profile screen** | `knowledge/sdk/pre-built-ui.md` - 18 settings screens already exist |
 | "Can BuildBase do X?" / which surface reaches a module / is there a hook for X | `knowledge/product/module-map.md` |
 | **First** when a developer reports a bug or something "doesn't work" | `knowledge/failure-library/top-mistakes.md` |
 | **First** when a developer is starting a fresh integration | `knowledge/learning/beginner-path.md` |
@@ -113,7 +113,7 @@ Establish these before showing any code.
 
 **Org → Workspace → User.** Everything — subscriptions, quotas, feature flags, credits — belongs to a workspace. Users join workspaces with roles. The org is the developer's product registered in the Buildbase dashboard.
 
-**Most of the UI is already written.** BuildBase ships 13 settings screens, a workspace switcher, a headless pricing page and a credit store, translated into 8 languages and permission-gated. Hand-building any of them is the most expensive mistake available here. Before writing an account, billing or members screen, read `knowledge/sdk/pre-built-ui.md`.
+**Most of the UI is already written.** BuildBase ships 18 settings screens, a workspace switcher, a headless pricing page and a credit store, translated into 8 languages and permission-gated. Hand-building any of them is the most expensive mistake available here. Before writing an account, billing or members screen, read `knowledge/sdk/pre-built-ui.md`.
 
 **Eight of the twenty modules have no React surface.** Email, workflows, collections, content, forms, short links, assets and reporting have no hooks or components; they are console and org-API surfaces, and since 0.0.73 content and collections are also readable from a server through `@buildbase/sdk/server` with an org API token. There is no `useCollections`. Check `knowledge/product/module-map.md` before reaching for a hook.
 
@@ -263,16 +263,16 @@ What each file contains, so you know whether it's worth opening:
 
 **SDK reference** (`knowledge/sdk/`)
 - `quick-start.md` - the minimal end-to-end first integration, ending with the webhook route (Step 8)
-- `auth.md` — `useSaaSAuth`, the three auth callbacks, events, redirect preservation
-- `workspace.md` — `useSaaSWorkspaces`, `WorkspaceSwitcher`, switch vs set, workspace modes
+- `auth.md` - `useSaaSAuth`, auth callbacks, session restore and outages (`isSessionUnverified`), confirm it's you, access refusals, events, redirect preservation, environments
+- `workspace.md` - `useSaaSWorkspaces`, `WorkspaceSwitcher`, switch vs set, invitations, roles and permissions, workspace modes
 - `billing.md` — subscription gates, trials, `PricingPage`, multi-currency utilities
 - `feature-flags.md` — workspace vs user features, `useUserFeatures`, programmatic checks
 - `quota-usage.md` — `useRecordUsage`, batch recording, response shape, quota gates
 - `credits.md` — `useConsumeCredits`, `CreditActionsProvider`, public packages, `INSUFFICIENT_CREDITS`
 - `commerce.md` - selling and buying inside the app (SDK 1.x): items, checkout, orders, bookings, licence keys, Stripe Connect sellers, the server back office
-- `notifications.md` — push service-worker setup, `notification.send`, channels, merge tags
+- `notifications.md` - push service worker (`PUSH_SERVICE_WORKER_SCRIPT`), `notification.send` and its limits, scheduling, channels, merge tags, the notification inbox
 - `server-side.md` — `BuildBase()` factory, all action modules, webhook verification (options-object API)
-- `pre-built-ui.md` — the 13 settings screens, pricing and credit-store components, the `ui` prop, theming variables, the 8 locales
+- `pre-built-ui.md` - the 18 settings screens, pricing and credit-store components, notification, invitation and enterprise components, the `ui` prop, theming variables, the 8 locales
 
 **Plain-language onboarding**
 - `explain-buildbase-simply.md` — jargon-free explanation + analogies for true beginners ("what is this?")
@@ -302,7 +302,7 @@ What each file contains, so you know whether it's worth opening:
 - `http-api/using-from-any-language.md` — login/code-exchange flow + Python/Go examples
 
 **MCP & agent readiness** (`knowledge/mcp/`)
-- `mcp/mcp-and-agent-readiness.md` — BuildBase's own hosted MCP server versus the app's; expose a live MCP server + agent OAuth: `createAgentStack`, console setup (OAuth2 agent client, Agent Readiness toggle, DCR base client), the two-client-secret split, tool exposure (`builtinTools`, `defineMcpTool`), verification checklist, and a failure library of real integration failures
+- `mcp/mcp-and-agent-readiness.md` - BuildBase's own hosted MCP server versus the app's ("Two tracks"); `init --agent`, the 82 built-in tools and their write scopes, the `agent doctor` / `agent setup` / `agent listing` commands; expose a live MCP server + agent OAuth: `createAgentStack`, console setup (OAuth2 agent client, Agent Readiness toggle, DCR base client), the two-client-secret split, tool exposure (`builtinTools`, `defineMcpTool`), verification checklist, and a failure library of real integration failures
 
 **Patterns & quick lookup**
 - `patterns/nextjs-integration.md` — complete production Next.js wiring (all 7 files)

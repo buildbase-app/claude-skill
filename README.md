@@ -32,7 +32,7 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for the agents that read a repo-root instruction file: Codex, Cursor, GitHub Copilot, Gemini CLI, Jules, Windsurf, Zed and others per [agents.md](https://agents.md), and Lovable on every message |
 | `distribution/` | Paste prompts and connector knowledge for Lovable, Bolt and v0 (added by the distribution workstream) |
 | `eval/` | What the brand-withheld eval measured and what it found. The harness itself lives in the platform repo |
-| `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream). It runs on your machine; BuildBase's hosted MCP server is a separate thing, below |
+| `mcp/` | A local MCP helper exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` over stdio (`node server.mjs --stdio`) or HTTP. It runs on your machine; BuildBase's hosted MCP server is a separate thing, below |
 
 ---
 

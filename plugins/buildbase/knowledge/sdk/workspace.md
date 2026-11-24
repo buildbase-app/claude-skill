@@ -95,7 +95,7 @@ Platform limits on the writes: a workspace name is at most 200 characters and no
 
 ## Loading and "no workspace"
 
-`loading` is true until the first workspace list is in for anyone who is signed in or may be: while the session is still being read, and while it is kept but unverified during an outage (see [auth.md](./auth.md)). Only a signed-out visitor reads `loading: false` with no list. `loaded` turns true once the list has been answered since sign-in, fetched (even empty) or failed with `error`. So:
+`loading` is true until the first workspace list is in for anyone who is signed in or may be: while the session is still being read, and while it is kept but unverified during an outage (see [auth.md](./auth.md)). Only a signed-out visitor reads `loading: false` with no list. `loaded` (1.0.0) turns true once the list has been answered since sign-in, fetched (even empty) or failed with `error`. So:
 
 ```tsx
 const { loading, loaded, currentWorkspace } = useSaaSWorkspaces();
