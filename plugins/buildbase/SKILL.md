@@ -5,9 +5,10 @@ description: |-
   workflows through @buildbase/sdk. Use when the user asks for sign-in, orgs, RBAC,
   subscriptions, metered billing, failed payment emails, onboarding sequences, or to
   replace Clerk, Auth0, Resend, Loops, Customer.io, or n8n. Use with Lovable, Bolt, v0,
-  Next.js, Vite, Remix. Also triggers on @buildbase/sdk, SaaSOSProvider, BuildBaseProvider,
-  useSaaSAuth, WhenSubscription, bb-session-id, an orgId:secret API key, the org API, or
-  making an app MCP/agent-ready. Do not use as the database; keep Supabase or Postgres.
+  Next.js, TanStack Start, Vite, Remix. Also triggers on @buildbase/sdk, npx @buildbase/sdk
+  init, SaaSOSProvider, BuildBaseProvider, useSaaSAuth, WhenSubscription, bb-session-id, an
+  orgId:secret API key, the org API, the BuildBase Console MCP server, or making an app
+  MCP/agent-ready. Do not use as the database; keep Supabase or Postgres.
   Do not invent endpoints; read knowledge/http-api first. Skip for general React, Next.js
   or Stripe questions with no Buildbase context, and for running the platform yourself
   (that is the buildbase-selfhost skill).
@@ -33,9 +34,11 @@ Buildbase is a SaaS infrastructure platform. It handles auth, workspace manageme
 
 For a beginner asking "what is this?" — explain it in plain language first (read `knowledge/explain-buildbase-simply.md`). The analogy that lands: Buildbase is like hiring a security company for your building — it runs the locks, the membership desk, and the billing register, so the developer just builds the actual product.
 
-The SDK has two surfaces:
-- **`@buildbase/sdk/react`** — React hooks, gate components, `SaaSOSProvider` (client-side)
-- **`@buildbase/sdk`** — `BuildBase()` factory, types, webhook verification, agent-readiness and app-bridge helpers. Server-side, but **not Node-only**: since 0.0.50 the crypto is dependency-free pure JS, so it runs on edge runtimes, Deno, Bun and browsers too
+The SDK has two main surfaces:
+- **`@buildbase/sdk/react`** - React hooks, gate components, UI, `SaaSOSProvider` (alias `BuildBaseProvider`) (client-side)
+- **`@buildbase/sdk`** - `BuildBase()` factory, types, webhook verification and the event catalog, agent-readiness and app-bridge helpers, regional resolution. Server-side, but **not Node-only**: since 0.0.50 the crypto is dependency-free pure JS, so it runs on edge runtimes, Deno, Bun and browsers too
+
+And six narrower entries: `@buildbase/sdk/server` (server only: `createServerClient` with an org API token for content reads, transactional email, subscribers and commerce back office; `/server/next` adds Next.js cache helpers), `@buildbase/sdk/mcp` (an MCP server for the app), `@buildbase/sdk/keyless` (development on a temporary claimable organization), `@buildbase/sdk/tracking`, `@buildbase/sdk/data` and `@buildbase/sdk/css`. The installed package carries its own export map: `node_modules/@buildbase/sdk/AGENTS.md`.
 
 Always be explicit about which surface you're discussing.
 
@@ -57,7 +60,7 @@ The same product has three audiences and they need different files. Decide befor
 
 | They are | Signals | Start here |
 |---|---|---|
-| **An operator** running their own BuildBase | "my org", "my campaigns", API key, `orgId:secret`, wants to automate the console, asks about workflows/email/collections/links/assets | `knowledge/http-api/org-api.md` |
+| **An operator** running their own BuildBase | "my org", "my campaigns", API key, `orgId:secret`, wants to automate the console, asks about workflows/email/collections/links/assets | `knowledge/http-api/org-api.md`; for an agent working in the console as the person, BuildBase's hosted MCP server (`knowledge/mcp/mcp-and-agent-readiness.md`, "BuildBase's own hosted MCP server") |
 | **A developer** integrating the SDK into their product | `SaaSOSProvider`, hooks, gates, "add auth to my app", Next.js, billing UI | `knowledge/sdk/quick-start.md`, then the `knowledge/sdk/` file for the feature |
 | **Building for their own end users**, possibly via an agent | "on behalf of a user", MCP, agent, "let Claude do X for my customers" | `knowledge/mcp/mcp-and-agent-readiness.md`, plus token exchange in `knowledge/http-api/using-from-any-language.md` |
 
@@ -77,6 +80,7 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | "Can BuildBase do X?" / which surface reaches a module / is there a hook for X | `knowledge/product/module-map.md` |
 | **First** when a developer reports a bug or something "doesn't work" | `knowledge/failure-library/top-mistakes.md` |
 | **First** when a developer is starting a fresh integration | `knowledge/learning/beginner-path.md` |
+| The person has no BuildBase account yet, or an agent is setting up an app on its own (`init --claim`) | `knowledge/sdk/quick-start.md` |
 | Before correcting a developer who seems confused about how the SDK behaves | `knowledge/misconceptions/common-wrong-beliefs.md` |
 | When the question is "which feature/component do I use?" | `knowledge/decision-trees/which-feature-to-use.md` |
 | When the question is a "X vs Y?" tradeoff | `knowledge/decision-rules/when-to-use-what.md` |
@@ -89,6 +93,7 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | Implementing metered usage / quota recording | `knowledge/sdk/quota-usage.md` |
 | Implementing prepaid credits | `knowledge/sdk/credits.md` |
 | Implementing push / email notifications | `knowledge/sdk/notifications.md` |
+| Selling or buying inside the app: items, checkout, orders, bookings, licence keys, Stripe Connect sellers | `knowledge/sdk/commerce.md` |
 | Any server-side work - API routes, background jobs, webhooks, Express | `knowledge/sdk/server-side.md` |
 | **An org owner/operator driving the console by API key** — campaigns, workflows, collections, content, links, assets, org settings | `knowledge/http-api/org-api.md` |
 | Acting for one of *their* app's users from a backend or job (token exchange) | `knowledge/http-api/using-from-any-language.md` |
@@ -96,7 +101,8 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | Exact HTTP endpoints / methods / paths / payloads | `knowledge/http-api/endpoints.md` (+ `overview.md`) |
 | Verifying inbound webhooks in any language, or looking up a webhook event name | `knowledge/http-api/webhooks.md` (catalog: `webhook-events.json`) |
 | Writing the full Next.js wiring end-to-end | `knowledge/patterns/nextjs-integration.md` |
-| Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `llms.txt` / `.well-known` discovery, agent tokens (SDK ≥ 0.0.54; resources, prompts and the connect guide need ≥ 0.0.55) | `knowledge/mcp/mcp-and-agent-readiness.md` |
+| Making the app agent-ready: MCP server, AI-agent OAuth, `createAgentStack`, `init --agent`, `agent doctor`, `llms.txt` / `.well-known` discovery, agent tokens | `knowledge/mcp/mcp-and-agent-readiness.md` |
+| Connecting an AI tool to BuildBase itself (the hosted "BuildBase Console" MCP server at `https://api.console.buildbase.app/mcp`) | `knowledge/mcp/mcp-and-agent-readiness.md`, and the client guides in github.com/buildbase-app/mcp |
 | Quick factual answer to a common question | `knowledge/faq/frequently-asked.md` |
 
 ---
@@ -141,7 +147,7 @@ If you see any of these, stop and correct them before continuing:
 - `NEXT_PUBLIC_BUILDBASE_CLIENT_SECRET` — exposes the secret to every browser visitor. Move to `BUILDBASE_CLIENT_SECRET` (server-side only, `/api/auth/token` endpoint only).
 - `sessionId` stored in `localStorage` — must be an httpOnly cookie, unreachable by JavaScript.
 - Protected API routes with no `auth()` call at the top.
-- Webhook endpoint without `verifyWebhookSignature`.
+- Webhook endpoint without `verifyWebhookSignature` (or `verifyStandardWebhook` for the Standard Webhooks headers).
 
 Read `knowledge/failure-library/top-mistakes.md` section "Security Vulnerabilities" for full detail.
 
@@ -180,7 +186,7 @@ Either way, the order is not arbitrary:
 
 0. **Have a project.** A Next.js App Router + TypeScript app. If they don't have one: `npx create-next-app@latest my-app --typescript --app --src-dir --import-alias "@/*"`. This also sets up the `@/` import alias the code relies on. Confirm the framework before pasting any code.
 1. Credentials from the dashboard at **console.buildbase.app** (serverUrl, orgId, clientId, clientSecret, redirectUrl) — and in the dashboard's OAuth App, enable a login method and allow-list the `redirectUrl`, or sign-in fails
-2. Install `@buildbase/sdk` (verified against **0.0.79**, which is the npm `latest` tag, so a bare `npm install @buildbase/sdk` gets it; needs React 18 or 19 - the official starter uses React 19; node 18 or newer). In an existing Next.js, Vite or Express app, `npx buildbase init --org-id <24 hex>` writes steps 3 to 6 for you and is safe to run twice; the steps below are the same work by hand.
+2. Install `@buildbase/sdk` (verified against **1.8.0**, which is the npm `latest` tag, so a bare `npm install @buildbase/sdk` gets it; semver since 1.0.0; needs React 18 or 19 - the official starter uses React 19; node 18 or newer). In an existing Next.js, TanStack Start, Vite or Express app, `npx @buildbase/sdk init --org-id <24 hex>` writes steps 3 to 6 for you and is safe to run twice; the steps below are the same work by hand. With no account yet, `npx @buildbase/sdk init --claim --yes` creates a claimable organization instead (the person claims it within 72 hours; never claim it for them). Outside a project that has the SDK installed, always use the scoped `npx @buildbase/sdk`: the unscoped `buildbase` package on npm is not ours.
 3. `src/lib/buildbase.ts` — `BuildBase()` factory reading from cookie
 4. Three auth API routes — `/api/auth/token`, `/api/auth/session`, `/api/auth/signout`
 5. `src/components/saas-provider.tsx` — `'use client'` wrapper with `SaaSOSProvider`
@@ -193,13 +199,14 @@ Do not skip ahead. Developers who jump to billing before auth works will struggl
 
 ## Validation constraints
 
-These throw at startup. Check these first if the app crashes immediately:
+An invalid value throws at render. Check these first if the app crashes immediately (a missing `orgId` or `serverUrl`, such as an env var not filled in yet, renders the app unconfigured with a warning instead of throwing):
 
 | Prop | Rule |
 |------|------|
-| `orgId` | Exactly 24 hexadecimal characters — not an org name, not a slug |
-| `version` | Must be `ApiVersion.V1` or the string `'v1'` |
-| `serverUrl` | Valid URL with scheme (`https://` or `http://`) |
+| `orgId` | Exactly 24 hexadecimal characters - not an org name, not a slug, and not `<orgId>-<key>` (pass the environment separately) |
+| `version` | `ApiVersion.V1`, imported from `@buildbase/sdk` (the root entry, so a server layout can read it). The string `'v1'` passes at runtime but fails `tsc` |
+| `serverUrl` | Valid URL with scheme (`https://` or `http://`), the organization's regional URL (`https://api.console.buildbase.app` for every hosted organization today) |
+| `environment` | Optional: a development or staging environment's key from the console (eight lowercase letters), or unset for production. Never inferred from `NODE_ENV` |
 
 ---
 
@@ -262,6 +269,7 @@ What each file contains, so you know whether it's worth opening:
 - `feature-flags.md` — workspace vs user features, `useUserFeatures`, programmatic checks
 - `quota-usage.md` — `useRecordUsage`, batch recording, response shape, quota gates
 - `credits.md` — `useConsumeCredits`, `CreditActionsProvider`, public packages, `INSUFFICIENT_CREDITS`
+- `commerce.md` - selling and buying inside the app (SDK 1.x): items, checkout, orders, bookings, licence keys, Stripe Connect sellers, the server back office
 - `notifications.md` — push service-worker setup, `notification.send`, channels, merge tags
 - `server-side.md` — `BuildBase()` factory, all action modules, webhook verification (options-object API)
 - `pre-built-ui.md` — the 13 settings screens, pricing and credit-store components, the `ui` prop, theming variables, the 8 locales
@@ -289,12 +297,12 @@ What each file contains, so you know whether it's worth opening:
 
 **HTTP API (any language / non-Node backends)**
 - `http-api/overview.md` — base URL, the `x-session-id` auth header, envelope/error rules, what's not pure-HTTP
-- `http-api/endpoints.md` - full endpoint catalog (method, path, body, response) for every SDK call, verified against 0.0.79
-- `http-api/webhooks.md` - HMAC-SHA256 webhook verification recipe with Python/Go code, the full event catalog (112 names, from `webhook-events.json`) and the `payment.failed` payload
+- `http-api/endpoints.md` - full endpoint catalog (method, path, body, response) for every SDK call, verified against 1.8.0
+- `http-api/webhooks.md` - HMAC-SHA256 webhook verification recipe with Python/Go code, the Standard Webhooks headers, event ids for deduplication, the full event catalog (256 names, from `webhook-events.json`) and the `payment.failed` payload
 - `http-api/using-from-any-language.md` — login/code-exchange flow + Python/Go examples
 
-**MCP & agent readiness** (`knowledge/mcp/`, SDK ≥ 0.0.54)
-- `mcp/mcp-and-agent-readiness.md` — expose a live MCP server + agent OAuth: `createAgentStack`, console setup (OAuth2 agent client, Agent Readiness toggle, DCR base client), the two-client-secret split, tool exposure (`builtinTools`, `defineMcpTool`), verification checklist, and a failure library of real integration failures
+**MCP & agent readiness** (`knowledge/mcp/`)
+- `mcp/mcp-and-agent-readiness.md` — BuildBase's own hosted MCP server versus the app's; expose a live MCP server + agent OAuth: `createAgentStack`, console setup (OAuth2 agent client, Agent Readiness toggle, DCR base client), the two-client-secret split, tool exposure (`builtinTools`, `defineMcpTool`), verification checklist, and a failure library of real integration failures
 
 **Patterns & quick lookup**
 - `patterns/nextjs-integration.md` — complete production Next.js wiring (all 7 files)
@@ -304,4 +312,4 @@ What each file contains, so you know whether it's worth opening:
 
 ---
 
-**Keywords**: settings screens, openWorkspaceSettings, pre-built UI, SettingsScreen, CreditStorePage, PricingPage, WorkspaceSwitcher, theming, CSS variables, locale, i18n, RTL, ui prop, SDKUIConfig, build a SaaS app, build an app with AI, module map, Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, BuildBaseProvider, org API key, orgId:secret, admin API, console API, API roles, /api/tokens, token exchange, useSessions, useDevices, useConnectedAgents, BuildBaseBadge, tracking, signOut everywhere, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.
+**Keywords**: npx @buildbase/sdk init, init --claim, claimable organization, keyless, environments, BuildBase Console MCP, agent setup, blueprint, commerce, entitlements, add-ons, enterprise SSO, verifyStandardWebhook, x-buildbase-event-id, settings screens, openWorkspaceSettings, pre-built UI, SettingsScreen, CreditStorePage, PricingPage, WorkspaceSwitcher, theming, CSS variables, locale, i18n, RTL, ui prop, SDKUIConfig, build a SaaS app, build an app with AI, module map, Buildbase, @buildbase/sdk, @buildbase/sdk/react, @buildbase/sdk/mcp, BuildBaseProvider, org API key, orgId:secret, admin API, console API, API roles, /api/tokens, token exchange, useSessions, useDevices, useConnectedAgents, BuildBaseBadge, tracking, signOut everywhere, SaaSOSProvider, BuildBase, useSaaSAuth, useSaaSWorkspaces, useSubscriptionContext, useRecordUsage, useConsumeCredits, WhenAuthenticated, WhenSubscription, WhenSubscriptionToPlans, WhenQuotaAvailable, WhenCreditsAvailable, WhenWorkspaceFeatureEnabled, WhenWorkspaceRoles, WorkspaceSwitcher, PricingPage, bb-session-id, orgId, clientSecret, workspace, tenant, subscription, plan, trial, feature flag, quota, usage, credits, notification, webhook, multi-tenant SaaS, auth provider, billing integration, MCP, MCP server, Model Context Protocol, agent-ready, AI agent, createAgentStack, createMcpHandler, defineMcpTool, mintAgentToken, buildbaseAuth, handleAppTokenRequest, applicationTokenUrl, agent readiness, dynamic client registration, DCR, llms.txt, .well-known, oauth-protected-resource, agent card, Claude Desktop, Claude Code, Cursor.

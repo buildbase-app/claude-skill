@@ -18,3 +18,6 @@ ai-analysis/
 
 # Eval suite / QA — kept local for maintenance, not published
 evaluation/
+
+# Python bytecode (validate.py imports the render script)
+__pycache__/

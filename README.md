@@ -4,13 +4,13 @@
 
 | Skill | For | What it does |
 |-------|-----|--------------|
-| **`buildbase`** | App developers integrating Buildbase, **and org owners automating their own org** | Takes a developer from `npm install` to a working sign-in, then guides auth, workspaces, billing, feature flags, quota, credits, notifications, devices and sessions, server-side usage, webhooks, and using Buildbase from a non-Node backend over raw HTTP. For operators it covers the console's own REST API: an API key with a role, the shared list contract, and what a key can and cannot reach. |
+| **`buildbase`** | App developers integrating Buildbase, **and org owners automating their own org** | Takes a developer from `npm install` (or `npx @buildbase/sdk init`) to a working sign-in, then guides auth, workspaces, billing for a workspace or a person, entitlements and add-ons, feature flags, quota, credits, notifications, devices and sessions, development environments, commerce, server-side usage, transactional email, webhooks, making the app agent-ready, and using Buildbase from a non-Node backend over raw HTTP. For operators it covers the console's own REST API: an API key with a role, the shared list contract, and what a key can and cannot reach. |
 | **`buildbase-selfhost`** | Operators running Buildbase themselves | Deploys and operates the self-hosted platform — the four-component architecture, the real Docker Compose + Nginx configs, env-var reference, production hardening, upgrades. |
 
 The two skills work together. If you self-host, first use `buildbase-selfhost` to deploy your stack, then use `buildbase` to build your app against it — point `serverUrl` at your own tenant server instead of the Buildbase cloud.
 
 **Grounding** — we don't guess:
-- `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@0.0.79` and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
+- `buildbase` - every API name, signature, endpoint and code sample is verified against the published type surface of `@buildbase/sdk@1.8.0` (the npm `latest` tag), the agent docs that package ships (`AGENTS.md`, `agents/*.md`), and the official `nextjs-starter` / `nextjs-agent-mcp-starter` reference apps. The org-API half is verified against the platform's own shared route constants, and the webhook event catalog (`knowledge/http-api/webhook-events.json`) is vendored from the platform's `SYSTEM_EVENTS` constant.
 - `buildbase-selfhost` — we ground every fact in the self-hosted docs (`self-hosted/{overview,quick-start,configuration,production}`) and reproduce the real `docker-compose.selfhost.yml` and `nginx-lb.conf` verbatim. Where the docs say nothing, the skill answers "not documented" instead of inventing (see [`plugins/buildbase-selfhost/GAPS.md`](./plugins/buildbase-selfhost/GAPS.md)).
 
 ---
@@ -32,7 +32,7 @@ The two skills work together. If you self-host, first use `buildbase-selfhost` t
 | `AGENTS.md` / `CLAUDE.md` | The position rule and the install paths, for the agents that read a repo-root instruction file: Codex, Cursor, GitHub Copilot, Gemini CLI, Jules, Windsurf, Zed and others per [agents.md](https://agents.md), and Lovable on every message |
 | `distribution/` | Paste prompts and connector knowledge for Lovable, Bolt and v0 (added by the distribution workstream) |
 | `eval/` | What the brand-withheld eval measured and what it found. The harness itself lives in the platform repo |
-| `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream; not hosted) |
+| `mcp/` | A local MCP server exposing `create_workspace`, `list_events`, `scaffold_auth`, `verify_webhook` (added by the distribution workstream). It runs on your machine; BuildBase's hosted MCP server is a separate thing, below |
 
 ---
 
@@ -54,7 +54,7 @@ Agent names are the CLI's own identifiers, not the product names: `claude-code`,
 `cline`, `continue`, `zed` and around seventy more. Run the command with no
 `-a` to pick from the list. Verified on 2026-10-08: `cursor`, `codex`,
 `github-copilot`, `gemini-cli`, `opencode` and `windsurf` each install this
-skill byte-identically, with all 33 knowledge files; most share
+skill byte-identically, with all 33 knowledge files it had then; most share
 `.agents/skills/`, while Claude Code uses `.claude/skills/` and Windsurf
 `.windsurf/skills/`.
 ```
@@ -88,6 +88,16 @@ cp -R claude-skill/plugins/buildbase-selfhost ~/.claude/skills/buildbase-selfhos
 ```
 
 Then in claude.ai: **Settings → Capabilities → Skills → Upload** and select each zip you want (`dist/buildbase.zip` and/or `dist/buildbase-selfhost.zip`).
+
+### BuildBase in your AI tools (the hosted MCP server)
+
+The skills teach an agent how to build with BuildBase. To let an agent work in your BuildBase organizations as you (read and change console data, set an organization up from a blueprint, search the docs), connect BuildBase's hosted MCP server, `https://api.console.buildbase.app/mcp`. It signs you in with OAuth; nothing to install. One command adds it to every AI tool on your computer:
+
+```bash
+npx @buildbase/sdk agent setup --console
+```
+
+Guides for each client: [buildbase-app/mcp](https://github.com/buildbase-app/mcp).
 
 ---
 

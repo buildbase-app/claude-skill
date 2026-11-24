@@ -5,14 +5,15 @@
     "path": "packages/shared/src/constants/system-events.ts",
     "constant": "SYSTEM_EVENTS (ALL_WEBHOOK_EVENTS)",
     "categoriesFrom": "packages/shared/src/constants/platform-stats.ts EVENT_CATEGORIES",
-    "commit": "f5d9c776e1efd694987a77ddefba3fb1b796c2c9",
-    "syncedOn": "2026-10-07"
+    "commit": "e11b48052f133c28019ca52537cf53b39f80973a",
+    "syncedOn": "2026-11-24"
   },
-  "count": 112,
+  "count": 256,
   "headers": {
     "signature": "x-buildbase-signature",
     "timestamp": "x-buildbase-timestamp",
-    "event": "x-buildbase-event"
+    "event": "x-buildbase-event",
+    "eventId": "x-buildbase-event-id"
   },
   "events": [
     "user.registered",
@@ -26,12 +27,31 @@
     "user.tag_removed",
     "user.blocked",
     "user.unblocked",
+    "user.mfa_enrolled",
+    "user.mfa_disabled",
+    "user.mfa_reset_by_admin",
+    "user.email_changed",
+    "user.imported",
+    "user.account_linked",
+    "user.account_unlinked",
+    "user.passkey_added",
+    "user.passkey_removed",
+    "user.phone_added",
+    "user.phone_verified",
+    "user.phone_removed",
+    "user.deletion_scheduled",
+    "user.deletion_cancelled",
+    "user.deleted",
+    "auth.login_failed",
+    "auth.signup_challenged",
+    "auth.sms_budget_exceeded",
     "organization.member_invited",
     "organization.member_accepted",
     "organization.member_role_changed",
     "organization.member_removed",
     "organization.public_write_limit_reached",
     "organization.end_user_ceiling_reached",
+    "entitlement.ceiling_reached",
     "workspace.created",
     "workspace.updated",
     "workspace.deleted",
@@ -54,18 +74,39 @@
     "subscription.suspended",
     "subscription.trial_started",
     "subscription.trial_will_end",
+    "subscription.trial_extended",
     "subscription.trial_expired",
+    "subscription.paused",
+    "subscription.unpaused",
+    "subscription.retention_accepted",
+    "subscription.stripe_out_of_sync",
+    "subscription.margin_below_threshold",
     "payment.succeeded",
     "payment.failed",
     "payment.action_required",
     "payment.refunded",
+    "payment.card_expiring",
+    "payment.stripe_events_failed",
     "quota.limit_exceeded",
+    "quota.threshold_reached",
     "credit.purchased",
     "credit.consumed",
     "credit.expired",
     "credit.granted",
     "credit.revoked",
     "credit.low_balance",
+    "credit.reserved",
+    "credit.settled",
+    "credit.released",
+    "credit.threshold_crossed",
+    "credit.top_up_failed",
+    "credit.plan_grant_failed",
+    "addon.purchased",
+    "addon.expired",
+    "addon.revoked",
+    "addon.changed",
+    "payer.subject_added",
+    "payer.subject_removed",
     "workflow.created",
     "workflow.deleted",
     "workflow.published",
@@ -95,6 +136,7 @@
     "email.opened",
     "email.clicked",
     "email.bounced",
+    "email.complained",
     "email.unsubscribed",
     "email.campaign_sent",
     "push.campaign_sent",
@@ -102,12 +144,64 @@
     "auth.domain_added",
     "auth.domain_verified",
     "auth.domain_deleted",
+    "auth.domain_unverified",
     "auth.client_self_registered",
+    "enterprise.created",
+    "enterprise.deleted",
+    "enterprise.domain_verified",
+    "enterprise.user_provisioned",
+    "enterprise.user_deprovisioned",
+    "enterprise.directory_synced",
+    "enterprise.certificate_expiring",
+    "enterprise.certificate_renewed",
+    "enterprise.policy_updated",
+    "enterprise.break_glass_used",
+    "enterprise.sessions_revoked",
+    "enterprise.connection_activated",
+    "enterprise.connection_deactivated",
+    "enterprise.connection_deleted",
+    "enterprise.log_stream_failing",
+    "enterprise.log_stream_recovered",
+    "enterprise.admin_added",
+    "enterprise.admin_removed",
+    "enterprise.key_created",
+    "enterprise.key_revoked",
+    "enterprise.group_created",
+    "enterprise.group_updated",
+    "enterprise.group_deleted",
+    "enterprise.group_members_changed",
+    "enterprise.role_created",
+    "enterprise.role_updated",
+    "enterprise.role_deleted",
+    "enterprise.person_joined",
+    "enterprise.join_requested",
+    "enterprise.join_request_declined",
+    "enterprise.domain_removed",
+    "enterprise.app_team_session",
+    "enterprise.workos_roles_attention",
+    "enterprise.workos_roles_recovered",
+    "enterprise.agent_issuer_updated",
+    "enterprise.agent_access",
+    "enterprise.sso_routing_updated",
+    "enterprise.workload_credential_updated",
+    "enterprise.workload_access",
+    "enterprise.workspace_policy_updated",
+    "oauth.consent_granted",
+    "oauth.consent_revoked",
     "subscription.downgraded",
+    "subscription.discount_applied",
+    "subscription.discount_removed",
+    "invoice.sent",
+    "invoice.overdue",
+    "subscription.version_move_scheduled",
+    "subscription.version_moved",
+    "subscription.version_move_withdrawn",
     "token.created",
     "token.updated",
     "token.revoked",
     "group_version.published",
+    "version_move.completed",
+    "version_move.cancelled",
     "form.submitted",
     "blog.published",
     "blog.updated",
@@ -126,7 +220,58 @@
     "collection.version_published",
     "collection.record_created",
     "collection.record_updated",
-    "collection.record_deleted"
+    "collection.record_deleted",
+    "item.created",
+    "item.updated",
+    "item.published",
+    "item.rejected",
+    "item.archived",
+    "order.created",
+    "order.paid",
+    "order.refunded",
+    "order.fulfilled",
+    "order.disputed",
+    "order.part_paid",
+    "order.part_failed",
+    "order.shipped",
+    "shipment.updated",
+    "return.requested",
+    "return.updated",
+    "review.created",
+    "review.updated",
+    "review.hidden",
+    "grant.created",
+    "grant.revoked",
+    "license.rotated",
+    "buyer.state_changed",
+    "grant.gifted",
+    "grant.claimed",
+    "item_subscription.created",
+    "item_subscription.renewed",
+    "item_subscription.past_due",
+    "item_subscription.recovered",
+    "item_subscription.canceled",
+    "item_subscription.resumed",
+    "item_subscription.ended",
+    "item_subscription.changed",
+    "booking.confirmed",
+    "booking.cancelled",
+    "booking.rescheduled",
+    "booking.updated",
+    "booking.requested",
+    "booking.accepted",
+    "booking.declined",
+    "booking.expired",
+    "affiliate.joined",
+    "affiliate.approved",
+    "affiliate.status_changed",
+    "commission.created",
+    "commission.paid",
+    "commission.reversed",
+    "seller.status_changed",
+    "payout.created",
+    "payout.paid",
+    "payout.failed"
   ],
   "categories": [
     {
@@ -143,7 +288,37 @@
         "user.tag_added",
         "user.tag_removed",
         "user.blocked",
-        "user.unblocked"
+        "user.unblocked",
+        "user.mfa_enrolled",
+        "user.mfa_disabled",
+        "user.mfa_reset_by_admin",
+        "user.email_changed",
+        "user.imported",
+        "user.account_linked",
+        "user.account_unlinked",
+        "user.passkey_added",
+        "user.passkey_removed",
+        "user.phone_added",
+        "user.phone_verified",
+        "user.phone_removed",
+        "user.deletion_scheduled",
+        "user.deletion_cancelled",
+        "user.deleted"
+      ]
+    },
+    {
+      "category": "Auth",
+      "domain": "auth",
+      "events": [
+        "auth.login_failed",
+        "auth.signup_challenged",
+        "auth.sms_budget_exceeded",
+        "auth.method_deleted",
+        "auth.domain_added",
+        "auth.domain_verified",
+        "auth.domain_deleted",
+        "auth.domain_unverified",
+        "auth.client_self_registered"
       ]
     },
     {
@@ -156,6 +331,13 @@
         "organization.member_removed",
         "organization.public_write_limit_reached",
         "organization.end_user_ceiling_reached"
+      ]
+    },
+    {
+      "category": "Entitlement",
+      "domain": "entitlement",
+      "events": [
+        "entitlement.ceiling_reached"
       ]
     },
     {
@@ -190,8 +372,19 @@
         "subscription.suspended",
         "subscription.trial_started",
         "subscription.trial_will_end",
+        "subscription.trial_extended",
         "subscription.trial_expired",
-        "subscription.downgraded"
+        "subscription.paused",
+        "subscription.unpaused",
+        "subscription.retention_accepted",
+        "subscription.stripe_out_of_sync",
+        "subscription.margin_below_threshold",
+        "subscription.downgraded",
+        "subscription.discount_applied",
+        "subscription.discount_removed",
+        "subscription.version_move_scheduled",
+        "subscription.version_moved",
+        "subscription.version_move_withdrawn"
       ]
     },
     {
@@ -201,14 +394,17 @@
         "payment.succeeded",
         "payment.failed",
         "payment.action_required",
-        "payment.refunded"
+        "payment.refunded",
+        "payment.card_expiring",
+        "payment.stripe_events_failed"
       ]
     },
     {
       "category": "Quota",
       "domain": "quota",
       "events": [
-        "quota.limit_exceeded"
+        "quota.limit_exceeded",
+        "quota.threshold_reached"
       ]
     },
     {
@@ -220,7 +416,31 @@
         "credit.expired",
         "credit.granted",
         "credit.revoked",
-        "credit.low_balance"
+        "credit.low_balance",
+        "credit.reserved",
+        "credit.settled",
+        "credit.released",
+        "credit.threshold_crossed",
+        "credit.top_up_failed",
+        "credit.plan_grant_failed"
+      ]
+    },
+    {
+      "category": "Add-on",
+      "domain": "addon",
+      "events": [
+        "addon.purchased",
+        "addon.expired",
+        "addon.revoked",
+        "addon.changed"
+      ]
+    },
+    {
+      "category": "Payer",
+      "domain": "payer",
+      "events": [
+        "payer.subject_added",
+        "payer.subject_removed"
       ]
     },
     {
@@ -268,6 +488,7 @@
         "email.opened",
         "email.clicked",
         "email.bounced",
+        "email.complained",
         "email.unsubscribed",
         "email.campaign_sent"
       ]
@@ -280,14 +501,65 @@
       ]
     },
     {
-      "category": "Auth",
-      "domain": "auth",
+      "category": "Enterprise",
+      "domain": "enterprise",
       "events": [
-        "auth.method_deleted",
-        "auth.domain_added",
-        "auth.domain_verified",
-        "auth.domain_deleted",
-        "auth.client_self_registered"
+        "enterprise.created",
+        "enterprise.deleted",
+        "enterprise.domain_verified",
+        "enterprise.user_provisioned",
+        "enterprise.user_deprovisioned",
+        "enterprise.directory_synced",
+        "enterprise.certificate_expiring",
+        "enterprise.certificate_renewed",
+        "enterprise.policy_updated",
+        "enterprise.break_glass_used",
+        "enterprise.sessions_revoked",
+        "enterprise.connection_activated",
+        "enterprise.connection_deactivated",
+        "enterprise.connection_deleted",
+        "enterprise.log_stream_failing",
+        "enterprise.log_stream_recovered",
+        "enterprise.admin_added",
+        "enterprise.admin_removed",
+        "enterprise.key_created",
+        "enterprise.key_revoked",
+        "enterprise.group_created",
+        "enterprise.group_updated",
+        "enterprise.group_deleted",
+        "enterprise.group_members_changed",
+        "enterprise.role_created",
+        "enterprise.role_updated",
+        "enterprise.role_deleted",
+        "enterprise.person_joined",
+        "enterprise.join_requested",
+        "enterprise.join_request_declined",
+        "enterprise.domain_removed",
+        "enterprise.app_team_session",
+        "enterprise.workos_roles_attention",
+        "enterprise.workos_roles_recovered",
+        "enterprise.agent_issuer_updated",
+        "enterprise.agent_access",
+        "enterprise.sso_routing_updated",
+        "enterprise.workload_credential_updated",
+        "enterprise.workload_access",
+        "enterprise.workspace_policy_updated"
+      ]
+    },
+    {
+      "category": "OAuth",
+      "domain": "oauth",
+      "events": [
+        "oauth.consent_granted",
+        "oauth.consent_revoked"
+      ]
+    },
+    {
+      "category": "Invoice",
+      "domain": "invoice",
+      "events": [
+        "invoice.sent",
+        "invoice.overdue"
       ]
     },
     {
@@ -304,6 +576,14 @@
       "domain": "group_version",
       "events": [
         "group_version.published"
+      ]
+    },
+    {
+      "category": "Version move",
+      "domain": "version_move",
+      "events": [
+        "version_move.completed",
+        "version_move.cancelled"
       ]
     },
     {
@@ -371,6 +651,141 @@
         "collection.record_created",
         "collection.record_updated",
         "collection.record_deleted"
+      ]
+    },
+    {
+      "category": "Item",
+      "domain": "item",
+      "events": [
+        "item.created",
+        "item.updated",
+        "item.published",
+        "item.rejected",
+        "item.archived"
+      ]
+    },
+    {
+      "category": "Order",
+      "domain": "order",
+      "events": [
+        "order.created",
+        "order.paid",
+        "order.refunded",
+        "order.fulfilled",
+        "order.disputed",
+        "order.part_paid",
+        "order.part_failed",
+        "order.shipped"
+      ]
+    },
+    {
+      "category": "Shipment",
+      "domain": "shipment",
+      "events": [
+        "shipment.updated"
+      ]
+    },
+    {
+      "category": "Return",
+      "domain": "return",
+      "events": [
+        "return.requested",
+        "return.updated"
+      ]
+    },
+    {
+      "category": "Review",
+      "domain": "review",
+      "events": [
+        "review.created",
+        "review.updated",
+        "review.hidden"
+      ]
+    },
+    {
+      "category": "Grant",
+      "domain": "grant",
+      "events": [
+        "grant.created",
+        "grant.revoked",
+        "grant.gifted",
+        "grant.claimed"
+      ]
+    },
+    {
+      "category": "License",
+      "domain": "license",
+      "events": [
+        "license.rotated"
+      ]
+    },
+    {
+      "category": "Buyer",
+      "domain": "buyer",
+      "events": [
+        "buyer.state_changed"
+      ]
+    },
+    {
+      "category": "Item subscription",
+      "domain": "item_subscription",
+      "events": [
+        "item_subscription.created",
+        "item_subscription.renewed",
+        "item_subscription.past_due",
+        "item_subscription.recovered",
+        "item_subscription.canceled",
+        "item_subscription.resumed",
+        "item_subscription.ended",
+        "item_subscription.changed"
+      ]
+    },
+    {
+      "category": "Booking",
+      "domain": "booking",
+      "events": [
+        "booking.confirmed",
+        "booking.cancelled",
+        "booking.rescheduled",
+        "booking.updated",
+        "booking.requested",
+        "booking.accepted",
+        "booking.declined",
+        "booking.expired"
+      ]
+    },
+    {
+      "category": "Affiliate",
+      "domain": "affiliate",
+      "events": [
+        "affiliate.joined",
+        "affiliate.approved",
+        "affiliate.status_changed"
+      ]
+    },
+    {
+      "category": "Commission",
+      "domain": "commission",
+      "events": [
+        "commission.created",
+        "commission.paid",
+        "commission.reversed"
+      ]
+    },
+    {
+      "category": "Seller",
+      "domain": "seller",
+      "events": [
+        "seller.status_changed"
+      ]
+    },
+    {
+      "category": "Payout",
+      "domain": "payout",
+      "events": [
+        "payout.created",
+        "payout.paid",
+        "payout.failed"
       ]
     }
   ]
