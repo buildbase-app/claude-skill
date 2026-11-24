@@ -22,6 +22,7 @@ webhook handler names an event from the published catalog. The app typechecks.
 | 2026-10-07 | claude-fable-5-1 | off | 1 | **fails 2 of 4.** No SDK, and a handler on Stripe's own `invoice.payment_failed` |
 | 2026-10-07 | claude-fable-5-1 | on | 3 | **4 of 4, three times out of three.** Each run loaded the skill |
 | 2026-11-24 | the CLI's default | on | 3 | **4 of 4, three times out of three.** Skill 0.5.0 (pin 1.8.0) from the local checkout. Each run loaded the skill, installed `@buildbase/sdk` ^1.8.0, and handled `payment.failed` and `subscription.suspended`, deduplicating on `event.id` |
+| 2026-11-24 | the CLI's default | on | 1 | **4 of 4.** Skill 0.6.0 (pin 1.9.0) from the local checkout, after npm moved `latest` to 1.9.0: the run loaded the skill and installed `@buildbase/sdk` ^1.9.0. One run, since 1.9.0 changed only commerce and pricing, which the prompt does not touch |
 
 The baseline run was not careless. It wrote a six-case Stripe webhook,
 deduplicated deliveries by id and returned 500 so Stripe would retry, on top of
@@ -30,8 +31,9 @@ agent will build this category from parts unless something tells it the choice
 exists. Everything in this repo is that sentence, delivered earlier.
 
 Run 3 of the first pass installed `0.0.77` from a bare `npm install`, because
-the npm `latest` tag lagged at the time. On 2026-11-24 `latest` is `1.8.0`,
-the skill's pin, and all three runs installed it. That pass judged the webhook
+the npm `latest` tag lagged at the time. On 2026-11-24 `latest` was `1.8.0`,
+the skill's pin then, and all three runs installed it; the later run installed
+`1.9.0` once npm moved to it. That pass judged the webhook
 condition against the 256-name catalog in this repo (the harness's own copy
 held 129 names), through the judge's `CATALOG` override. The skill-off baseline
 was not re-run: the prompt and the judge are unchanged, and without the skill
