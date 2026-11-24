@@ -1,15 +1,18 @@
 {
   "name": "buildbase-mcp-local",
   "private": true,
-  "version": "0.1.0",
-  "description": "A local MCP server with the four BuildBase distribution tools. Not hosted; see README.md.",
+  "version": "0.2.0",
+  "description": "A local MCP helper with the four BuildBase distribution tools for building an app, over stdio or localhost. Not the hosted BuildBase MCP server; see README.md.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.mjs",
+    "start:stdio": "node server.mjs --stdio",
     "check": "node --check server.mjs"
   },
   "dependencies": {
-    "@buildbase/sdk": "^0.0.79"
+    "@buildbase/sdk": "^1.8.0"
   }
 }
