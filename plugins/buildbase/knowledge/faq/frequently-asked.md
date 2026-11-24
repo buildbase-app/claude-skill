@@ -76,7 +76,7 @@ handleEvent: async (type, data) => {
 ```
 
 **Q: Can I restrict workspace creation?**
-Yes - in Platform mode, turn on Advanced overrides under Workspaces, Settings and set "Can create workspace" to Disabled (the choices are Everyone or Disabled). The first workspace made on first sign-in is not affected. In Personal mode users never create workspaces. No code change needed.
+Yes - in Platform mode, open Workspaces, Settings (the Workspace configuration page), turn on Advanced overrides and set "Can create workspace" to Disabled (the choices are Everyone or Disabled). The first workspace made on first sign-in is not affected. In Personal mode users never create workspaces. No code change needed.
 
 ---
 

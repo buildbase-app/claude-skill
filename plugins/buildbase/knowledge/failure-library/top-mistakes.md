@@ -76,7 +76,7 @@ Organized from most common to most dangerous. Most bugs are in the first two cat
 
 **What the developer did**: Added a second `SaaSOSProvider` in a child component (e.g., inside a dashboard layout) with different config.
 
-**Symptom**: Undefined behavior — context values may conflict, workspace state may not update correctly, subscription data may be stale or wrong.
+**Symptom**: Undefined behavior - context values may conflict, workspace state may not update correctly, subscription data may be stale or wrong.
 
 **Why it happens**: React context providers can be nested for different values. Developers try to apply workspace-specific config by nesting.
 
@@ -88,7 +88,7 @@ Organized from most common to most dangerous. Most bugs are in the first two cat
 
 ### Mistake 6: Missing Auth Endpoints
 
-**What the developer did**: Added `SaaSOSProvider` with `getSession`, `handleAuthentication`, and `onSignOut` callbacks that call `/api/auth/session`, `/api/auth/token`, and `/api/auth/signout` — but never created those route files.
+**What the developer did**: Added `SaaSOSProvider` with `getSession`, `handleAuthentication`, and `onSignOut` callbacks that call `/api/auth/session`, `/api/auth/token`, and `/api/auth/signout` - but never created those route files.
 
 **Symptom**: Clicking "Sign In" redirects to Buildbase OAuth, returns with a `?code=` in the URL, but the user never gets signed in. `isAuthenticated` stays false.
 
@@ -138,7 +138,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **Why it happens**: `.env.local` is gitignored by default. Developers forget to set the same vars in their hosting provider (Vercel, Railway, Fly.io).
 
-**Detection**: Check the hosting provider's environment variables dashboard. Log `process.env.NEXT_PUBLIC_BUILDBASE_ORG_ID` in a server route — if undefined, the var isn't set.
+**Detection**: Check the hosting provider's environment variables dashboard. Log `process.env.NEXT_PUBLIC_BUILDBASE_ORG_ID` in a server route - if undefined, the var isn't set.
 
 **Recovery**: Add all required env vars to your hosting provider's environment variables section. For Vercel: Settings → Environment Variables. Remember: `NEXT_PUBLIC_` vars must also be added there (not just server-side vars).
 
@@ -178,7 +178,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **What the developer did**: Set the session cookie without the `HttpOnly` flag, making it accessible via `document.cookie`.
 
-**Symptom**: No functional symptom — but the session is now vulnerable to XSS theft. Any injected script can steal the session token.
+**Symptom**: No functional symptom - but the session is now vulnerable to XSS theft. Any injected script can steal the session token.
 
 **Why it happens**: Developers copy a cookie-setting snippet that omits the security flags. The app "works" so the mistake isn't caught.
 
@@ -220,7 +220,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **What the developer did**: The `/api/auth/token` route fails (wrong secret, network error) but returns a 200 response anyway, so the SDK doesn't know auth failed.
 
-**Symptom**: Auth appears to "complete" — the code is processed, no error is shown — but the user isn't actually signed in. `isAuthenticated` stays false.
+**Symptom**: Auth appears to "complete" - the code is processed, no error is shown - but the user isn't actually signed in. `isAuthenticated` stays false.
 
 **Why it happens**: The route catches errors but returns `{ success: false }` with a 200 status instead of a 4xx. The SDK can't distinguish success from failure.
 
@@ -238,7 +238,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **Symptom**: The workspace visually changes in the UI, but `onWorkspaceChange` callback doesn't fire. The internal JWT for the developer's own API isn't refreshed. API calls use a stale workspace token.
 
-**Why it happens**: `setCurrentWorkspace` sounds like the right function — "set the current workspace." The distinction between the two functions isn't obvious from the names.
+**Why it happens**: `setCurrentWorkspace` sounds like the right function - "set the current workspace." The distinction between the two functions isn't obvious from the names.
 
 **Detection**: Add logging to `onWorkspaceChange` callback. If switching workspaces doesn't trigger it, `switchToWorkspace` isn't being used.
 
@@ -308,7 +308,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **What the developer did**: Used `<WhenWorkspaceFeatureEnabled slug="dark-mode">` in code but never created a "dark-mode" feature in the Buildbase dashboard.
 
-**Symptom**: The gate renders nothing — silently. No error. Looks like the feature is disabled for all users.
+**Symptom**: The gate renders nothing - silently. No error. Looks like the feature is disabled for all users.
 
 **Why it happens**: The code-first mental model. The slug feels like a string you just make up. The dashboard step feels optional.
 
@@ -322,7 +322,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **What the developer did**: Created the feature in the dashboard but didn't add it to any plan.
 
-**Symptom**: Same as above — gate shows nothing for all users even though the feature exists.
+**Symptom**: Same as above - gate shows nothing for all users even though the feature exists.
 
 **Why it happens**: Creating a feature and assigning it to a plan are two separate steps. Developers do the first but forget the second.
 
@@ -338,7 +338,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **Symptom**: `WhenQuotaAvailable` shows the fallbackComponent for all users, even on paid plans. Or `useQuotaUsageStatus` returns unexpected values.
 
-**Why it happens**: Same pattern as features — quota slugs must be defined on plans in the dashboard before SDK references to them work.
+**Why it happens**: Same pattern as features - quota slugs must be defined on plans in the dashboard before SDK references to them work.
 
 **Detection**: Dashboard → Plans → [plan name] → Quotas. Check if "api_calls" is listed.
 
@@ -368,7 +368,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **Why it happens**: `idempotencyKey` is optional. Developers skip optional parameters.
 
-**Detection**: Trigger the action twice in rapid succession (double-click). Check the quota usage counter — if it increments by 2, there's no idempotency protection.
+**Detection**: Trigger the action twice in rapid succession (double-click). Check the quota usage counter - if it increments by 2, there's no idempotency protection.
 
 **Recovery**: Pass an `idempotencyKey` on every `usage.record`, `usage.recordBatch`, `credits.consume` and `credits.reserve` call, derived from the unit of work: `gen-<requestId>`, `email-<messageId>`, the job's own id. Not the user ID or workspace ID (too broad), and not a fresh UUID generated inside the call (a retry then carries a new key and bills twice). The SDK does not retry these POSTs for you, so your retry must send the first attempt's key. A replayed `usage.record` answers 200 with `used: 0`.
 
@@ -380,7 +380,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **What the developer did**: Used `NEXT_PUBLIC_BUILDBASE_CLIENT_SECRET` or imported `process.env.BUILDBASE_CLIENT_SECRET` in a client component.
 
-**Symptom**: No runtime error — the app works. But the secret is embedded in the JavaScript bundle. Anyone can open DevTools → Sources → search for the secret.
+**Symptom**: No runtime error - the app works. But the secret is embedded in the JavaScript bundle. Anyone can open DevTools → Sources → search for the secret.
 
 **Why it happens**: Fast development pace. Env var copy-paste mistakes. No lint rule catches this.
 
@@ -428,7 +428,7 @@ An empty `orgId` no longer breaks the build: `BuildBase()` accepts it, and the f
 
 **Detection**: Send a POST request to your webhook endpoint with a fake payload and no signature header. If it processes the event, verification is missing.
 
-**Recovery**: Verify before processing any event. Both webhook helpers take a **single options object** (not positional args) and require the `x-buildbase-timestamp` header for replay protection. Prefer `parseWebhookEvent` — it verifies and parses in one step, returning `null` on failure:
+**Recovery**: Verify before processing any event. Both webhook helpers take a **single options object** (not positional args) and require the `x-buildbase-timestamp` header for replay protection. Prefer `parseWebhookEvent` - it verifies and parses in one step, returning `null` on failure:
 
 ```ts
 const event = parseWebhookEvent({
@@ -452,13 +452,13 @@ if (!event) return Response.json({ error: 'Invalid webhook' }, { status: 401 });
 
 **What the developer did**: Called `BuildBase({ ... })` inside a function, API route handler, or React component, creating a new factory instance on every call.
 
-**Symptom**: Performance degrades under load. Each request creates new connection pools and configuration objects. In development, this may not be noticeable.
+**Symptom**: Performance degrades under load. Each request builds a new client, its API classes and its configuration, and nothing set up once is reused. In development, this may not be noticeable.
 
 **Why it happens**: Developers follow the pattern of other libraries that are initialized per-request. Or they create the factory inside a component to access env vars.
 
 **Detection**: Search for `BuildBase(` in your codebase. Any occurrence outside a module-level `const` assignment is a problem.
 
-**Recovery**: Call `BuildBase(...)` exactly once at module level in `lib/buildbase.ts`. Export the destructured action modules. Import them in API routes and server components. The factory is a singleton — one instance for the lifetime of the process.
+**Recovery**: Call `BuildBase(...)` exactly once at module level in `lib/buildbase.ts`. Export the destructured action modules. Import them in API routes and server components. The factory is a singleton - one instance for the lifetime of the process.
 
 ---
 
@@ -472,7 +472,7 @@ if (!event) return Response.json({ error: 'Invalid webhook' }, { status: 401 });
 
 **Detection**: Use React DevTools Profiler. If many components highlight on subscription data updates, context consumption is too broad.
 
-**Recovery**: Memoize components that use subscription data with `React.memo`. Extract subscription checks into a single gate component (`WhenSubscription`) rather than reading the raw context in many places. Use gate components for rendering decisions — they're optimized for this. Access the raw context only when you genuinely need the subscription data object, not just a boolean.
+**Recovery**: Memoize components that use subscription data with `React.memo`. Extract subscription checks into a single gate component (`WhenSubscription`) rather than reading the raw context in many places. Use gate components for rendering decisions - they're optimized for this. Access the raw context only when you genuinely need the subscription data object, not just a boolean.
 
 ---
 

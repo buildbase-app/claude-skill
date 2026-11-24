@@ -1,15 +1,16 @@
 # Developer Personas
 
-Six developer archetypes who integrate the Buildbase SDK. Understanding which persona you're talking to changes what you emphasize and what you warn against.
+Seven archetypes who integrate the Buildbase SDK, the last of them an AI agent. Understanding which persona you're talking to changes what you emphasize and what you warn against.
 
 ## Contents
 
-- [1. Solo Founder](#1-solo-founder) — first SaaS, ship in days
-- [2. Frontend Developer (Contractor)](#2-frontend-developer-contractor) — methodical, reads docs first
-- [3. Full-Stack Developer](#3-full-stack-developer) — skims, copy-runs, moves on
-- [4. Agency Developer](#4-agency-developer) — maintainable client handoff
-- [5. Enterprise Developer](#5-enterprise-developer) — security and compliance first
-- [6. Student / Hobbyist](#6-student--hobbyist) — learning, side project
+- [1. Solo Founder](#1-solo-founder) - first SaaS, ship in days
+- [2. Frontend Developer (Contractor)](#2-frontend-developer-contractor) - methodical, reads docs first
+- [3. Full-Stack Developer](#3-full-stack-developer) - skims, copy-runs, moves on
+- [4. Agency Developer](#4-agency-developer) - maintainable client handoff
+- [5. Enterprise Developer](#5-enterprise-developer) - security and compliance first
+- [6. Student / Hobbyist](#6-student--hobbyist) - learning, side project
+- [7. AI Coding Agent or App Builder](#7-ai-coding-agent-or-app-builder) - building the app itself, often with no account yet
 
 ---
 
@@ -19,7 +20,7 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 
 **Primary goal**: Ship something real within days, not weeks. Every hour not building features is a liability.
 
-**What they'll try to skip**: Reading the auth endpoint implementation. They'll drop `SaaSOSProvider` into the root layout, see nothing break immediately, and ship — without the three required auth API routes. The app "works" until someone tries to sign in.
+**What they'll try to skip**: Reading the auth endpoint implementation. They'll drop `SaaSOSProvider` into the root layout, see nothing break immediately, and ship - without the three required auth API routes. The app "works" until someone tries to sign in. The fix is one command: `npx @buildbase/sdk init` writes the provider and all three routes.
 
 **Why that's dangerous**: Without the `/api/auth/token` route, the OAuth code exchange never happens. Users get redirected back with a `?code=` param but nothing processes it. The app silently fails at login. The founder discovers this at demo time.
 
@@ -30,14 +31,15 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 **Specific pitfalls**:
 - Will store `clientSecret` in a `NEXT_PUBLIC_` env var because they're moving fast
 - Will forget `import '@buildbase/sdk/css'` and spend an hour debugging why the UI looks broken
-- Will try to build their own subscription check instead of using `WhenSubscription`
+- Will try to build their own subscription check instead of using `WhenEntitled` / `useEntitlement` (or `WhenSubscription` for "has any plan")
 - Will not read about workspace modes and accidentally ship in the wrong one for their product type
+- Building a consumer app, will bill a hidden workspace per person instead of selling the person their own plan (`{ user: true }`)
 
 ---
 
 ## 2. Frontend Developer (Contractor)
 
-**Profile**: Hired specifically to integrate Buildbase. Technically strong — knows React, TypeScript, and Next.js well. Has never used Buildbase. Will read documentation carefully before writing a line of code. Methodical.
+**Profile**: Hired specifically to integrate Buildbase. Technically strong - knows React, TypeScript, and Next.js well. Has never used Buildbase. Will read documentation carefully before writing a line of code. Methodical.
 
 **Primary goal**: Integrate correctly, deliver clean code, and not have to revisit this in three months because something broke.
 
@@ -45,7 +47,7 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 
 **Why that's dangerous**: They'll understand all the leaf nodes but miss the required setup in the middle. Will know what `WhenSubscriptionToPlans` does but not realize the three auth endpoints are mandatory, not optional.
 
-**First question to Claude**: "What's the complete list of files I need to create to integrate Buildbase? I want to understand the full picture first."
+**First question to Claude**: "What's the complete list of files I need to create to integrate Buildbase? I want to understand the full picture first." (Run `npx @buildbase/sdk init` in a scratch copy and read what it writes: the provider, three auth routes, a webhook route and the env placeholders.)
 
 **What success looks like**: A clean, well-typed integration with all edge cases handled. PR is reviewable and another developer could understand it without asking.
 
@@ -67,7 +69,7 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 
 **Why that's dangerous**: Feature slugs, plan slugs, and quota slugs must exist in the Buildbase dashboard first. Code that references a slug that doesn't exist in the dashboard silently does nothing. The developer will assume the SDK is broken.
 
-**First question to Claude**: "Show me the full integration — lib/buildbase.ts, the provider, and the auth routes. I'll figure out the rest."
+**First question to Claude**: "Show me the full integration - lib/buildbase.ts, the provider, and the auth routes. I'll figure out the rest."
 
 **What success looks like**: It's working in under two hours and they haven't had to context-switch too much.
 
@@ -85,7 +87,7 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 
 **Primary goal**: Deliver a maintainable, well-documented integration that the client can hand to another developer in 12 months without disaster.
 
-**What they'll try to skip**: Using the built-in UI components (WorkspaceSwitcher, PricingPage). They'll want to build custom UI everywhere for full control. This is sometimes right — but they'll reinvent things that Buildbase already does well.
+**What they'll try to skip**: Using the built-in UI components (WorkspaceSwitcher, PricingPage). They'll want to build custom UI everywhere for full control. This is sometimes right - but they'll reinvent things that Buildbase already does well.
 
 **Why that's dangerous**: The built-in components handle edge cases (loading states, error handling, trial logic) that the agency developer will miss in their custom implementation. Custom UI that looks simple gets subtle bugs in edge cases.
 
@@ -97,17 +99,18 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 - Will try to implement a custom workspace selector without reading about `WorkspaceSwitcher`'s render-prop pattern
 - May want to manage subscriptions in their own database, duplicating what Buildbase already tracks
 - Will under-invest in understanding the `onWorkspaceChange` pattern, leading to stale JWT issues
-- May not document which slugs were configured in the Buildbase dashboard, creating a gap for the next developer
+- May not document which slugs were configured in the Buildbase dashboard, creating a gap for the next developer. A blueprint closes it: `npx @buildbase/sdk blueprint export` writes the org's configuration to `buildbase.blueprint.json`, which can live in the repo
+- May point every client's staging site at production instead of a development or staging environment (`environment`)
 
 ---
 
 ## 5. Enterprise Developer
 
-**Profile**: Works at a company with security reviews, architecture approval processes, and compliance requirements. Has been burned by third-party dependencies before. Will read the source code. Will ask about data residency, token lifetimes, and what data the SDK sends to Buildbase servers.
+**Profile**: Works at a company with security reviews, architecture approval processes, and compliance requirements. Has been burned by third-party dependencies before. Will read the source code. Will ask about data residency, token lifetimes, single sign-on for their own customers, and what data the SDK sends to Buildbase servers.
 
 **Primary goal**: Understand the security model completely before writing code. Justify the integration to their security team.
 
-**What they'll try to skip**: Nothing — but they'll slow down at every security decision point.
+**What they'll try to skip**: Nothing - but they'll slow down at every security decision point.
 
 **Why that's dangerous**: They'll sometimes reject the recommended patterns (like httpOnly cookies) in favor of patterns they control more directly (like JWT in Authorization headers). This creates security gaps or forces them to build more infrastructure than needed.
 
@@ -120,6 +123,9 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 - Will want to verify webhook signatures but may not know the `verifyWebhookSignature` utility exists
 - May duplicate auth checks in middleware when the SDK's `auth()` call already handles it
 - Will be bothered that `clientSecret` appears in an env var alongside `NEXT_PUBLIC_` vars and need explicit confirmation that it's not exposed
+- Will find the SDK's own session copy in `localStorage` (`saas-session-id`, sent as the `x-session-id` header) and need it explained: the httpOnly cookie is the source of truth on page load, and the browser copy is why a Content-Security-Policy still matters
+- On residency: `serverUrl` is the organization's regional URL (today every organization is on `https://api.console.buildbase.app`), and a request to the wrong cell is refused with `421 misdirected_request`, never read across regions
+- On their customers' SSO: enterprise SSO (SAML, OIDC) and Directory Sync (SCIM) run through the app owner's own WorkOS account; the SDK ships the setup screens (`EnterpriseAccess`) and hooks
 
 ---
 
@@ -142,4 +148,26 @@ Six developer archetypes who integrate the Buildbase SDK. Understanding which pe
 - Will use `localhost` URLs in production redirectUrl config
 - Will test with a real Stripe card number instead of the test card
 - Will not understand the difference between `@buildbase/sdk` and `@buildbase/sdk/react` and import from the wrong one in Node.js routes
-- May not understand workspace modes and accidentally create thousands of test workspaces in the dashboard
+- May not understand workspace modes and accidentally create thousands of test workspaces in production; a development environment, or a claimable organization from `npx @buildbase/sdk init --claim --yes` (deleted after 72 hours unless claimed), keeps experiments out of anything real
+
+---
+
+## 7. AI Coding Agent or App Builder
+
+**Profile**: Claude Code, Cursor, Codex, Lovable, Bolt, v0 or Replit, building the app for a person who asked for sign-in, teams and paid plans. Fast, literal, and confident. Often starts with no BuildBase account and no org id.
+
+**Primary goal**: Ship working auth and billing in one session without stopping to ask for keys.
+
+**What they'll try to skip**: Checking that a hook, endpoint or event exists. They pattern-match from other vendors and invent `useCollections`, a publishable key, or an event name that is not in the catalog.
+
+**Why that's dangerous**: An invented name compiles in the agent's head and fails in the person's build, and a stopped agent that asks for an account loses the person's momentum.
+
+**First question it should ask itself**: "Is there an org id? If not, `npx @buildbase/sdk init --claim --yes`, then give the person the claim URL."
+
+**What success looks like**: The app signs people in and takes a test payment, the keys are in `.env.local` and never in the chat, and the person has claimed the organization.
+
+**Specific pitfalls**:
+- Runs `npx buildbase` outside a project that has the SDK installed; the unscoped package is not ours, so it is always `npx @buildbase/sdk <command>` there
+- Confuses BuildBase's hosted MCP server (`https://api.console.buildbase.app/mcp`, for managing the person's BuildBase organization as that person) with the app's own MCP server built with `@buildbase/sdk/mcp`
+- Applies a blueprint or creates an environment without the person's go-ahead; the plan is shown to the person, and the apply is theirs
+- Migrates an app that already has auth without asking first

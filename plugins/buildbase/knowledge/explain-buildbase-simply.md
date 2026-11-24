@@ -44,7 +44,7 @@ Building all of that yourself takes months and is easy to get wrong (especially 
 
 **Dashboard first, then code.**
 
-Many Buildbase features depend on something you set up in the dashboard *before* your code can use it. If you write `<WhenWorkspaceFeatureEnabled slug="analytics">` but never created an "analytics" feature in the dashboard, nothing shows up — and there's no error, just silence. That silence confuses everyone.
+Many Buildbase features depend on something you set up in the dashboard *before* your code can use it. If you write `<WhenWorkspaceFeatureEnabled slug="analytics">` but never created an "analytics" feature in the dashboard, nothing shows up - and there's no error, just silence. That silence confuses everyone.
 
 So whenever a feature involves a **slug** (a plan, a feature, a quota), the order is always:
 1. Create it in the dashboard (give it a slug).
@@ -68,6 +68,6 @@ You don't have to build the login page or handle passwords - Buildbase does. You
 ## What Buildbase does NOT do
 
 So you don't go looking for features that aren't there:
-- It's **not your database.** Your app's own data (todos, posts, whatever) lives in your own database. Buildbase handles accounts, billing, and limits — not your business data.
+- It's **not your database.** Your app's own data (todos, posts, whatever) lives in your own database. Buildbase handles accounts, billing, and limits - not your business data.
 - It's **not a UI framework.** It gives you some ready-made screens (login, pricing, settings), but you build your actual app's interface.
 - It **doesn't replace your backend.** You still have your own API routes; Buildbase plugs into them.
