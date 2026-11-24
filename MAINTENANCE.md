@@ -34,7 +34,7 @@ Re-run the verification that caught real bugs during authoring — for each know
 - credit consume uses **`amount`** (usage record uses `quantity`)
 - runtime values (`AuthStatus`, pricing utils) import from `@buildbase/sdk`; since 0.0.51 `@buildbase/sdk/react` re-exports them by value too, so either import is correct
 - `IWorkspace` / `IUser` / `ISettings` **are** exported by name since 0.0.53 (the older claim that they were not is itself a regression rule now)
-- only `INSUFFICIENT_CREDITS` is a guaranteed error-code string
+- error codes: since 1.x the package's `docs/ERROR_CODES.md` lists exactly the codes the SDK sets, and changing one is a major release; the old vocabulary (`AUTH_REQUIRED`, `SESSION_EXPIRED`, ...) was never thrown and must not come back. Until 1.x the skill said only `INSUFFICIENT_CREDITS` was guaranteed
 - `users.invite` / `users/add` adds an **existing** account and answers 404 otherwise; reaching an address with no account is the invitations surface (0.0.71)
 - there **is** a permission endpoint since 0.0.73, `GET workspaces/{id}/permissions/me`; the local three-GET computation is the fallback for older servers, not the only way
 - every interpolated path segment is URL-encoded (0.0.51), not only slugs

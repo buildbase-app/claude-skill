@@ -88,12 +88,12 @@ Don't answer Buildbase API specifics from memory — open the relevant file firs
 | When a term needs defining | `knowledge/explain-buildbase-simply.md` (plain), `knowledge/mental-models/key-concepts.md`, `knowledge/glossary/terms.md` |
 | Implementing or debugging sign-in / session / cookies | `knowledge/sdk/auth.md` |
 | Implementing workspace switching / multi-tenant | `knowledge/sdk/workspace.md` |
-| Implementing subscriptions / plans / trials / pricing page | `knowledge/sdk/billing.md` |
+| Implementing subscriptions / plans / trials / pricing page / entitlements / add-ons / seats / embedded checkout, for a workspace or a person | `knowledge/sdk/billing.md` |
 | Implementing feature flags | `knowledge/sdk/feature-flags.md` |
 | Implementing metered usage / quota recording | `knowledge/sdk/quota-usage.md` |
 | Implementing prepaid credits | `knowledge/sdk/credits.md` |
 | Implementing push / email notifications | `knowledge/sdk/notifications.md` |
-| Selling or buying inside the app: items, checkout, orders, bookings, licence keys, Stripe Connect sellers | `knowledge/sdk/commerce.md` |
+| Letting the app's users sell to each other (Stripe Connect storefront or marketplace) or the app sell its own items: seller onboarding, items, `BuyButton` and carts, orders and grants, bookings, licence keys, item subscriptions, affiliates, co-sellers, the server back office | `knowledge/sdk/commerce.md` |
 | Any server-side work - API routes, background jobs, webhooks, Express | `knowledge/sdk/server-side.md` |
 | **An org owner/operator driving the console by API key** — campaigns, workflows, collections, content, links, assets, org settings | `knowledge/http-api/org-api.md` |
 | Acting for one of *their* app's users from a backend or job (token exchange) | `knowledge/http-api/using-from-any-language.md` |
@@ -244,7 +244,7 @@ Gate (When*) renders nothing
 ## What not to do
 
 - Do not invent SDK behavior. If you are not certain something exists, say so and tell the developer to check the source or docs.
-- On error codes, be precise about what is guaranteed. `INSUFFICIENT_CREDITS` is the one code the SDK documents as reliably set, on a 402 from consuming credits, alongside `err.available` and `err.requested`. The package also ships `docs/ERROR_CODES.md` listing a wider vocabulary (`AUTH_REQUIRED`, `SESSION_EXPIRED`, `NETWORK_ERROR`, `WORKSPACE_NOT_FOUND` and more) as the canonical reference for `SDKError.code` — but that doc says plainly that not every code is used in every release. So treat the list as the vocabulary, not as a promise, and never branch on a code other than `INSUFFICIENT_CREDITS` without checking it against the installed version.
+- On error codes, branch only on a `code` listed in the installed package's `docs/ERROR_CODES.md`, which since 1.x lists exactly the codes the SDK sets (invitation, credit, usage, plan, subscription-state, idempotency, server-API and more, each with its constant such as `INVITATION_ERROR_CODE` or `PLAN_REFUSAL_CODE`). Changing or removing one is a major release, and new members arrive in minor releases, so give every `switch` over codes a `default` branch. `INSUFFICIENT_CREDITS` still carries `err.available` and `err.requested`. The older vocabulary (`AUTH_REQUIRED`, `SESSION_EXPIRED`, `NETWORK_ERROR`, `WORKSPACE_NOT_FOUND` and the rest) was never thrown and is gone from that page: never branch on it. An error with no `code` is matched by its situation, not by its message.
 - Do not generate code before establishing the mental model.
 - Do not show advanced patterns to beginners — route to `knowledge/learning/beginner-path.md` instead.
 - Do not show the same answer to a solo founder and an enterprise developer — read `knowledge/user-model/personas.md` and tailor.
@@ -265,11 +265,11 @@ What each file contains, so you know whether it's worth opening:
 - `quick-start.md` - the minimal end-to-end first integration, ending with the webhook route (Step 8)
 - `auth.md` - `useSaaSAuth`, auth callbacks, session restore and outages (`isSessionUnverified`), confirm it's you, access refusals, events, redirect preservation, environments
 - `workspace.md` - `useSaaSWorkspaces`, `WorkspaceSwitcher`, switch vs set, invitations, roles and permissions, workspace modes
-- `billing.md` — subscription gates, trials, `PricingPage`, multi-currency utilities
+- `billing.md` - subscription gates (live by default), plans for a workspace or a person, entitlements, add-ons, seats, trials, embedded and in-app checkout, refusal codes, `PricingPage`, multi-currency utilities
 - `feature-flags.md` — workspace vs user features, `useUserFeatures`, programmatic checks
-- `quota-usage.md` — `useRecordUsage`, batch recording, response shape, quota gates
-- `credits.md` — `useConsumeCredits`, `CreditActionsProvider`, public packages, `INSUFFICIENT_CREDITS`
-- `commerce.md` - selling and buying inside the app (SDK 1.x): items, checkout, orders, bookings, licence keys, Stripe Connect sellers, the server back office
+- `quota-usage.md` - `useRecordUsage`, batch recording and per-row refusals, hard limit versus overage (`QUOTA_EXHAUSTED`), reset periods, response shape, quota gates
+- `credits.md` - `useConsumeCredits`, holds (`reserve` / `withHold`), a person's own wallet, `CreditActionsProvider`, public packages, auto top-up, the credit codes
+- `commerce.md` - commerce as of SDK 1.8.0: the app's users sell through Stripe Connect (storefront or marketplace) or the app sells its own items; seller onboarding, items, `BuyButton` and carts, orders and grants, bookings, licence keys, item subscriptions, affiliates, co-sellers, the server back office (`createServerClient().commerce`) and its traps
 - `notifications.md` - push service worker (`PUSH_SERVICE_WORKER_SCRIPT`), `notification.send` and its limits, scheduling, channels, merge tags, the notification inbox
 - `server-side.md` — `BuildBase()` factory, all action modules, webhook verification (options-object API)
 - `pre-built-ui.md` - the 18 settings screens, pricing and credit-store components, notification, invitation and enterprise components, the `ui` prop, theming variables, the 8 locales
