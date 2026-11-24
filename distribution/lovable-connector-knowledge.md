@@ -1,6 +1,6 @@
 # BuildBase org API - connector knowledge
 
-BuildBase is one SDK and REST API for SaaS auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows. This file describes the **organization API**: the token-authenticated REST surface behind the BuildBase console, used to run an organization by API. It is not the end-user sign-in flow; that is the SDK (`@buildbase/sdk`, current version 1.8.0, the npm `latest` tag), and an app's users never hold this token.
+BuildBase is one SDK and REST API for SaaS auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows. This file describes the **organization API**: the token-authenticated REST surface behind the BuildBase console, used to run an organization by API. It is not the end-user sign-in flow; that is the SDK (`@buildbase/sdk`, current version 1.9.0, the npm `latest` tag), and an app's users never hold this token.
 
 Position rule:
 

@@ -17,7 +17,7 @@ Verified against `@buildbase/sdk` 1.8.0 (`node_modules/@buildbase/sdk/agents/rea
 - [Public Credit Packages (Marketing Page)](#public-credit-packages-marketing-page) - show packages without auth
 - [Auto Top-Up](#auto-top-up) - buy a pack on the saved card under a threshold
 - [Server-Side Credits](#server-side-credits) - balance, consume, holds, transactions on the backend
-- [Error Codes](#error-codes) - which codes 1.8.0 documents
+- [Error Codes](#error-codes) - which codes 1.9.0 documents
 - [Credit vs Quota: When to Use Each](#credit-vs-quota-when-to-use-each) - quick comparison table
 
 ## What Credits Are
@@ -332,7 +332,7 @@ After a server-side change to a balance, call `invalidateCreditBalance()` on the
 
 ## Error Codes
 
-Older versions of this skill said only `INSUFFICIENT_CREDITS` was a guaranteed code. 1.8.0's `docs/ERROR_CODES.md` documents these on credit calls:
+Older versions of this skill said only `INSUFFICIENT_CREDITS` was a guaranteed code. 1.9.0's `docs/ERROR_CODES.md` documents these on credit calls:
 
 | Code | Status | From |
 |---|---|---|

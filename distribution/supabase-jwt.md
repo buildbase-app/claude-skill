@@ -1,6 +1,6 @@
 # BuildBase sessions and Supabase RLS
 
-Short answer: **not supported today** (re-checked against `@buildbase/sdk` 1.8.0 and the platform's main branch on 2026-11-24), and the gap is on the BuildBase side. This file records exactly why, and the smallest change an app can make now.
+Short answer: **not supported today** (re-checked against `@buildbase/sdk` 1.9.0 and the platform's main branch on 2026-11-24), and the gap is on the BuildBase side. This file records exactly why, and the smallest change an app can make now.
 
 Position rule:
 

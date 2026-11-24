@@ -17,14 +17,14 @@ Verified against `@buildbase/sdk` 1.8.0. The SDK's own reference for every name 
 - [useSubscriptionContext Hook](#usesubscriptioncontext-hook) - read subscription data in code
 - [Trial Gates](#trial-gates) - gate UI on trial status
 - [Seats](#seats) - per-seat pricing and the invite ceiling
-- [Public Pricing Page](#public-pricing-page) - display plans without login
+- [Public Pricing Page](#public-pricing-page) - display plans without login, with prices in the server HTML (`initialData`)
 - [Checkout: hosted, embedded, in the app](#checkout-hosted-embedded-in-the-app) - where the buyer pays
 - [Add-ons](#add-ons) - buying on top of a plan
 - [Server-Side Subscription](#server-side-subscription) - manage subscriptions from the backend
 - [Retries and the Idempotency-Key](#retries-and-the-idempotency-key) - never charge twice
 - [Refusals and Their Codes](#refusals-and-their-codes) - 402, 400, 409 and what each means
 - [Money and Multi-Currency Utilities](#money-and-multi-currency-utilities) - format minor units, never `/ 100`
-- [Renewal Terms](#renewal-terms) - what the SDK shows beside paid buttons
+- [Renewal Terms](#renewal-terms) - what the SDK shows beside paid buttons, and `PricingPlanTerms` for yours
 - [Affiliate / Referral Tracking](#affiliate--referral-tracking) - pass referral data to checkout
 
 ## Overview
@@ -314,6 +314,38 @@ function PublicPricingPage() {
 - Signed out (`AuthStatus.unauthenticated`): **only resumes after login when `redirectBaseUrl` is set on `PricingPage`.** Without it the user is simply sent to sign-in and the plan choice is lost.
 - While the session is still being read, the press waits for the answer; it never sends a signed-in person to sign in.
 
+### Prices in the server HTML (`initialData`, 1.9.0)
+
+Without help, `PricingPage` fetches the plans in the browser, so the server HTML has a skeleton and the layout shifts when the prices arrive (the starter measured CLS 0.16). Since 1.9.0, fetch the plans on the server and pass them in: they render from the first render, server and client alike, and the hook still refreshes them in the background (a failed refresh keeps them on screen, with `error` null, and reports to `handleError`).
+
+```tsx
+// app/pricing/page.tsx - a server component. plans.getPublic needs no session.
+import { plans } from '@/lib/buildbase';
+import { PricingClient } from './pricing-client';
+
+export default async function Page() {
+  const initialData = await plans.getPublic('main-pricing').catch(() => null);
+  return <PricingClient initialData={initialData} />;
+}
+```
+
+```tsx
+// app/pricing/pricing-client.tsx
+'use client';
+import type { IPublicPlansResponse } from '@buildbase/sdk';
+import { PricingPage } from '@buildbase/sdk/react';
+
+export function PricingClient({ initialData }: { initialData: IPublicPlansResponse | null }) {
+  return (
+    <PricingPage slug="main-pricing" initialData={initialData} redirectBaseUrl="https://app.com/dashboard">
+      {({ plans }) => /* the same markup as above */ null}
+    </PricingPage>
+  );
+}
+```
+
+`usePublicPlans(slug, { initialData })` takes the same option (type `UsePublicPlansOptions`). `initialData` is used only for the `slug` it was given with on the first render.
+
 The render prop also carries `items`, `notes`, `refetch`, `promotion` (the `promotionCode` prop or `?promo=` in the URL, with `check`), `addOns` (`{ list, loading, error }`, the org's add-ons) with `selectAddOn(slug, currency?)`, and `purchaseGuard` (`'confirming'`, `'clearing'` or null: show it in place of the buy buttons while a buyer back from Stripe is being confirmed). For an interval toggle, `getAvailableBillingIntervals(plans, currency)` offers an interval only when some plan prices it (monthly is always in the list).
 
 ---
@@ -535,7 +567,7 @@ Also: `getCurrencySymbol`, `getAvailableCurrenciesFromPlans`, `getAvailableBilli
 
 ## Renewal Terms
 
-Since 1.0.0 the SDK's own screens put auto-renewal terms beside every button that starts or changes a paid subscription or a recurring add-on (the plan picker, the change summary, End Trial, a recurring add-on's Buy): how often it renews, that it renews until cancelled, and at what charge, in the reader's language. Stripe Checkout shows its own terms above Subscribe, in the app's `locale`. So a pricing page whose button calls `selectPlan` reaches payment through the terms. If you build a paid button of your own that starts a checkout directly, put the renewal terms beside it yourself: 1.8.0 has no public component for them.
+Since 1.0.0 the SDK's own screens put auto-renewal terms beside every button that starts or changes a paid subscription or a recurring add-on (the plan picker, the change summary, End Trial, a recurring add-on's Buy): how often it renews, that it renews until cancelled, and at what charge, in the reader's language. Stripe Checkout shows its own terms above Subscribe, in the app's `locale`. So a pricing page whose button calls `selectPlan` reaches payment through the terms. If you build a paid button of your own on a `PricingPage` card, put `<PricingPlanTerms plan={plan} currency="usd" interval="monthly" id={termsId} />` (1.9.0) beside it and `aria-describedby={termsId}` on the button: it says every interval the plan sells with its price (`showIntervals={false}` hides that list), the one-time setup fee sentence, and the auto-renewal terms of the interval the button buys, in the reader's language. Renewal terms beside every paid button are a legal requirement (California's Automatic Renewal Law). Before 1.9.0 there was no public component, and you wrote them yourself.
 
 ---
 

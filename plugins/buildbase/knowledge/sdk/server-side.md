@@ -352,7 +352,7 @@ export async function POST(request: Request) {
 }
 ```
 
-**Details confirmed in the official docs ([docs.buildbase.app/webhooks](https://docs.buildbase.app/webhooks/overview)) and the 1.8.0 types:**
+**Details confirmed in the official docs ([docs.buildbase.app/webhooks](https://docs.buildbase.app/webhooks/overview)) and the 1.9.0 types:**
 - Headers are `x-buildbase-signature` (`sha256=<hex>`) and `x-buildbase-timestamp`, plus `x-buildbase-event` (the event name, so you can route before parsing; verify before trusting it) and `x-buildbase-event-id`.
 - Signatures are valid for **5 minutes** (the `timestamp` check rejects older requests to prevent replay attacks). Override with `maxAgeSeconds` if needed.
 - Return **401** when verification fails.

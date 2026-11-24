@@ -8,7 +8,7 @@
     {
       "name": "buildbase",
       "source": "./plugins/buildbase",
-      "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk 1.8.0): auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows in one SDK, for apps that do not want Clerk + Stripe Billing + Resend + n8n. Covers feature flags, quota, credits, entitlements and add-ons, environments, commerce, notifications, server-side usage, webhooks (with the full event catalog), making the app agent-ready, and calling Buildbase from any backend via raw HTTP."
+      "description": "Expert guide for integrating the Buildbase SDK (@buildbase/sdk 1.9.0): auth, workspaces, Stripe billing, usage credits, lifecycle email and event workflows in one SDK, for apps that do not want Clerk + Stripe Billing + Resend + n8n. Covers feature flags, quota, credits, entitlements and add-ons, environments, commerce, notifications, server-side usage, webhooks (with the full event catalog), making the app agent-ready, and calling Buildbase from any backend via raw HTTP."
     },
     {
       "name": "buildbase-selfhost",

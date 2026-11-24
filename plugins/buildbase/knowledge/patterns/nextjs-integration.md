@@ -1,6 +1,6 @@
 # Complete Next.js Integration Pattern
 
-This is the production-ready integration pattern for the Next.js App Router. The core files (Sections 1 to 5) are exactly the ones `npx @buildbase/sdk init` writes in `@buildbase/sdk` 1.8.0; the official [`nextjs-starter`](https://github.com/buildbase-app/nextjs-starter) and the [`with-buildbase`](https://github.com/buildbase-app/examples/tree/main/with-buildbase) example are the same wiring in running apps.
+This is the production-ready integration pattern for the Next.js App Router. The core files (Sections 1 to 5) are exactly the ones `npx @buildbase/sdk init` writes in `@buildbase/sdk` 1.9.0; the official [`nextjs-starter`](https://github.com/buildbase-app/nextjs-starter) and the [`with-buildbase`](https://github.com/buildbase-app/examples/tree/main/with-buildbase) example are the same wiring in running apps.
 
 > **New to BuildBase? Start with the beginner golden path in [`../sdk/quick-start.md`](../sdk/quick-start.md).** That guide gets you from zero to signed in with the minimal set of files, and explains each one. THIS file is the complete/production reference: it stays consistent with quick-start but goes further, adding the advanced/production pieces (`defaultPermissions`, `onWorkspaceChange`, the `/api/auth/workspace-token` route, environments, server-side route protection).
 

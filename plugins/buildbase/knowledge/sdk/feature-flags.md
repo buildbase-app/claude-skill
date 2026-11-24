@@ -1,6 +1,6 @@
 # Feature Flags
 
-A **feature flag** (or **feature**) is a simple on/off switch you use to decide whether a given user or workspace can see a piece of your app. Use it when you want to turn a capability on for some customers and off for others - ship a beta to a few users, let a workspace's admins switch something on, or pair a feature with a plan. (A **feature** is a yes/no capability switch; a **quota** - covered in [quota-usage.md](./quota-usage.md) - is a numeric limit like "5,000 API calls/month." Different things.) Verified against `@buildbase/sdk` 1.8.0.
+A **feature flag** (or **feature**) is a simple on/off switch you use to decide whether a given user or workspace can see a piece of your app. Use it when you want to turn a capability on for some customers and off for others - ship a beta to a few users, let a workspace's admins switch something on, or pair a feature with a plan. (A **feature** is a yes/no capability switch; a **quota** - covered in [quota-usage.md](./quota-usage.md) - is a numeric limit like "5,000 API calls/month." Different things.) Verified against `@buildbase/sdk` 1.9.0.
 
 > Feature flags assume sign-in already works - start with [quick-start.md](./quick-start.md) if it doesn't.
 

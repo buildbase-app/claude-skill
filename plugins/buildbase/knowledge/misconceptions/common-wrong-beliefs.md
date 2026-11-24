@@ -1,6 +1,6 @@
 # Common Misconceptions
 
-Twenty-five wrong beliefs developers bring to Buildbase integration, each checked against `@buildbase/sdk` 1.8.0. Knowing these lets you correct them before they cause bugs. Beliefs 21 to 25 are about things that changed in the 1.x releases.
+Twenty-five wrong beliefs developers bring to Buildbase integration, each checked against `@buildbase/sdk` 1.9.0. Knowing these lets you correct them before they cause bugs. Beliefs 21 to 25 are about things that changed in the 1.x releases.
 
 ## Contents
 

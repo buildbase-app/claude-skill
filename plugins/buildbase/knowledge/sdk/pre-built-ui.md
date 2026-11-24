@@ -1,6 +1,6 @@
 # Pre-built UI - what ships, so you do not rebuild it
 
-**Read this before writing any settings, billing, members, profile, sign-in security, notifications or SSO screen.** BuildBase ships 18 settings screens, a workspace switcher, a pricing page, a credit store, a notification bell and inbox, invitation, guest and consent components, the enterprise single sign-on screens and an agent-connection guide. They are translated into 8 languages, permission-gated, responsive, and handle their own loading and error states. Verified against `@buildbase/sdk` 1.8.0.
+**Read this before writing any settings, billing, members, profile, sign-in security, notifications or SSO screen.** BuildBase ships 18 settings screens, a workspace switcher, a pricing page, a credit store, a notification bell and inbox, invitation, guest and consent components, the enterprise single sign-on screens and an agent-connection guide. They are translated into 8 languages, permission-gated, responsive, and handle their own loading and error states. Verified against `@buildbase/sdk` 1.9.0.
 
 The most expensive mistake an AI agent makes with BuildBase is hand-building UI that already exists. A "simple" members screen is invites, pending invitations, role changes, seat counting, seat-overage warnings, permission checks and eight translations. `openWorkspaceSettings('users')` is one line.
 
@@ -103,7 +103,8 @@ import { CreditStorePage, PricingPage } from '@buildbase/sdk/react';
 ```
 
 - `slug` is the **plan-group** slug and must exist in the console, or the page renders empty. `redirectBaseUrl` is what makes `selectPlan` / `selectPackage` resume after sign-in for a signed-out visitor; without it the visitor is simply sent to sign-in and the choice is lost. A press made while the session is still being read waits for it.
-- `selectPlan(planVersionId, interval, currency)`. `PricingPage` also takes `promotionCode` (or reads `?promo=` / `?coupon=`), `for="user"` for a plan group sold to people, `loadingFallback` and `errorFallback`. `CreditStorePage` takes `subject={{ user: true }}` to buy for the person's own wallet.
+- `selectPlan(planVersionId, interval, currency)`. `PricingPage` also takes `promotionCode` (or reads `?promo=` / `?coupon=`), `for="user"` for a plan group sold to people, `loadingFallback` and `errorFallback`, and since 1.9.0 `initialData`: the plans fetched on the server (`plans.getPublic(slug)` from `BuildBase()`), rendered from the first render so the HTML carries real prices and nothing shifts on hydration ([billing.md](./billing.md#prices-in-the-server-html-initialdata-190)).
+- `<PricingPlanTerms plan currency interval id />` (1.9.0) goes beside a plan card's paid button: every interval the plan sells with its price, the setup fee sentence, and the renewal terms of the interval the button buys. Put its `id` in the button's `aria-describedby`. `CreditStorePage` takes `subject={{ user: true }}` to buy for the person's own wallet.
 - `purchaseGuard` is `'confirming'`, `'clearing'` or null: while set, show "A purchase is being confirmed" in place of the buy buttons, so a buyer back from Stripe is not offered the same thing twice.
 - `<CheckoutStatus />` renders the return from Stripe inline on your own route (`ui.routes.checkoutReturn`); by default the provider confirms the return in a dialog.
 - `<CreditBalance>{details => ...}</CreditBalance>` and `<CreditActionsProvider>` are render-prop components for the balance and purchases (see [credits.md](./credits.md)).
@@ -170,7 +171,7 @@ Each part is also exported for a page of its own: `EnterpriseActivity`, `Enterpr
 
 ## Commerce components
 
-Selling through Stripe Connect (`SellerHome`, `StartSelling`, `SellerItems`, `SellerSales`, ...), buying (`BuyButton`, `CartSummary`, ...), bookings, affiliates, shipping and coupons have their own components and hooks. They are in [commerce.md](./commerce.md), and the settings dialog's `my-selling` and `selling` sections show the seller screens while the app's selling is on.
+Selling through Stripe Connect (`SellerHome`, `StartSelling`, `SellerItems`, `SellerSales`, `SellerStats`, ...), buying (`BuyButton`, `CartSummary`, ...), reviews (`ReviewList`, `ReviewForm`, `RatingSummary`, 1.9.0), bookings, affiliates, shipping and coupons have their own components and hooks. They are in [commerce.md](./commerce.md), and the settings dialog's `my-selling` and `selling` sections show the seller screens while the app's selling is on.
 
 ---
 
