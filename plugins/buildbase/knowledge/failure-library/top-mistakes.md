@@ -1,6 +1,6 @@
 # Top Integration Mistakes
 
-Organized from most common to most dangerous. Most bugs are in the first two categories. Mistakes 31 to 36 come from surfaces added in the 1.x releases (`@buildbase/sdk` 1.8.0 is current).
+Organized from most common to most dangerous. Most bugs are in the first two categories. Mistakes 31 to 36 come from surfaces added in the 1.x releases (`@buildbase/sdk` 1.9.0 is current).
 
 ## Contents
 

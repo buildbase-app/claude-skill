@@ -1,6 +1,6 @@
 # Authentication
 
-This is everything about logging users in and knowing who they are: starting sign-in, reading the logged-in user, protecting pages, keeping a session through an outage, and reacting to auth events. You'll reach for this the moment your app needs a "Sign In" button or needs to show different things to logged-in vs. logged-out users. If you just want the shortest working setup, do [quick-start.md](./quick-start.md) first - this doc is the deeper reference for what the SDK gives you afterward. Verified against `@buildbase/sdk` 1.8.0.
+This is everything about logging users in and knowing who they are: starting sign-in, reading the logged-in user, protecting pages, keeping a session through an outage, and reacting to auth events. You'll reach for this the moment your app needs a "Sign In" button or needs to show different things to logged-in vs. logged-out users. If you just want the shortest working setup, do [quick-start.md](./quick-start.md) first - this doc is the deeper reference for what the SDK gives you afterward. Verified against `@buildbase/sdk` 1.9.0.
 
 ## Contents
 

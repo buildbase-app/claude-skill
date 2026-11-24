@@ -1,6 +1,6 @@
 # Workspace Management
 
-This is how your app groups users and everything they own - billing, features, quotas, and members all hang off a workspace. You need it as soon as your app has the idea of a "team," an "account," or even just "this user's stuff." If a user can belong to more than one of these (or switch between them), this is the doc. New here? Get logged in first via [quick-start.md](./quick-start.md), then come back. Verified against `@buildbase/sdk` 1.8.0.
+This is how your app groups users and everything they own - billing, features, quotas, and members all hang off a workspace. You need it as soon as your app has the idea of a "team," an "account," or even just "this user's stuff." If a user can belong to more than one of these (or switch between them), this is the doc. New here? Get logged in first via [quick-start.md](./quick-start.md), then come back. Verified against `@buildbase/sdk` 1.9.0.
 
 ## Contents
 

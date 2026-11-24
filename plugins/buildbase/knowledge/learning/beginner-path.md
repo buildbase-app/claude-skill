@@ -2,7 +2,7 @@
 
 A guided journey from zero to working BuildBase integration. Each milestone has a concrete deliverable, a "what success looks like" check, and checkpoint questions. Don't skip milestones: each one builds on the last.
 
-> **This path is the journey and the checks. The full, commented code lives in one place: [quick-start.md](../sdk/quick-start.md).** That is the canonical golden-path setup guide, and its files are the ones `npx @buildbase/sdk init` writes (checked against `@buildbase/sdk` 1.8.0). When a milestone needs setup code, you'll paste it from there rather than from divergent copies here. This keeps you from accidentally mixing two slightly different versions.
+> **This path is the journey and the checks. The full, commented code lives in one place: [quick-start.md](../sdk/quick-start.md).** That is the canonical golden-path setup guide, and its files are the ones `npx @buildbase/sdk init` writes (checked against `@buildbase/sdk` 1.9.0). When a milestone needs setup code, you'll paste it from there rather than from divergent copies here. This keeps you from accidentally mixing two slightly different versions.
 
 ## Contents
 

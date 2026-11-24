@@ -1,6 +1,6 @@
 # HTTP API - Endpoint Catalog
 
-Every endpoint the `@buildbase/sdk` calls, extracted from source at **1.8.0** (`sdk/src/api/services/*-api.ts`, `sdk/src/lib/api-base.ts`, `sdk/src/lib/server-client.ts`, `sdk/src/lib/auth-code-exchange.ts`, `sdk/src/lib/checkout-status.ts`, `sdk/src/lib/resolve-server-url.ts`, `sdk/src/tracking/*`, `sdk/src/analytics/client.ts`, `sdk/src/lib/agent-discovery.ts`, `sdk/src/lib/server-content/client.ts`, `sdk/src/lib/server-messaging/client.ts`, `sdk/src/lib/server-commerce/client.ts`, `sdk/src/lib/inbox-socket.ts`). Paths below are the part after the base. Unless noted, the full URL is:
+Every endpoint the `@buildbase/sdk` calls, extracted from source at **1.9.0** (`sdk/src/api/services/*-api.ts`, `sdk/src/lib/api-base.ts`, `sdk/src/lib/server-client.ts`, `sdk/src/lib/auth-code-exchange.ts`, `sdk/src/lib/checkout-status.ts`, `sdk/src/lib/resolve-server-url.ts`, `sdk/src/tracking/*`, `sdk/src/analytics/client.ts`, `sdk/src/lib/agent-discovery.ts`, `sdk/src/lib/server-content/client.ts`, `sdk/src/lib/server-messaging/client.ts`, `sdk/src/lib/server-commerce/client.ts`, `sdk/src/lib/inbox-socket.ts`). Paths below are the part after the base. Unless noted, the full URL is:
 
 ```
 {serverUrl}/api/{version}/public/{path}      e.g. https://api.console.buildbase.app/api/v1/public/workspaces
@@ -383,7 +383,7 @@ Refusals carry codes from the `ENTERPRISE_*` constants (`docs/ERROR_CODES.md` in
 
 ## Commerce
 
-Selling through Stripe Connect (since 1.2.0, grown through 1.8.0). Session routes; the buyer side is the signed-in person (`me`), the seller side is a workspace or the person selling, written `{seller}` = `workspaces/{workspaceId}` or `me`.
+Selling through Stripe Connect (since 1.2.0, grown through 1.9.0). Session routes; the buyer side is the signed-in person (`me`), the seller side is a workspace or the person selling, written `{seller}` = `workspaces/{workspaceId}` or `me`.
 
 | Area | Routes (all under `public/`) |
 |---|---|

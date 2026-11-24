@@ -4,7 +4,7 @@ Commerce is for apps whose **users sell**: the people or workspaces in your app 
 
 This is not how you charge for your own app. Plans, add-ons and credit packs do that: [billing.md](./billing.md), [credits.md](./credits.md). Commerce is the other direction, people selling to people inside your app.
 
-Verified against `@buildbase/sdk` 1.8.0. The seller screens need 1.2.0 or later; co-sellers 1.4.0; account debit terms 1.5.0; booking requests, gifts, seats, reviews hooks and seller stats 1.8.0. This page names the main parts and the traps. The full list of every component, hook, type and code is in the installed package: `node_modules/@buildbase/sdk/agents/react-commerce.md` (components and hooks), `agents/core-commerce.md` (types, pure helpers, API classes), `agents/server.md` (the server back office) and `docs/ERROR_CODES.md`. The docs site covers it under Billing: selling, items, item types, orders, bookings, shipping, coupons, affiliates.
+Verified against `@buildbase/sdk` 1.9.0. The seller screens need 1.2.0 or later; co-sellers 1.4.0; account debit terms 1.5.0; booking requests, gifts, seats, the review hooks and `useSellerStats` 1.8.0; the review screens, `SellerStats`, the booking-request list, the licence-key states and `BuyButton gift`/`seats` 1.9.0. This page names the main parts and the traps. The full list of every component, hook, type and code is in the installed package: `node_modules/@buildbase/sdk/agents/react-commerce.md` (components and hooks), `agents/core-commerce.md` (types, pure helpers, API classes), `agents/server.md` (the server back office) and `docs/ERROR_CODES.md`. The docs site covers it under Billing: selling, items, item types, orders, bookings, shipping, coupons, affiliates.
 
 ## Contents
 
@@ -21,7 +21,7 @@ Verified against `@buildbase/sdk` 1.8.0. The seller screens need 1.2.0 or later;
 - [Subscriptions bought](#subscriptions-bought) - recurring prices sellers sell
 - [Affiliates](#affiliates) - referral programs
 - [Co-sellers](#co-sellers) - sharing one item's sales
-- [Reviews, gifts and seats](#reviews-gifts-and-seats) - 1.8.0 hooks
+- [Reviews, gifts and seats](#reviews-gifts-and-seats) - hooks (1.8.0) and screens (1.9.0)
 - [Your server: the back office](#your-server-the-back-office) - `createServerClient(...).commerce`
 - [Webhooks](#webhooks) - what your server is told
 - [Traps](#traps) - what the SDK docs call out
@@ -130,7 +130,7 @@ export function Shop() {
 
 - `<SellerSales subject={{ user: true }} />`: each order of what they sell, what the seller receives (`sellerAmount`) and the app's fee, refunds per line, Mark as sent, shipments, returns, Export CSV. Headless `useSales`, `useRefundSale`, `useFulfilSale`, `useSalesExport`.
 - A seller refunds only in the storefront shape (`sellerMayRefund`); in the marketplace the platform answers `REFUND_NOT_ALLOWED` and the app owner refunds. `REFUND_FAILED` means Stripe made no refund.
-- `useSellerStats(subject, { from?, to?, bucket?, currency? })` (1.8.0) reads the seller's own figures: totals, a series, top items, currencies; minor units of one currency, never converted.
+- `useSellerStats(subject, { from?, to?, bucket?, currency? })` (1.8.0) reads the seller's own figures: totals, a series, top items, currencies; minor units of one currency, never converted. Since 1.9.0 `<SellerStats subject={{ user: true }} />` draws them: sales, net, orders, average order, refunds, running subscriptions and MRR over the last 30 days or 12 months (`initialRange`), the best sellers, and a currency switch when there is more than one. ⚠️ `<SellerHome>` shows it once the seller's account is set up; `showStats={false}` keeps the 1.8.0 page.
 - Shipping (`ShippingRatesEditor`, `ShipOrder`), coupons (`SellerCoupons`) and tax at checkout are seller settings too; see react-commerce.md.
 
 ## Bookings
@@ -139,12 +139,13 @@ An item type with `checkoutMode: 'booking'` sells a time on the seller's calenda
 
 - Buyer: `<SlotPicker itemId={item._id} value={slot} onChange={setSlot} />`, then `<BuyButton ... slotStart={slot} />`. `BookingDetails` and `useMyBookings` for cancel and move, as the item's rules allow.
 - Seller: `BookingAvailabilityEditor` (inside `ItemEditor`), `SellerBookings`, `SellerCalendars` (shared calendars), `useSellerBookingActions` (with `accept` and `decline` for a booking request, 1.8.0).
+- Booking requests (1.9.0): ⚠️ `<SellerBookings>` lists the requests waiting for the seller's answer above its tabs, each with its answer-by time, Accept (charges the authorised card) and Decline (asked once, with an optional reason the buyer reads). On a platform without booking requests the list is empty. `BookingStatusBadge` and `BOOKING_STATUS_DISPLAY` read `requested` and `declined`, and `BookingListQuery.status` takes them.
 - Refusals: `409 SLOT_UNAVAILABLE` when the last seat went first, `422 BOOKING_CHANGE_REFUSED` with `problems[].code`, `404 BOOKING_NOT_FOUND`.
 
 ## Files and licence keys
 
 - Files: `<SellerFiles subject={{ user: true }} seriesId="..." />` uploads and publishes releases (each file checked and scanned for malware); the buyer's `<HoldingFiles holding={h} />` asks for a link per file with `useDownloadFile`. A link works for a few minutes and counts a download: never store one.
-- Licence keys: `<HoldingKeys holding={h} />` shows one key per seat. The seller's own software checks a key with `new LicensesApi({ serverUrl, version: ApiVersion.V1, orgId })`: `validate`, `activate`, `deactivate`, with no session or secret, so it can ship inside a desktop app. `reason` is `not_found`, `revoked`, `expired`, `not_yet`, `limit_reached` or `not_activated`.
+- Licence keys: `<HoldingKeys holding={h} />` shows one key per seat; since 1.9.0 it says how many seats a seat-counted key covers (`seats`) and when the seller turned a key off (`disabled`), and a signed-in holder gives an activation back (`canRemove={false}` for a guest). The seller's own software checks a key with `new LicensesApi({ serverUrl, version: ApiVersion.V1, orgId })`: `validate`, `activate`, `deactivate`, with no session or secret, so it can ship inside a desktop app. `reason` is `not_found`, `revoked`, `expired`, `not_yet`, `limit_reached` or `not_activated`.
 
 ## Subscriptions bought
 
@@ -160,10 +161,11 @@ A seller invites another seller to share one item's sales at `shareBps` (1.4.0).
 
 ## Reviews, gifts and seats
 
-1.8.0 adds these as hooks (headless):
+1.8.0 added these as hooks (headless); 1.9.0 adds the screens.
 
 - Reviews, off until the app owner turns them on for an item type: `useItemReviews(itemId)` (published reviews and the rating, signed in only), `useOrderReviews(orderId)` (the buyer writes per line), `useSaleReviews(subject, orderId)` (the seller replies once). Show `authorName ?? t('reviews.verifiedBuyer')`.
-- Gifts and team seats: check out with `gift: { recipientEmail, ... }` or `seats: true` on `useCheckout().checkout(itemId, input)`. The recipient claims with `useGift(giftLinkFromUrl())`; a pool's lead assigns and frees seats with `useSeats`.
+- Review screens (1.9.0): `<ReviewList itemId={item._id} />` shows an item's published reviews with its rating on top, sorted newest, highest or lowest, a page at a time, with the seller's reply and Report (`canReport={false}` hides it); signed out it says to sign in. `<RatingSummary rating={data.rating} />` is the average, five stars and the count on its own (`variant="compact"` for a card); in `/react` the name is both the component and the `{ count, average }` type. `<ReviewForm orderId={order._id} />` is the buyer's order line by line: stars and text while a line's window is open, Edit until it closes, and why a line is closed (`REVIEW_CLOSED_KEYS`); with `seller={{ user: true }}` it shows each buyer's review with Reply (once).
+- Gifts and team seats: check out with `gift: { recipientEmail, ... }` or `seats: true` on `useCheckout().checkout(itemId, input)`, or since 1.9.0 straight from the button: `<BuyButton ... gift={{ recipientEmail, recipientName?, message?, deliverAt?, hidePrice?, claimUrl? }} />` (with the button's usual `itemId`, `variantId` and `priceId`) says "Buy as a gift" and, under the button, where and when it goes; `<BuyButton ... seats quantity={5} />` says "Buy 5 seats". Neither with a booking, and not together. The recipient claims with `useGift(giftLinkFromUrl())`; a pool's lead assigns and frees seats with `useSeats`.
 - Refusals: `REVIEW_NOT_FOUND`, `REVIEW_REFUSED`, `GIFT_NOT_FOUND`, `GIFT_ALREADY_CLAIMED`, `GIFT_REVOKED`, `SEAT_REFUSED`.
 
 ## Your server: the back office
@@ -214,7 +216,7 @@ Your server hears commerce through the same signed webhooks as everything else (
 - **A marketplace seller cannot refund**: `REFUND_NOT_ALLOWED`; the app owner does.
 - **The shape locks** once the first seller joins. Test in Staging with test keys; sellers onboard again in live mode, because Stripe keeps test and live apart.
 - **Only some benefits are delivered so far**: `message`, `link`, `access`, `manual` and `webhook_only`. Checkout refuses the others (`benefit_not_delivered`).
-- **Booking times**: read slot maths from `effectiveBookingConfig(item.booking, calendar)`, never `item.booking.timeZone` (an item may sit on a shared calendar). `BookingStatus` does not list `requested` or `declined` in 1.8.0; `isBookingRequest(booking)` does.
+- **Booking times**: read slot maths from `effectiveBookingConfig(item.booking, calendar)`, never `item.booking.timeZone` (an item may sit on a shared calendar). `BookingStatus` itself does not list `requested` or `declined` (they are `BookingRequestStatus`); test a booking with `isBookingRequest(booking)`.
 - **Bank debits** (ACH, SEPA) leave an order `checkout: 'open'` and unpaid for up to 14 days: wait for `order.paid`, not the return from Stripe.
 - **Carrier shipping rates** must be quoted for the address before checkout (`addressFirst`, a `shippingQuote` valid 30 minutes), because Stripe's hosted page offers fixed amounts only.
 - **Download links expire** in minutes and count a download: never store one.

@@ -1,6 +1,6 @@
 # Notifications
 
-This is how your app tells users something happened - "your export is ready," "payment failed," "Alice commented." BuildBase delivers those messages two ways: **email** (lands in their inbox) and **push** (a pop-up from the browser, even when your tab is closed), and keeps every one in an **in-app inbox** the user can come back to. You'll reach for this whenever code needs to nudge a user. New to the SDK? Start with [quick-start.md](./quick-start.md) - this guide assumes you already have the `notification` tool wired up. Verified against `@buildbase/sdk` 1.8.0.
+This is how your app tells users something happened - "your export is ready," "payment failed," "Alice commented." BuildBase delivers those messages two ways: **email** (lands in their inbox) and **push** (a pop-up from the browser, even when your tab is closed), and keeps every one in an **in-app inbox** the user can come back to. You'll reach for this whenever code needs to nudge a user. New to the SDK? Start with [quick-start.md](./quick-start.md) - this guide assumes you already have the `notification` tool wired up. Verified against `@buildbase/sdk` 1.9.0.
 
 ## Contents
 

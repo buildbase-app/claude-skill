@@ -32,14 +32,14 @@ If auth already exists, stop and ask before migrating.
 |---|---|---|
 | `list_events` | Every webhook event name by category, plus the delivery headers. Optional `category` filter. | `../plugins/buildbase/knowledge/http-api/webhook-events.json`, read on every call, so it returns whatever that file holds |
 | `verify_webhook` | Verifies a delivery (`body`, `signature`, `timestamp`) against `BUILDBASE_WEBHOOK_SECRET` from the server's environment and returns the parsed event, with its `id`. The secret is never a tool argument. | `verifyWebhookSignature` and `parseWebhookEvent` from `@buildbase/sdk` |
-| `scaffold_auth` | For `nextjs`, `tanstack-start`, `vite`, `express` or `remix`: the `npx @buildbase/sdk init` command, the files and env names init writes in SDK 1.8.0, the `--claim` and `--agent` variants, the guide URL and the matching knowledge file. Writes nothing. | `buildbase init` in `@buildbase/sdk` 1.8.0, and the knowledge files in this repo |
+| `scaffold_auth` | For `nextjs`, `tanstack-start`, `vite`, `express` or `remix`: the `npx @buildbase/sdk init` command, the files and env names init writes in SDK 1.9.0, the `--claim` and `--agent` variants, the guide URL and the matching knowledge file. Writes nothing. | `buildbase init` in `@buildbase/sdk` 1.9.0, and the knowledge files in this repo |
 | `create_workspace` | The SDK's built-in, run as the signed-in user. Needs `BUILDBASE_ORG_ID` and a session. | `@buildbase/sdk/mcp` built-ins |
 
 Nothing else is exposed: `builtinTools` is an explicit `{ include: ['create_workspace'] }`. Without `BUILDBASE_ORG_ID` the server starts with three tools and says so on stderr.
 
 ## Run it
 
-Pinned to `@buildbase/sdk` `^1.8.0`.
+Pinned to `@buildbase/sdk` `^1.9.0`.
 
 ```bash
 cd mcp
@@ -67,7 +67,7 @@ Auth is local-only. Over HTTP the Bearer token is passed through as the caller's
 
 ## Protocol revision
 
-The server speaks what `@buildbase/sdk` 1.8.0's handler speaks: MCP **2026-07-28** for a request that carries the per-request `_meta`, and **2025-11-25** for a client that starts with `initialize`, negotiating down to 2024-11-05. Over stdio the server mirrors the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers a 2026-07-28 request is checked against from the message itself, since stdio has no headers.
+The server speaks what `@buildbase/sdk` 1.9.0's handler speaks: MCP **2026-07-28** for a request that carries the per-request `_meta`, and **2025-11-25** for a client that starts with `initialize`, negotiating down to 2024-11-05. Over stdio the server mirrors the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers a 2026-07-28 request is checked against from the message itself, since stdio has no headers.
 
 ## Check it by hand
 

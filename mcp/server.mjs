@@ -52,7 +52,7 @@ const PORT = Number(process.env.PORT || 8787);
 const CATALOG_PATH = knowledge('http-api/webhook-events.json');
 const readCatalog = () => JSON.parse(readFileSync(CATALOG_PATH, 'utf8'));
 
-// What `buildbase init` in @buildbase/sdk 1.8.0 writes for each framework it
+// What `buildbase init` in @buildbase/sdk 1.9.0 writes for each framework it
 // accepts (`--framework nextjs | tanstack-start | vite | express | remix`).
 // Paths are relative to the project root, under `src/` when the app uses it.
 const FRAMEWORKS = {
@@ -237,7 +237,7 @@ const scaffoldAuth = defineMcpTool({
   name: 'scaffold_auth',
   title: 'Sign-in recipe for a framework',
   description:
-    'How to add BuildBase sign-in to an app of the given framework: the `npx @buildbase/sdk init` command (SDK 1.8.0), the files and env names init writes, the variants with no account (--claim) and for agent sign-in (--agent), the guide URL and the matching knowledge file. Writes nothing; the agent runs the command or applies the recipe.',
+    'How to add BuildBase sign-in to an app of the given framework: the `npx @buildbase/sdk init` command (SDK 1.9.0), the files and env names init writes, the variants with no account (--claim) and for agent sign-in (--agent), the guide URL and the matching knowledge file. Writes nothing; the agent runs the command or applies the recipe.',
   inputSchema: {
     type: 'object',
     properties: {

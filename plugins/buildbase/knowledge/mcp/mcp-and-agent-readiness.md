@@ -2,7 +2,7 @@
 
 Make a BuildBase-powered app connectable by AI agents (Claude, ChatGPT, Cursor, VS Code, Codex, the MCP Inspector): a live MCP server on the app's own domain, OAuth discovery so agents sign in with **zero manual config**, and the agent-discovery documents (`llms.txt`, `robots.txt`, `.well-known/*`, server and agent cards, `auth.md`).
 
-**Verified against `@buildbase/sdk` 1.8.0** on 2026-11-24, from the published package: `dist/mcp/index.d.ts`, the runtime built-in tool list, `agents/mcp.md`, `agents/server-toolkits.md`, `agents/cli.md` and `docs/MCP-AND-AGENT-READINESS.md`. The `/mcp` entry exists since 0.0.54; the wiring and the failure library below were first verified live on 0.0.54 (Next.js 16 App Router, Claude Code as the client) on 2026-07-10. The installed package's `docs/MCP-AND-AGENT-READINESS.md` is the full guide; where it and this page disagree, the package wins.
+**Verified against `@buildbase/sdk` 1.9.0** on 2026-11-24, from the published package: `dist/mcp/index.d.ts`, the runtime built-in tool list, `agents/mcp.md`, `agents/server-toolkits.md`, `agents/cli.md` and `docs/MCP-AND-AGENT-READINESS.md`. The `/mcp` entry exists since 0.0.54; the wiring and the failure library below were first verified live on 0.0.54 (Next.js 16 App Router, Claude Code as the client) on 2026-07-10. The installed package's `docs/MCP-AND-AGENT-READINESS.md` is the full guide; where it and this page disagree, the package wins.
 
 ## Contents
 
@@ -113,7 +113,7 @@ Agents can sign in only after a person turns it on: the "Let AI agents sign in" 
 ### 0. Prereqs
 
 - A working BuildBase auth integration (the app already signs users in; see [`../sdk/quick-start.md`](../sdk/quick-start.md)).
-- `@buildbase/sdk` 1.0.0 or later for the default `/api/mcp` path (see the first failure below); 1.8.0 is current.
+- `@buildbase/sdk` 1.0.0 or later for the default `/api/mcp` path (see the first failure below); 1.9.0 is current.
 - A **public HTTPS origin**. The platform calls the app's token route, and its SSRF guard blocks loopback and private addresses in production, so a localhost app works only against a local platform. For local dev, tunnel first (`ngrok http 3000`) and use the tunnel origin everywhere.
 
 ### 1. `lib/agent.ts`: one config for the whole surface
@@ -295,13 +295,13 @@ builtinTools: false,
 
 ### The built-in catalog: 82 tools
 
-Counted from `builtinMcpTools` in the 1.8.0 runtime, grouped by each tool's own annotations:
+Counted from `builtinMcpTools` in the 1.8.0 runtime (1.9.0 did not change the list), grouped by each tool's own annotations:
 
 - **Read (49, the `'readonly'` set):** workspaces and people `list_workspaces` `get_workspace` `list_workspace_users` `get_user_profile` · billing `get_subscription` `preview_plan_change` `get_upcoming_invoice` `get_plans` `get_plan_versions` `get_plan_version` `get_public_plans` `list_invoices` `get_invoice` `get_checkout_status` · usage `get_quota_usage` `get_all_quota_usage` `get_usage_logs` · credits `get_credit_balance` `list_credit_transactions` `get_credit_packages` `get_credit_buckets` `get_expiring_credits` `get_public_credit_packages` · add-ons and entitlements `get_add_ons` `get_grants` `check_entitlement` · a named person's billing `get_user_subscription` `get_user_entitlement` `get_user_plans` `check_user_limit` `preview_user_plan_change` `get_user_upcoming_invoice` · flags, permissions, settings `check_feature_flag` `check_permission` `resolve_permissions` `get_settings` · commerce `search_items` `get_item` `list_item_slots` `list_my_orders` `get_my_order` `list_my_bookings` `list_my_holdings` `check_item_access` `list_my_item_subscriptions` `preview_item_subscription_change` `list_my_commissions` `list_my_sales` `get_sale`
 - **Write, not destructive (16):** `record_usage` `record_usage_batch` `claim_user_limit` `release_credit_hold` `create_workspace` `update_workspace` `update_user_profile` `update_feature_flag` `select_free_plan` `create_subscription_checkout` `resume_subscription` `get_billing_portal_url` `purchase_credits` `start_item_checkout` `resume_item_subscription` `fulfil_sale_line`
 - **Destructive (17, a client asks before each):** `consume_credits` `reserve_credits` `settle_credit_hold` `release_user_claim` `send_notification` `delete_workspace` `invite_workspace_user` `remove_workspace_user` `update_workspace_user_role` `update_subscription` `cancel_subscription` `purchase_add_on` `cancel_item_subscription` `change_item_subscription` `cancel_my_booking` `reschedule_my_booking` `refund_sale`
 
-In 1.8.0 the `BuiltinMcpToolName` type lists 81 names: `get_checkout_status` is served (it is in `'readonly'`) but missing from the union, so naming it in an `include` list fails `tsc`. Use `'readonly'` or a cast for it.
+In 1.8.0 and 1.9.0 the `BuiltinMcpToolName` type lists 81 names: `get_checkout_status` is served (it is in `'readonly'`) but missing from the union, so naming it in an `include` list fails `tsc`. Use `'readonly'` or a cast for it.
 
 A template worth recommending: write `{ include: [ ...every tool you might want, grouped with comments... ] }` so the menu is visible in code and narrowing is deleting lines (destructive group first).
 

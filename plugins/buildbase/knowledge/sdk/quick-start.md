@@ -5,7 +5,7 @@ This is the **golden path**: follow it top to bottom and you'll go from an empty
 There are two ways to get the same files:
 
 - **Let the CLI write them.** `npx @buildbase/sdk init` writes every file below into your app in one command (see [The fastest path](#the-fastest-path-let-init-write-the-files)).
-- **Write them yourself**, step by step (Steps 0 to 8). The files below are the ones `init` writes in `@buildbase/sdk` 1.8.0, with the comments expanded, so you learn what each one does and can fix it when something breaks.
+- **Write them yourself**, step by step (Steps 0 to 8). The files below are the ones `init` writes in `@buildbase/sdk` 1.9.0, with the comments expanded, so you learn what each one does and can fix it when something breaks.
 
 > **This guide assumes Next.js (App Router) with TypeScript.** That's what `init` writes for a Next.js app and what the official examples use. `init` also wires TanStack Start, Vite and Express apps (the file names differ; see [The fastest path](#the-fastest-path-let-init-write-the-files)). For anything else, the *ideas* are the same but the file paths differ: ask for framework-specific help before pasting.
 >
@@ -78,7 +78,7 @@ npx buildbase init --org-id <your 24-character org id>
 
 Outside a project that has `@buildbase/sdk` installed, always run the scoped form, `npx @buildbase/sdk init ...`. Never `npx buildbase` there: the unscoped `buildbase` package on npm is not ours.
 
-On a Next.js App Router app, `init` 1.8.0 writes exactly the files of Steps 2 to 8 (under `src/` when your app uses it):
+On a Next.js App Router app, `init` 1.9.0 writes exactly the files of Steps 2 to 8 (under `src/` when your app uses it):
 
 | File | What it is | Step |
 |---|---|---|
@@ -160,7 +160,7 @@ When prompted, the defaults are fine. The `@/` import alias it sets up is what m
 npm install @buildbase/sdk
 ```
 
-The SDK needs React to run but doesn't bundle its own (so it can't clash with yours). It works with React 18 or 19, and Node 18 or later. This guide was checked against `@buildbase/sdk` 1.8.0.
+The SDK needs React to run but doesn't bundle its own (so it can't clash with yours). It works with React 18 or 19, and Node 18 or later. This guide was checked against `@buildbase/sdk` 1.9.0.
 
 ✅ **Check:** `npm ls @buildbase/sdk` prints a version with no errors.
 
