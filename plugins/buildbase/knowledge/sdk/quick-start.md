@@ -107,7 +107,7 @@ npx @buildbase/sdk init --claim --yes --name "Acme" --email you@example.com
 - A code lasts 15 minutes; `npx @buildbase/sdk claim-code` prints a fresh one.
 - After the claim the org id and client keep working, but the temporary key stops. Get permanent keys with `npx @buildbase/sdk init --dev` (after `npx @buildbase/sdk login`) or copy them from the console.
 - Until it is claimed it runs on caps: at most 50 end users, Stripe test keys only, no invitations, no extra environments, and its only email is sign-in and verification mail in BuildBase's fixed wording. Add an email sender after the claim, before real users sign up.
-- Exit codes: `2` refused (`.env.local` already names an organization), `3` the daily limit for that email address, `4` the platform has no claimable organizations, `5` (`claim-code`) the key was refused because the organization was claimed or expired.
+- Exit codes: `2` refused (`.env.local` already names an organization), `3` the daily limit for that email address, `4` the platform does not offer claimable organizations yet (an older one answers 404), `5` (`claim-code`) the key was refused because the organization was claimed or expired.
 
 `init` also takes `--agent` (make the app agent-ready too: its own MCP server at `/api/mcp` and the agent sign-in routes; see [mcp-and-agent-readiness.md](../mcp/mcp-and-agent-readiness.md)) and `--dev` (wire it to a development or staging environment, after `npx @buildbase/sdk login`). Every command is in `node_modules/@buildbase/sdk/agents/cli.md`.
 

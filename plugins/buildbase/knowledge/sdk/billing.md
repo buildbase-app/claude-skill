@@ -49,7 +49,7 @@ You do NOT need to write Stripe checkout code. The SDK handles it.
 
 ## A workspace or a person
 
-Since 1.0.0 a plan can be sold to a **workspace** (the default) or to a **person** (their own plan, apart from any workspace). Every billing hook that takes a workspace id also takes `{ user: true }` for the signed-in person; the two are never merged.
+Since 1.0.0 a plan can be sold to a **workspace** (the default) or to a **person** (their own plan, apart from any workspace). The subscription, checkout, cancel, portal, invoice, entitlement, add-on and credit hooks take `{ user: true }` in place of the workspace id for the signed-in person (`agents/react.md` lists which); the two are never merged. `useTrialEligibility`, `useConvertToPaid` and the quota hooks take a workspace id only.
 
 | You want | Workspace | The signed-in person |
 |---|---|---|
@@ -85,7 +85,7 @@ function Projects({ projects }: { projects: { id: string }[] }) {
         <NewProjectButton />
       </WhenWithinLimit>
 
-      {analytics.loading ? null : <p>{reached ? 'Project limit reached' : `${remaining ?? 'Unlimited'} left`}</p>}
+      {analytics.loading ? null : <p>{reached ? 'Project limit reached' : remaining != null ? `${remaining} left` : null}</p>}
     </>
   );
 }
@@ -314,7 +314,7 @@ function PublicPricingPage() {
 - Signed out (`AuthStatus.unauthenticated`): **only resumes after login when `redirectBaseUrl` is set on `PricingPage`.** Without it the user is simply sent to sign-in and the plan choice is lost.
 - While the session is still being read, the press waits for the answer; it never sends a signed-in person to sign in.
 
-The render prop also carries `items`, `notes`, `refetch`, `promotion` (the `promotionCode` prop or `?promo=` in the URL, with `check`), `addOns` (`{ list, loading, error }`, the org's add-ons) with `selectAddOn(slug, currency?)`, and `purchaseGuard` (`'confirming'`, `'clearing'` or null: show it in place of the buy buttons while a buyer back from Stripe is being confirmed). The plans read's `intervals` lists every interval the group sells; `getAvailableBillingIntervals(plans)` builds an interval toggle.
+The render prop also carries `items`, `notes`, `refetch`, `promotion` (the `promotionCode` prop or `?promo=` in the URL, with `check`), `addOns` (`{ list, loading, error }`, the org's add-ons) with `selectAddOn(slug, currency?)`, and `purchaseGuard` (`'confirming'`, `'clearing'` or null: show it in place of the buy buttons while a buyer back from Stripe is being confirmed). For an interval toggle, `getAvailableBillingIntervals(plans, currency)` offers an interval only when some plan prices it (monthly is always in the list).
 
 ---
 

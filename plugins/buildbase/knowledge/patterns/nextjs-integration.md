@@ -328,7 +328,7 @@ export function SaaSProvider({ children }: { children: React.ReactNode }) {
 - **`BuildBaseProvider`** is the same component as `SaaSOSProvider` under its brand name (props type `BuildBaseProviderProps`); prefer either, they are interchangeable.
 - **`environment`** is the development or staging key from Section 1; unset is production.
 - **`defaultPermissions`** declares which permissions your app has and which roles get them by default; workspace owners can change them per workspace in the settings dialog.
-- Other callbacks on `auth.callbacks`: `onSessionExpired(reason)`, `onAccessRefused(refusal)`, `onSessionEnded(ended)`, `onReauthRequired(refusal)`, and `handleEvent(eventType, data)` for the SDK's client-side events (`SDKEvent`). Anything that must reach your backend reliably belongs in a webhook, not `handleEvent`.
+- Other callbacks in the `callbacks` object of the `auth` prop: `onSessionExpired(reason)`, `onAccessRefused(refusal)`, `onSessionEnded(ended)`, `onReauthRequired(refusal)`, and `handleEvent(eventType, data)` for the SDK's client-side events (`SDKEvent`). Anything that must reach your backend reliably belongs in a webhook, not `handleEvent`.
 
 ---
 

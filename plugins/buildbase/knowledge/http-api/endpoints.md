@@ -82,7 +82,7 @@ The signed-in user's own account. All `x-session-id`, none take a workspace id. 
 |---|---|---|
 | Change password | POST | `public/profile/password` |
 | Change email: send a code, then confirm it | POST | `public/profile/email` (`{ newEmail }`), `public/profile/email/confirm` |
-| Add a phone (SMS or WhatsApp code), confirm it, remove it | POST / POST / DELETE | `public/profile/phone` (`{ phone, channel? }`), `public/profile/phone/confirm`, `public/profile/phone` |
+| Add a phone (a code by SMS, or WhatsApp or a voice call where the app offers them), confirm it, remove it | POST / POST / DELETE | `public/profile/phone` (`{ phone, channel? }`), `public/profile/phone/confirm`, `public/profile/phone` |
 | Set or remove a username | PUT / DELETE | `public/profile/username` |
 | Two-step status | GET | `public/mfa` |
 | Authenticator app: enroll, confirm, disable | POST | `public/mfa/totp/enroll`, `public/mfa/totp/confirm`, `public/mfa/totp/disable` |

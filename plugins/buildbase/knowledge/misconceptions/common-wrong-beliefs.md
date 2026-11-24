@@ -1,29 +1,34 @@
 # Common Misconceptions
 
-Twenty wrong beliefs developers bring to Buildbase integration. Knowing these lets you correct them before they cause bugs.
+Twenty-five wrong beliefs developers bring to Buildbase integration, each checked against `@buildbase/sdk` 1.8.0. Knowing these lets you correct them before they cause bugs. Beliefs 21 to 25 are about things that changed in the 1.x releases.
 
 ## Contents
 
-- [1. "orgId is my organization's name"](#1-orgid-is-my-organizations-name) — orgId is a 24-char ObjectId
-- [2. "clientSecret is safe to use on the client"](#2-clientsecret-is-safe-to-use-on-the-client-because-clientid-is-also-there) — secret must stay server-side
-- [3. "Feature flags work instantly once I add the gate"](#3-feature-flags-work-instantly-once-i-add-whenworkspacefeatureenabled) — slug must exist in dashboard
-- [4. "Gates are binary"](#4-gates-are-binary--either-they-show-children-or-they-dont) — gates have three states
-- [5. "SaaSOSProvider handles CSS automatically"](#5-saasosprovider-handles-css-automatically) — you must import the CSS
-- [6. "I should store the sessionId in localStorage"](#6-i-should-store-the-sessionid-in-localstorage-for-easy-access) — use an httpOnly cookie
-- [7. "Credits and quotas are the same thing"](#7-credits-and-quotas-are-the-same-thing--ill-use-whichever-sounds-right) — different billing models
-- [8. "The serverUrl is the marketing site"](#8-the-serverurl-is-the-buildbase-marketing-site-url) — serverUrl is the API endpoint
-- [9. "Use multiple SaaSOSProvider instances"](#9-i-can-use-multiple-saasosprovider-instances-for-different-workspaces) — one provider; switch at runtime
-- [10. "handleAuthentication receives the sessionId"](#10-handleauthentication-receives-the-sessionid-and-i-just-need-to-store-it) — it receives a code to exchange
-- [11. "useRecordUsage is safe to call anywhere"](#11-userecordusage-is-safe-to-call-anywhere--ill-use-it-on-the-client) — record billable usage server-side
-- [12. "withSession replaces getSessionId"](#12-withsession-replaces-getsessionid--i-should-only-use-one) — they serve different contexts
-- [13. "I need to register a webhook URL in the SDK"](#13-i-need-to-register-a-webhook-url-in-the-sdk-config) — webhooks configured in dashboard
-- [14. "Plan slugs are case-sensitive"](#14-plan-slugs-are-case-sensitive) — matching is case-insensitive
-- [15. "The billing period resets on the 1st"](#15-the-billing-period-resets-at-midnight-on-the-1st-of-each-month) — resets on subscription anchor date
-- [16. "The SDK calls Stripe directly"](#16-the-sdk-calls-stripe-directly--i-need-to-set-up-stripe-in-my-app) — Buildbase is the Stripe integration
-- [17. "The dashboard is just for viewing data"](#17-the-dashboard-is-just-for-viewing-data--config-is-all-in-code) — Buildbase is dashboard-first
-- [18. "handleEvent and onWorkspaceChange are the same"](#18-handleevent-and-onworkspacechange-do-the-same-thing) — credentials vs data sync
-- [19. "Workspace features and user features are the same"](#19-workspace-features-and-user-features-work-the-same-way) — plan-level vs per-user
-- [20. "Hooks have data immediately after mount"](#20-once-the-provider-mounts-all-hooks-have-their-data-immediately) — data loads asynchronously
+- [1. "orgId is my organization's name"](#1-orgid-is-my-organizations-name) - orgId is a 24-char ObjectId
+- [2. "clientSecret is safe to use on the client"](#2-clientsecret-is-safe-to-use-on-the-client-because-clientid-is-also-there) - secret must stay server-side
+- [3. "Feature flags work instantly once I add the gate"](#3-feature-flags-work-instantly-once-i-add-whenworkspacefeatureenabled) - slug must exist in dashboard
+- [4. "Gates are binary"](#4-gates-are-binary-either-they-show-children-or-they-dont) - most gates have three states
+- [5. "SaaSOSProvider handles CSS automatically"](#5-saasosprovider-handles-css-automatically) - you must import the CSS
+- [6. "I should store the sessionId in localStorage"](#6-i-should-store-the-sessionid-in-localstorage-for-easy-access) - use an httpOnly cookie
+- [7. "Credits and quotas are the same thing"](#7-credits-and-quotas-are-the-same-thing-ill-use-whichever-sounds-right) - different billing models
+- [8. "The serverUrl is the marketing site"](#8-the-serverurl-is-the-buildbase-marketing-site-url) - serverUrl is the API endpoint
+- [9. "Use multiple SaaSOSProvider instances"](#9-i-can-use-multiple-saasosprovider-instances-for-different-workspaces) - one provider; switch at runtime
+- [10. "handleAuthentication receives the sessionId"](#10-handleauthentication-receives-the-sessionid-and-i-just-need-to-store-it) - it receives a code to exchange
+- [11. "useRecordUsage is safe to call anywhere"](#11-userecordusage-is-safe-to-call-anywhere-ill-use-it-on-the-client) - record billable usage server-side
+- [12. "withSession replaces getSessionId"](#12-withsession-replaces-getsessionid-i-should-only-use-one) - they serve different contexts
+- [13. "I need to register a webhook URL in the SDK"](#13-i-need-to-register-a-webhook-url-in-the-sdk-config) - webhooks configured in dashboard
+- [14. "Plan slugs are case-sensitive"](#14-plan-slugs-are-case-sensitive) - matching is case-insensitive
+- [15. "The billing period resets on the 1st"](#15-the-billing-period-resets-at-midnight-on-the-1st-of-each-month) - resets on subscription anchor date
+- [16. "The SDK calls Stripe directly"](#16-the-sdk-calls-stripe-directly-i-need-to-set-up-stripe-in-my-app) - Buildbase is the Stripe integration
+- [17. "The dashboard is just for viewing data"](#17-the-dashboard-is-just-for-viewing-data-config-is-all-in-code) - Buildbase is dashboard-first, with a file option
+- [18. "handleEvent and onWorkspaceChange are the same"](#18-handleevent-and-onworkspacechange-do-the-same-thing) - credentials vs data sync
+- [19. "Workspace features and user features are the same"](#19-workspace-features-and-user-features-work-the-same-way) - plan-level vs per-user
+- [20. "Hooks have data immediately after mount"](#20-once-the-provider-mounts-all-hooks-have-their-data-immediately) - data loads asynchronously
+- [21. "BuildBase doesn't host an MCP server"](#21-buildbase-doesnt-host-an-mcp-server) - it does, for managing BuildBase itself
+- [22. "An agent can't start until the person has an account"](#22-an-agent-cant-start-until-the-person-has-a-buildbase-account) - claimable organizations
+- [23. "Billing always belongs to a workspace"](#23-billing-always-belongs-to-a-workspace) - a person can hold a plan
+- [24. "I need a second org for staging"](#24-i-need-a-second-organization-for-staging) - environments
+- [25. "Transactional email needs another email API in my code"](#25-transactional-email-needs-another-email-api-in-my-code) - `emails.send` from the server
 
 ---
 
@@ -31,13 +36,13 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: The developer sets `orgId="my-company"` or `orgId="acme"`.
 
-**Reality**: `orgId` must be exactly 24 hexadecimal characters — it's a MongoDB ObjectId. Example: `"64a3f5b2c1d4e7890abc1234"`. The SDK validates this at startup and throws if the format is wrong.
+**Reality**: `orgId` must be exactly 24 hexadecimal characters - it's a MongoDB ObjectId. Example: `"64a3f5b2c1d4e7890abc1234"`. The provider validates it on load and throws on a malformed one (`Invalid orgId: "acme". Must be a valid MongoDB ObjectId (24 hexadecimal characters).`); an empty one does not throw, but nothing reaches Buildbase until it is set.
 
 **Why this happens**: The prop name sounds like a human identifier. Developers assume they can name their org whatever they want.
 
-**How to detect**: The app crashes on load with an "Invalid orgId" error. Or the developer asks "where do I set my org name?"
+**How to detect**: The SDK's error card replaces the app with an "Invalid orgId" error. Or the developer asks "where do I set my org name?"
 
-**Correction**: "orgId isn't a name you choose — it's a unique identifier generated by Buildbase when your org was created. Find it in the Buildbase dashboard under Settings → General → Organization ID. It will look like `64a3f5b2c1d4e7890abc1234`."
+**Correction**: "orgId isn't a name you choose — it's a unique identifier generated by Buildbase when your org was created. Find it in the Buildbase dashboard under Settings → General → Organization ID. It will look like `64a3f5b2c1d4e7890abc1234`. A staging copy is not a new id either: that's an environment key, passed as `environment`."
 
 ---
 
@@ -65,15 +70,15 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: The gate shows nothing even in dev mode. The developer has never opened the dashboard Features section.
 
-**Correction**: "Feature flags are code + dashboard. The slug `'analytics'` must exist as a feature in your Buildbase dashboard (Features → New Feature). Once created, you can enable or disable it per plan or per workspace. The code references the slug; the dashboard controls whether the slug exists and what it means."
+**Correction**: "Feature flags are code + dashboard. The slug `'analytics'` must exist as a feature in your Buildbase dashboard (Features → New Feature). Once created, you can enable or disable it per plan or per workspace. The code references the slug; the dashboard controls whether the slug exists and what it means. If it's a feature you sell, gate it with `WhenEntitled` instead, and note the difference: an unknown slug there renders as allowed, not hidden."
 
 ---
 
-## 4. "Gates are binary — either they show children or they don't"
+## 4. "Gates are binary: either they show children or they don't"
 
 **Misconception**: A gate component either shows its children (condition met) or shows nothing (condition not met). There are two states.
 
-**Reality**: Gates have three states: loading (shows `null` or `loadingComponent`), condition met (shows children), condition not met (shows `null` or `fallbackComponent`). During loading, the gate looks identical to "condition not met" unless you add a `loadingComponent`.
+**Reality**: The auth, subscription, trial, quota and credit gates have three states: loading (shows `null` or `loadingComponent`), condition met (shows children), condition not met (shows `null` or `fallbackComponent`). During loading, the gate looks identical to "condition not met" unless you add a `loadingComponent`. The role and permission gates take only `fallback`, the feature gates take neither, and the entitlement gates (`WhenEntitled` and the limit gates) lock nothing while loading.
 
 **Why this happens**: Documentation focuses on the success/failure states. The loading state is invisible unless you explicitly handle it.
 
@@ -87,13 +92,13 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: Installing the package is enough. SDK components will render correctly styled out of the box.
 
-**Reality**: You must explicitly import the CSS: `import '@buildbase/sdk/css'` in your root layout. Without this, SDK components render unstyled or with broken layout.
+**Reality**: You must explicitly import the CSS: `import '@buildbase/sdk/css'`, once. Without this, SDK components render unstyled or with broken layout.
 
 **Why this happens**: Most npm packages with built-in styles bundle them automatically. Explicit CSS imports are less common in modern tooling.
 
 **How to detect**: SDK UI components (the auth modal, workspace switcher, settings dialog) render but look completely unstyled. Developer says "the UI looks broken."
 
-**Correction**: "Add `import '@buildbase/sdk/css'` to your root layout file (e.g., `app/layout.tsx`). This must be in a server component or at the top level — not inside a `'use client'` component. One import, and all SDK UI components get their styles."
+**Correction**: "Add `import '@buildbase/sdk/css'` once, in the client component that renders the provider (that's where `npx @buildbase/sdk init` puts it, at the top of the `'use client'` file) or in your root layout (`app/layout.tsx`). One import, and all SDK UI components get their styles."
 
 ---
 
@@ -101,17 +106,17 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: The sessionId is just a token — store it wherever is convenient, like `localStorage`.
 
-**Reality**: The sessionId is an authentication credential. It must be stored in an httpOnly cookie — not accessible to JavaScript at all. This prevents XSS attacks from stealing the session.
+**Reality**: The sessionId is an authentication credential. Your app keeps it in an httpOnly cookie, set by your server and read by your server, which is the source of truth on every page load (`getSession`). Don't write your own copy to `localStorage`. The SDK does keep a working copy there itself (`saas-session-id`) after sign-in, to send as the `x-session-id` header on its API calls, so the cookie is one layer of defence against injected scripts, not the only one.
 
 **Why this happens**: JWT-based auth tutorials often use localStorage. The sessionId looks like a JWT (it's an opaque string). Developers apply the same pattern.
 
 **How to detect**: Developer's `/api/auth/token` sets a response body with sessionId and the frontend stores `localStorage.setItem('sessionId', data.sessionId)`. Or the `getSession` callback reads from localStorage.
 
-**Correction**: "The sessionId is like a password — it must never be readable by JavaScript. Your `/api/auth/token` route sets an httpOnly cookie using `Set-Cookie`. Your `/api/auth/session` route reads that cookie server-side and returns only what the SDK needs. JavaScript (including the SDK) never touches the raw token."
+**Correction**: "The sessionId is like a password. Your `/api/auth/token` route sets an httpOnly cookie using `Set-Cookie`. Your `/api/auth/session` route reads that cookie server-side and hands the SDK what it needs on page load. Your own code never stores the token; the SDK manages its own copy for its API calls, and your server routes read the cookie."
 
 ---
 
-## 7. "Credits and quotas are the same thing — I'll use whichever sounds right"
+## 7. "Credits and quotas are the same thing: I'll use whichever sounds right"
 
 **Misconception**: Credits and quotas are interchangeable names for "usage limits."
 
@@ -129,13 +134,13 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: `serverUrl` is something like `https://buildbase.app` or `https://www.buildbase.com`.
 
-**Reality**: `serverUrl` is the Buildbase API server URL — the backend endpoint the SDK communicates with for all API calls. For the hosted service it's a fixed value: `https://api.console.buildbase.app` (note: a *different* address from the dashboard you log into at `console.buildbase.app`). It's only a custom URL if you self-host.
+**Reality**: `serverUrl` is the Buildbase API server URL - the backend endpoint the SDK communicates with for all API calls. For the hosted service it is `https://api.console.buildbase.app` (note: a *different* address from the dashboard you log into at `console.buildbase.app`). Strictly, it is the organization's regional URL: each organization lives in one cell, and today every one is on that default cell. A self-hosted stack uses its own tenant server URL.
 
 **Why this happens**: The prop is called `serverUrl`, which sounds like "the Buildbase server." Developers guess the marketing site instead of using the API URL.
 
 **How to detect**: The app loads but all SDK API calls fail. Network tab shows 404s or wrong domain. App may crash on startup with a network error.
 
-**Correction**: "Find `serverUrl` in your Buildbase dashboard under Settings → API. Copy it exactly — don't guess. It's the URL the SDK uses to make all its API calls. Guessing a URL will cause all SDK operations to silently fail."
+**Correction**: "For the hosted service, use `https://api.console.buildbase.app`; `npx @buildbase/sdk init` writes it for you. Don't guess another hostname - not the marketing site, and not a made-up regional one. A request sent to the wrong cell is refused with `421 misdirected_request`, which names the right `serverUrl`; an app serving many organizations resolves each one on the server with `resolveServerUrl`."
 
 ---
 
@@ -149,7 +154,7 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: Developer asks "how do I configure different workspaces?" or nests providers and reports broken state.
 
-**Correction**: "One provider, one root. Workspace switching is a runtime operation — call `switchToWorkspace(workspace)` (the workspace object, not an id) and the provider updates all contexts automatically. You don't rewrap the tree. Use `onWorkspaceChange` callback to handle workspace-specific logic (like generating a workspace-scoped JWT for your own API)."
+**Correction**: "One provider, one root. Workspace switching is a runtime operation - call `switchToWorkspace(workspace)` (the workspace object, not an id) and the provider updates all contexts automatically. You don't rewrap the tree. Use `onWorkspaceChange` callback to handle workspace-specific logic (like generating a workspace-scoped JWT for your own API)."
 
 ---
 
@@ -163,11 +168,11 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: Developer returns the code directly (`return { sessionId: code }`), or calls a wrong endpoint, or returns `undefined`. Auth appears to succeed (no error) but the session doesn't persist.
 
-**Correction**: "The `code` in `handleAuthentication` is an OAuth authorization code — a one-time token that must be exchanged for a real sessionId. Your implementation calls your server-side `/api/auth/token` endpoint (which holds `clientSecret`), which does the exchange with Buildbase, gets the sessionId, sets the cookie, and returns it to the client."
+**Correction**: "The `code` in `handleAuthentication` is an OAuth authorization code - a one-time token that must be exchanged for a real sessionId. Your implementation calls your server-side `/api/auth/token` endpoint (which holds `clientSecret`), which does the exchange with Buildbase (`exchangeAuthCode` from `@buildbase/sdk` does it in one call), gets the sessionId, sets the cookie, and returns it to the client."
 
 ---
 
-## 11. "useRecordUsage is safe to call anywhere — I'll use it on the client"
+## 11. "useRecordUsage is safe to call anywhere: I'll use it on the client"
 
 **Misconception**: `useRecordUsage` can be called from any React component to track usage for any action.
 
@@ -177,11 +182,11 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: Developer records AI generation usage in a React component's `useEffect`. Or records file upload usage in an `onChange` handler.
 
-**Correction**: "Client-side recording can be manipulated — a user could modify the request. For anything where the count matters for billing, record server-side in your API route using `usage.record(workspaceId, { quotaSlug, quantity })`. Add an `idempotencyKey` to prevent double-counting."
+**Correction**: "Client-side recording can be manipulated — a user could modify the request. For anything where the count matters for billing, record server-side in your API route using `usage.record(workspaceId, { quotaSlug, quantity, idempotencyKey })`. Derive the `idempotencyKey` from the request or job, and send the same one on a retry, to prevent double-counting."
 
 ---
 
-## 12. "withSession replaces getSessionId — I should only use one"
+## 12. "withSession replaces getSessionId: I should only use one"
 
 **Misconception**: `withSession` and `getSessionId` do the same thing. Pick one.
 
@@ -191,7 +196,7 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: Developer uses `withSession` in every Next.js API route individually instead of setting `getSessionId` in the factory config.
 
-**Correction**: "In Next.js, set `getSessionId` once in `BuildBase()` to read from your cookie on every call — you never need `withSession` for normal routes. Use `withSession` only when you need a different session for a specific call: a service account session in a cron job, or per-request session binding in Express."
+**Correction**: "In Next.js, set `getSessionId` once in `BuildBase()` to read from your cookie on every call — you never need `withSession` for normal routes. Use `withSession` only when you need a different session for a specific call: a service account session in a cron job, or per-request session binding in Express. Work that needs no person at all (reading content, sending a transactional email) uses `createServerClient` from `@buildbase/sdk/server` with an org API token instead."
 
 ---
 
@@ -199,13 +204,13 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: There's a webhook URL config option in `BuildBase()` or `SaaSOSProvider` where you register your endpoint.
 
-**Reality**: Webhooks are configured entirely in the Buildbase dashboard, not in code. You register the URL in the dashboard (Settings → Webhooks). Your code only needs to: (1) expose the endpoint at that URL, and (2) verify the signature with `verifyWebhookSignature`.
+**Reality**: Webhooks are configured in the Buildbase dashboard, not in the SDK's config. You register the URL in the dashboard (Settings → Webhooks); it can also be set in a blueprint file or through the org API (`/api/organizations/webhooks`). Your code only needs to: (1) expose the endpoint at that URL, and (2) verify the signature with `verifyWebhookSignature` (or `parseWebhookEvent`, which verifies and parses).
 
 **Why this happens**: Some payment platforms (like Stripe) require SDK-level webhook configuration. Developers assume Buildbase works the same way.
 
 **How to detect**: Developer searches `BuildBase()` config options for a webhook URL. Or asks "where in the SDK do I register my webhook?"
 
-**Correction**: "Webhook registration is in the dashboard, not the SDK. In Buildbase dashboard → Webhooks → Add Endpoint. Enter your URL (e.g., `https://yourapp.com/api/webhooks/buildbase`). In your code, just expose that route and use `parseWebhookEvent` + `verifyWebhookSignature` to process events safely."
+**Correction**: "Webhook registration is in the dashboard, not the SDK. In Buildbase dashboard → Webhooks → Add Endpoint. Enter your URL (e.g., `https://yourapp.com/api/webhooks/buildbase`). In your code, just expose that route and use `parseWebhookEvent` (it verifies the signature and parses) to process events safely, once each: dedupe on the event's `id`."
 
 ---
 
@@ -237,31 +242,31 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 ---
 
-## 16. "The SDK calls Stripe directly — I need to set up Stripe in my app"
+## 16. "The SDK calls Stripe directly: I need to set up Stripe in my app"
 
-**Misconception**: The developer needs to install `stripe` or `@stripe/stripe-js` alongside `@buildbase/sdk` and configure it.
+**Misconception**: The developer needs to install `stripe` alongside `@buildbase/sdk`, write their own Stripe webhook handler, and put Stripe keys in the app.
 
-**Reality**: Buildbase is the Stripe integration. You connect your Stripe account to Buildbase in the dashboard. The SDK never calls Stripe directly. You don't need to install or configure Stripe in your app.
+**Reality**: Buildbase is the Stripe integration. You connect your own Stripe account to Buildbase in the dashboard (Stripe is bring-your-own, with no platform fee on top). Buildbase creates the checkouts and subscriptions and handles Stripe's webhooks. The default flow redirects to Stripe's own page and needs nothing from Stripe in your app. One optional exception: to open checkout inside the app (`ui.behavior.checkoutMode: 'embedded'`) or take a card in the app (`useInAppPayment`), you install `@stripe/stripe-js` and pass its `loadStripe` to the provider; the SDK never imports Stripe.js itself.
 
 **Why this happens**: Most billing integrations require Stripe SDK setup. Developers expect to see Stripe setup instructions alongside billing setup.
 
-**How to detect**: Developer asks "where do I put my Stripe publishable key?" or installs `@stripe/stripe-js` alongside the Buildbase SDK.
+**How to detect**: Developer asks "where do I put my Stripe publishable key?", installs the `stripe` server package, or writes a Stripe webhook route.
 
-**Correction**: "You don't need Stripe SDK in your app. Connect Stripe to Buildbase once in the dashboard (Billing → Stripe Connect). Buildbase handles all Stripe interactions. Your app uses Buildbase SDK to manage subscriptions — Buildbase talks to Stripe on your behalf."
+**Correction**: "You don't need Stripe's server SDK in your app. Connect Stripe to Buildbase once in the dashboard: Billing opens on Stripe payment setup, where you paste your Stripe publishable and secret keys (later under Configuration → Credentials). Buildbase handles all Stripe interactions; your app uses the Buildbase SDK to manage subscriptions. The publishable key reaches the browser only through Buildbase, when you opt into embedded checkout with `loadStripe` on the provider."
 
 ---
 
-## 17. "The dashboard is just for viewing data — config is all in code"
+## 17. "The dashboard is just for viewing data: config is all in code"
 
 **Misconception**: The Buildbase dashboard is a monitoring/viewing tool. The real configuration is in the SDK.
 
-**Reality**: The dashboard is where most configuration lives: plans, features, quotas, notification events, webhook endpoints, OAuth apps, workspace settings. The SDK references these by slug. Code-only setup is impossible for most features.
+**Reality**: The dashboard is where most configuration lives: plans, features, quotas, notification events, webhook endpoints, OAuth apps, workspace settings. The SDK references these by slug; nothing in `SaaSOSProvider` or `BuildBase()` creates them. Since 1.0.0 the same configuration can also be one file, `buildbase.blueprint.json`, that an owner or admin validates, plans and applies (`npx @buildbase/sdk blueprint`, the console's "Set up from one file", or BuildBase's hosted MCP server), so it can be reviewed and kept in git. Either way it lands in the org before the code that references it runs.
 
-**Why this happens**: Modern infrastructure-as-code culture makes developers expect everything to be code-configurable. Terraform, Vercel, and most dev tools support this. Buildbase's dashboard-first model is the exception.
+**Why this happens**: Modern infrastructure-as-code culture makes developers expect everything to be code-configurable. Terraform, Vercel, and most dev tools support this.
 
 **How to detect**: Developer has no features defined in the dashboard but has `WhenWorkspaceFeatureEnabled` in their code. Or asks "how do I create a plan in code?"
 
-**Correction**: "Buildbase is dashboard-first. Plans, features, and quotas are created in the dashboard with a name and slug. Your code references them by slug. Think of it like environment variables — you declare the variable in one place (dashboard), reference it in another (code). The dashboard is not optional for billing or feature flags."
+**Correction**: "Buildbase is dashboard-first. Plans, features, and quotas are created in the dashboard with a name and slug. Your code references them by slug. Think of it like environment variables - you declare the variable in one place (dashboard), reference it in another (code). If you want it as code, write a blueprint: `npx @buildbase/sdk blueprint validate`, then `plan`, show the plan to the account's owner or admin, and let them `apply` it with an admin key. The app's own code still never creates plans."
 
 ---
 
@@ -269,13 +274,13 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **Misconception**: `handleEvent` and `onWorkspaceChange` are two ways to listen to workspace switches — use whichever you prefer.
 
-**Reality**: They serve different purposes. `onWorkspaceChange` fires specifically when the current workspace changes — it's designed for generating workspace-scoped credentials (like your own JWT). `handleEvent` fires for client SDK events (`user:created`, `workspace:created`, `workspace:changed`, `workspace:user-added`, etc.) — it's designed for syncing data to your database or triggering side effects. (Note: there is **no** `subscription:changed` client event — subscription changes arrive via server-side webhooks like `subscription.created`, or by polling `subscription.get`.)
+**Reality**: They serve different purposes. `onWorkspaceChange` fires specifically when the current workspace changes, before the switch completes - it's designed for generating workspace-scoped credentials (like your own JWT). `handleEvent` fires for client SDK events (`user:created`, `workspace:created`, `workspace:changed`, `workspace:user-added`, etc.) - it's designed for syncing data to your database or triggering side effects. (Note: there is **no** `subscription:changed` client event - subscription changes arrive via server-side webhooks like `subscription.created`, through the SDK's checkout return (`useCheckoutStatus`), or by polling `subscription.get`.)
 
 **Why this happens**: Both are callbacks. Both receive workspace-related data. The distinction isn't obvious from the API surface.
 
 **How to detect**: Developer uses `handleEvent` with an `if (type === 'workspace:changed')` check to generate a JWT, or uses `onWorkspaceChange` to sync user data to their database.
 
-**Correction**: "Use `onWorkspaceChange` for generating workspace-scoped credentials for your own API (JWT, workspace token). Use `handleEvent` for syncing Buildbase state to your database (e.g. creating user records on `user:created`, reacting to `workspace:changed`). For subscription changes, use server-side webhooks (`subscription.created`, etc.) or poll `subscription.get` — they're not delivered through `handleEvent`. They're complementary — a real integration uses both plus webhooks."
+**Correction**: "Use `onWorkspaceChange` for generating workspace-scoped credentials for your own API (JWT, workspace token). Use `handleEvent` for syncing Buildbase state to your database (e.g. creating user records on `user:created`, reacting to `workspace:changed`). For subscription changes, use server-side webhooks (`subscription.created`, etc.) or poll `subscription.get` - they're not delivered through `handleEvent`. They're complementary - a real integration uses both plus webhooks."
 
 ---
 
@@ -289,7 +294,7 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 
 **How to detect**: Developer uses `WhenWorkspaceFeatureEnabled` for a personal beta feature they want to test, or `WhenUserFeatureEnabled` for a paid plan feature.
 
-**Correction**: "Workspace features = plan-level features that all workspace members share. User features = individual user-level toggles. Configure workspace features under your plans in the dashboard. Configure user features under individual users. When in doubt: if it's about the subscription tier, it's a workspace feature. If it's about a specific person, it's a user feature."
+**Correction**: "Workspace features = plan-level features that all workspace members share. User features = individual user-level toggles. Configure workspace features under your plans in the dashboard. Configure user features under individual users. When in doubt: if it's about the subscription tier, it's a workspace feature. If it's about a specific person, it's a user feature. And if it's something you sell, check the entitlement (`WhenEntitled`, `useEntitlement`) rather than either flag."
 
 ---
 
@@ -304,3 +309,73 @@ Twenty wrong beliefs developers bring to Buildbase integration. Knowing these le
 **How to detect**: Developer does `if (!useSubscriptionContext().response) redirect('/subscribe')` and users get incorrectly redirected on first load.
 
 **Correction**: "Treat all SDK hook data as potentially loading until the `loading` flag is false. `useSubscriptionContext().loading === true` means 'we don't know yet.' Gate components handle this automatically with their three-state model. If you're writing imperative logic, check `loading` first before acting on the data."
+
+---
+
+## 21. "BuildBase doesn't host an MCP server"
+
+**Misconception**: The only MCP server around BuildBase is one the developer runs locally, so an agent cannot reach BuildBase's console.
+
+**Reality**: BuildBase hosts one: `https://api.console.buildbase.app/mcp`, titled "BuildBase Console", over Streamable HTTP. An agent signs in over OAuth as the person and works in their BuildBase organizations with their role: console reads and writes, blueprints, docs search and the env template an app needs, with deletes and other destructive changes approved by the person. It is listed in Claude's connectors directory, and `npx @buildbase/sdk agent setup --console` adds it to local AI clients. It is a different thing from the app's own MCP server, which the app builds with `@buildbase/sdk/mcp` (`createAgentStack`) for its own users' agents.
+
+**Why this happens**: Older guidance, this skill's included, said BuildBase hosted nothing for agents. That is no longer true.
+
+**How to detect**: The agent tells the person to click through the console for a setup step it could do, or confuses the console server with the app's own `/api/mcp` route.
+
+**Correction**: "To set up or change your BuildBase organization from an AI client, connect BuildBase's hosted MCP server and sign in as yourself. To let your app's users' agents use your app, build your app's own MCP server with `@buildbase/sdk/mcp`. They are two servers for two jobs."
+
+---
+
+## 22. "An agent can't start until the person has a BuildBase account"
+
+**Misconception**: Wiring BuildBase needs a person to sign up first and paste an org id and keys.
+
+**Reality**: `npx @buildbase/sdk init --claim --yes` creates a claimable organization with no account (central's `POST /api/organizations/agent/identity`), makes a sign-in client for the app's local redirect URL, and writes the keys to `.env.local` (mode 0600). It works at once, on an unclaimed organization's caps, and is deleted after 72 hours unless a person claims it with the printed claim URL and code. In development, `withBuildBaseKeyless` (next.config) or `applyKeyless` (Express) from `@buildbase/sdk/keyless` does the same when no org id is set.
+
+**Why this happens**: Every other auth vendor starts with a sign-up form.
+
+**How to detect**: The agent stops and asks the person to create an account before writing any code.
+
+**Correction**: "Start with `npx @buildbase/sdk init --claim --yes`, build, and give the person the claim URL. Claiming is theirs to do: they sign in or sign up and enter the code. Never paste the key into the chat."
+
+---
+
+## 23. "Billing always belongs to a workspace"
+
+**Misconception**: A consumer app has to bill each person through a hidden workspace, and a per-person feature (their own API keys, their connected agents) cannot have its own plan.
+
+**Reality**: Workspaces are the default subject, but since 1.0.0 a plan can belong to one person: a pricing group whose payer is a person, read and bought with `{ user: true }` on the hooks (`useEntitlement(slug, { subject: { user: true } })`, `<WhenUserEntitled>`, `useSubscription({ user: true })`, the credit hooks), shown on the person's own Billing screen. The two are never merged; a screen that cares about both asks twice.
+
+**Why this happens**: Earlier SDK releases billed workspaces only, and most examples still do.
+
+**How to detect**: The developer creates a workspace per user just to attach a plan, or asks how to give one member a personal upgrade.
+
+**Correction**: "Decide who pays for each thing. What the team shares belongs to the workspace's plan; what follows one person belongs to their own plan, checked with `{ user: true }`."
+
+---
+
+## 24. "I need a second organization for staging"
+
+**Misconception**: To keep test users and test payments out of production, the developer creates another BuildBase organization and swaps org ids between deploys.
+
+**Reality**: An organization can have development and staging environments, each with its own database, users and sign-in client, within the plan's allowance. The app passes the environment's key as `environment` (on `SaaSOSProvider`, `BuildBase()`, `createAgentStack` and `BuildBaseTracking`) and keeps the same `orgId`; the SDK sends `<orgId>-<key>`, and unset is production. `npx @buildbase/sdk env diff` and `env push` compare and promote email templates, workflows and plans to production.
+
+**Why this happens**: A separate org is how many vendors do staging.
+
+**How to detect**: Two org ids in the env files, or a test environment that drifts from production by hand.
+
+**Correction**: "Create an environment (in the console, or `npx @buildbase/sdk env create` after `buildbase login`, with the owner's go-ahead because it uses one of the plan's environments), then `npx @buildbase/sdk init --dev` to wire the app to it."
+
+---
+
+## 25. "Transactional email needs another email API in my code"
+
+**Misconception**: Receipts, order confirmations and other one-off emails need Resend, SendGrid or another email SDK in the app, because BuildBase only sends campaigns and sign-in mail.
+
+**Reality**: Since 1.0.0 the app's server sends one transactional email with `createServerClient(...).emails.send({ to: { email }, templateId, data }, { idempotencyKey })` from `@buildbase/sdk/server`, using a template from the console (or inline `subject` with `html` / `text`), and reads its status with `emails.get(id)`. `subscribers.upsert` and the rest manage the audience. Mail goes out through the sender connected in the console (SMTP, Google, Mailgun or Amazon SES). The org API token's role needs `emails_api_sends` to send and `audience` for subscribers.
+
+**Why this happens**: The email module has no React hook, so it looks console-only.
+
+**How to detect**: A second email vendor in `package.json` for mail the app could send through BuildBase, or a request for an email hook in `@buildbase/sdk/react`.
+
+**Correction**: "Send it from your server with `emails.send` and the same idempotency key on any retry; the platform remembers it for 24 hours. It never runs in the browser."
